@@ -152,57 +152,6 @@
     user-select: none;
   }
 
-  /* Section switcher */
-  .switcher {
-    position: absolute;
-    top: 88px;
-    left: 50%;
-    transform: translateX(-50%);
-    display: flex;
-    gap: 4px;
-    padding: 4px;
-    border-radius: 999px;
-    background: rgba(255,255,255,0.1);
-    border: 0.5px solid rgba(255,255,255,0.18);
-    backdrop-filter: blur(24px);
-    z-index: 10;
-  }
-
-  .switch-btn {
-    padding: 7px 18px;
-    border-radius: 999px;
-    border: none;
-    background: transparent;
-    color: rgba(255,255,255,0.6);
-    font-size: 13.5px;
-    font-weight: 500;
-    cursor: pointer;
-    transition: background 0.2s ease, color 0.2s ease;
-  }
-
-  .switch-btn.active {
-    background: rgba(255,255,255,0.92);
-    color: #16161c;
-  }
-
-  .switch-btn:not(.active):hover {
-    color: rgba(255,255,255,0.85);
-  }
-
-  /* Sections */
-  .section {
-    position: absolute;
-    inset: 0;
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 0.25s ease;
-  }
-
-  .section.active {
-    opacity: 1;
-    pointer-events: auto;
-  }
-
   /* Toolbar */
   .toolbar {
     position: absolute;
@@ -255,29 +204,29 @@
     display: block;
   }
 
-  /* Notes sub-switcher (Canvas / Subject Notes) */
+  /* Notes sub-switcher (Canvas / Subject Notes) \u2014 now the app's only navigation */
   .notes-subswitcher {
     position: absolute;
-    top: 140px;
+    top: 84px;
     left: 50%;
     transform: translateX(-50%);
     display: flex;
     gap: 4px;
     padding: 4px;
     border-radius: 999px;
-    background: rgba(255,255,255,0.08);
-    border: 0.5px solid rgba(255,255,255,0.16);
-    backdrop-filter: blur(20px);
-    z-index: 8;
+    background: rgba(255,255,255,0.1);
+    border: 0.5px solid rgba(255,255,255,0.18);
+    backdrop-filter: blur(24px);
+    z-index: 10;
   }
 
   .subswitch-btn {
-    padding: 5px 14px;
+    padding: 7px 18px;
     border-radius: 999px;
     border: none;
     background: transparent;
-    color: rgba(255,255,255,0.55);
-    font-size: 12px;
+    color: rgba(255,255,255,0.6);
+    font-size: 13.5px;
     font-weight: 500;
     cursor: pointer;
     transition: background 0.2s ease, color 0.2s ease;
@@ -286,6 +235,10 @@
   .subswitch-btn.active {
     background: rgba(255,255,255,0.85);
     color: #16161c;
+  }
+
+  .subswitch-btn:not(.active):hover {
+    color: rgba(255,255,255,0.85);
   }
 
   .notes-sub {
@@ -298,17 +251,22 @@
     display: block;
   }
 
+  #sub-subjects.active {
+    display: flex;
+    flex-direction: column;
+    padding-top: 138px;
+  }
+
   /* Subject Notes */
   .subjects-wrap {
-    position: absolute;
-    inset: 0;
-    top: 194px;
+    flex: 1;
+    min-height: 0;
     display: flex;
     gap: 0;
   }
 
   .subjects-sidebar {
-    width: 220px;
+    width: 260px;
     flex-shrink: 0;
     background: rgba(255,255,255,0.06);
     border-right: 0.5px solid rgba(255,255,255,0.14);
@@ -316,6 +274,25 @@
     flex-direction: column;
     padding: 16px 12px;
     overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255,255,255,0.25) transparent;
+  }
+
+  .subjects-sidebar::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  .subjects-sidebar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .subjects-sidebar::-webkit-scrollbar-thumb {
+    background: rgba(255,255,255,0.22);
+    border-radius: 6px;
+  }
+
+  .subjects-sidebar::-webkit-scrollbar-thumb:hover {
+    background: rgba(255,255,255,0.38);
   }
 
   .subjects-sidebar-head {
@@ -451,6 +428,26 @@
     position: relative;
     flex: 1;
     overflow: auto;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255,255,255,0.25) transparent;
+  }
+
+  .subject-notes-layer::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  .subject-notes-layer::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .subject-notes-layer::-webkit-scrollbar-thumb {
+    background: rgba(255,255,255,0.22);
+    border-radius: 6px;
+  }
+
+  .subject-notes-layer::-webkit-scrollbar-thumb:hover {
+    background: rgba(255,255,255,0.38);
   }
 
   .subjects-empty {
@@ -878,7 +875,6 @@
     box-shadow: 0 8px 32px rgba(0,0,0,0.18), 0 1px 2px rgba(0,0,0,0.08);
     display: flex;
     flex-direction: column;
-    cursor: grab;
     transition: box-shadow 0.2s ease;
     background-size: cover;
     background-position: center;
@@ -888,7 +884,6 @@
   }
 
   .note.dragging {
-    cursor: grabbing;
     box-shadow: 0 20px 48px rgba(0,0,0,0.3);
     z-index: 100;
     transition: none;
@@ -900,7 +895,38 @@
     justify-content: space-between;
     padding: 8px 10px 4px;
     flex-shrink: 0;
+  }
+
+  /* Dedicated drag handle bar \u2014 the ONLY way to move a note now, so buttons
+     in the header/toolbar never fight with drag detection. */
+  .note-drag-handle {
+    flex-shrink: 0;
+    height: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: grab;
     touch-action: none;
+    border-top: 0.5px solid rgba(255,255,255,0.12);
+    background: rgba(0,0,0,0.06);
+    transition: background 0.15s ease;
+  }
+
+  .note-drag-handle:hover {
+    background: rgba(0,0,0,0.14);
+  }
+
+  .note.dragging .note-drag-handle {
+    cursor: grabbing;
+    background: rgba(0,0,0,0.2);
+  }
+
+  .note-drag-grip {
+    width: 32px;
+    height: 3px;
+    border-radius: 3px;
+    background: rgba(255,255,255,0.4);
+    pointer-events: none;
   }
 
   .note-dot-wrap {
@@ -1040,6 +1066,7 @@
     align-items: center;
     gap: 5px;
     padding: 0 10px 6px;
+    margin-bottom: 2px;
     flex-shrink: 0;
     opacity: 0;
     max-height: 0;
@@ -1051,6 +1078,7 @@
   body.touch-device .note-toolbar2 {
     opacity: 1;
     max-height: 34px;
+    overflow: visible;
   }
 
   .note-font-select {
@@ -1086,8 +1114,8 @@
   }
 
   .note-font-color-wrap {
-    width: 18px;
-    height: 18px;
+    width: 16px;
+    height: 16px;
     border-radius: 5px;
     position: relative;
     overflow: hidden;
@@ -1103,7 +1131,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 11px;
+    font-size: 9.5px;
     font-weight: 700;
     color: var(--fc, #fff);
     pointer-events: none;
@@ -1111,9 +1139,9 @@
 
   .note-font-color-wrap input[type="color"] {
     position: absolute;
-    inset: -4px;
-    width: 26px;
-    height: 26px;
+    inset: -2px;
+    width: 20px;
+    height: 20px;
     border: none;
     cursor: pointer;
     opacity: 0;
@@ -1201,48 +1229,6 @@
   }
 
   /* Calendar section */
-  .cal-wrap {
-    position: absolute;
-    inset: 0;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    padding: 160px 24px 24px;
-    overflow-y: auto;
-  }
-
-  .timepiece {
-    text-align: center;
-    color: #fff;
-    user-select: none;
-    margin-bottom: 28px;
-    flex-shrink: 0;
-  }
-
-  .clock {
-    font-size: clamp(40px, 6vw, 68px);
-    font-weight: 500;
-    letter-spacing: -0.02em;
-    line-height: 1;
-    text-shadow: 0 2px 40px rgba(0,0,0,0.25);
-  }
-
-  .clock .secs {
-    font-size: 0.4em;
-    font-weight: 400;
-    opacity: 0.55;
-    margin-left: 0.15em;
-    vertical-align: 0.12em;
-  }
-
-  .datepiece {
-    margin-top: 8px;
-    font-size: clamp(14px, 1.4vw, 17px);
-    font-weight: 400;
-    opacity: 0.75;
-    letter-spacing: 0.01em;
-  }
-
   .cal-card {
     width: 100%;
     max-width: 1100px;
@@ -1346,11 +1332,11 @@
 
   .cal-cell .cell-icons {
     position: absolute;
-    top: 3px;
-    right: 4px;
+    top: 4px;
+    right: 5px;
     display: flex;
-    gap: 1px;
-    font-size: 8px;
+    gap: 3px;
+    font-size: 9px;
     line-height: 1;
     z-index: 2;
     pointer-events: none;
@@ -1415,7 +1401,13 @@
     pointer-events: none;
   }
 
-  /* Hover-expand mechanics */
+  .cal-cell-outer.tap-expanded .cal-cell.today::before {
+    display: none;
+  }
+
+  /* Expand mechanics \u2014 click/tap only, no hover-trigger. Hovering across a
+     dense grid used to expand multiple cells at once and glitch; now a day
+     only expands on a deliberate click. */
   .cal-cell-outer {
     position: relative;
     aspect-ratio: 1;
@@ -1434,7 +1426,6 @@
                 background 0.32s cubic-bezier(0.22, 1, 0.36, 1);
   }
 
-  .cal-cell-outer:hover .cal-cell:not(.empty),
   .cal-cell-outer.tap-expanded .cal-cell:not(.empty) {
     width: 220px;
     height: 220px;
@@ -1454,12 +1445,163 @@
   }
 
   /* keep expanded cell from clipping off the right/bottom edge of the grid */
-  .cal-cell-outer:nth-child(7n):hover .cal-cell,
-  .cal-cell-outer:nth-child(7n-1):hover .cal-cell,
   .cal-cell-outer.tap-expanded:nth-child(7n) .cal-cell,
   .cal-cell-outer.tap-expanded:nth-child(7n-1) .cal-cell {
     left: auto;
     right: 0;
+  }
+
+  /* Full-width collapsible calendar band above Subjects */
+  .mini-cal-wrap {
+    flex-shrink: 0;
+    width: 100%;
+    border-top: 0.5px solid rgba(255,255,255,0.14);
+  }
+
+  .mini-cal-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    background: none;
+    border: none;
+    color: rgba(255,255,255,0.55);
+    font-size: 13px;
+    font-weight: 500;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    font-family: "Montserrat", -apple-system, sans-serif;
+    padding: 12px 6px;
+    cursor: pointer;
+    transition: color 0.15s ease;
+  }
+
+  .mini-cal-toggle:hover {
+    color: rgba(255,255,255,0.85);
+  }
+
+  .mini-cal-chevron {
+    flex-shrink: 0;
+    transition: transform 0.2s ease;
+  }
+
+  .mini-cal-toggle[aria-expanded="true"] .mini-cal-chevron {
+    transform: rotate(180deg);
+  }
+
+  .mini-cal-collapse {
+    display: grid;
+    grid-template-rows: 0fr;
+    transition: grid-template-rows 0.25s ease, visibility 0.25s;
+    visibility: hidden;
+  }
+
+  .mini-cal-collapse.open {
+    grid-template-rows: 1fr;
+    visibility: visible;
+  }
+
+  .mini-cal-collapse > div {
+    overflow: hidden;
+    min-height: 0;
+    display: flex;
+    justify-content: center;
+  }
+
+  .mini-cal-card {
+    width: 100%;
+    max-width: 720px;
+    max-height: 50vh;
+    overflow-y: auto;
+    border-radius: 16px;
+    background: rgba(255,255,255,0.06);
+    border: 0.5px solid rgba(255,255,255,0.14);
+    padding: 16px 8px 12px;
+    margin: 0 20px 20px;
+    color: #fff;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255,255,255,0.25) transparent;
+  }
+
+  .mini-cal-card::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  .mini-cal-card::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .mini-cal-card::-webkit-scrollbar-thumb {
+    background: rgba(255,255,255,0.22);
+    border-radius: 6px;
+  }
+
+  .mini-cal-grid {
+    gap: 8px;
+  }
+
+  .mini-cal-grid .cal-dow {
+    font-size: 13px;
+    padding: 4px 0 12px;
+    text-align: center;
+  }
+
+  .mini-cal-grid .cal-cell-outer {
+    min-height: 48px;
+  }
+
+  .mini-cal-grid .cal-cell {
+    font-size: 14px;
+    border-radius: 9px;
+  }
+
+  .mini-cal-grid .cal-daynum {
+    font-size: 14px;
+    top: 4px;
+    left: 6px;
+  }
+
+  .mini-cal-grid .preview-snip {
+    display: none;
+  }
+
+  /* Expanding a day from the mini calendar centers a larger card over the
+     whole screen instead of trying to grow inside the narrow sidebar.
+     Click-only (no hover-expand) so moving the cursor across the grid
+     never triggers multiple cells expanding at once. */
+  .mini-cal-grid .cal-cell-outer.tap-expanded .cal-cell:not(.empty) {
+    position: fixed;
+    left: 50% !important;
+    right: auto !important;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    width: min(86vw, 260px);
+    height: min(86vw, 260px);
+    max-height: 70vh;
+  }
+
+  .mini-cal-grid .cal-cell-outer.tap-expanded .cal-daynum {
+    font-size: 15px;
+  }
+
+  .mini-cal-card .cal-head {
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 18px;
+    text-align: center;
+  }
+
+  .mini-cal-card .cal-title {
+    font-size: 18px;
+  }
+
+  .mini-cal-card .cal-nav-btn {
+    width: 30px;
+    height: 30px;
+    font-size: 15px;
   }
 
   .cal-daynum {
@@ -1470,7 +1612,6 @@
     transition: opacity 0.2s ease;
   }
 
-  .cal-cell-outer:hover .cal-daynum,
   .cal-cell-outer.tap-expanded .cal-daynum {
     position: static;
     font-size: 15px;
@@ -1478,12 +1619,10 @@
     margin-bottom: 8px;
   }
 
-  .cal-cell-outer:hover .cell-icons,
   .cal-cell-outer.tap-expanded .cell-icons {
     display: none;
   }
 
-  .cal-cell-outer:hover .preview-snip,
   .cal-cell-outer.tap-expanded .preview-snip {
     display: none;
   }
@@ -1498,7 +1637,6 @@
     transition: opacity 0.22s ease 0.08s, transform 0.22s ease 0.08s;
   }
 
-  .cal-cell-outer:hover .exp-panel,
   .cal-cell-outer.tap-expanded .exp-panel {
     display: flex;
     opacity: 1;
@@ -1667,131 +1805,12 @@
     letter-spacing: 0.02em;
   }
 
-  /* App dock section */
-  .app-dock {
-    margin-top: 22px;
-    padding: 16px 16px 14px;
-    border-radius: 16px;
-    background: rgba(255,255,255,0.16);
-    border: 0.5px solid rgba(255,255,255,0.24);
-  }
-
-  .app-dock-title {
-    font-size: 12px;
-    color: rgba(255,255,255,0.55);
-    margin-bottom: 12px;
-    letter-spacing: 0.02em;
-  }
-
-  .app-dock-row {
-    display: flex;
-    gap: 10px;
-    flex-wrap: wrap;
-  }
-
-  .app-icon {
-    width: 52px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 6px;
-    cursor: pointer;
-    background: none;
-    border: none;
-    padding: 4px;
-  }
-
-  .app-icon-glyph {
-    width: 42px;
-    height: 42px;
-    border-radius: 11px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 16px;
-    font-weight: 500;
-    color: #fff;
-    border: 1.5px solid transparent;
-    transition: transform 0.15s ease, border-color 0.15s ease;
-  }
-
-  .app-icon:hover .app-icon-glyph {
-    transform: translateY(-2px);
-  }
-
-  .app-icon.active .app-icon-glyph {
-    border-color: rgba(255,255,255,0.85);
-  }
-
-  .app-icon-label {
-    font-size: 9.5px;
-    color: rgba(255,255,255,0.6);
-    text-align: center;
-    line-height: 1.2;
-  }
-
-  .app-icon.active .app-icon-label {
-    color: #fff;
-  }
-
-  .cal-app-banner {
-    display: none;
-    align-items: center;
-    gap: 8px;
-    margin-bottom: 14px;
-    padding: 8px 12px;
-    border-radius: 10px;
-    background: rgba(255,255,255,0.1);
-    border: 0.5px solid rgba(255,255,255,0.18);
-    font-size: 12.5px;
-    color: rgba(255,255,255,0.85);
-  }
-
-  .cal-app-banner.show {
-    display: flex;
-  }
-
-  .cal-app-banner .swatch-sm {
-    width: 18px;
-    height: 18px;
-    border-radius: 6px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 10px;
-    font-weight: 500;
-    color: #fff;
-  }
-
-  .cal-app-banner .clear-app {
-    margin-left: auto;
-    background: none;
-    border: none;
-    color: rgba(255,255,255,0.5);
-    font-size: 12px;
-    cursor: pointer;
-  }
-
-  .cal-app-banner .clear-app:hover {
-    color: #fff;
-  }
-
   /* ===================== Mobile responsiveness ===================== */
   @media (max-width: 720px) {
     .app-title {
       padding-top: 14px;
       font-size: clamp(20px, 7vw, 28px);
       letter-spacing: 0.02em;
-    }
-
-    .switcher {
-      top: 58px;
-      padding: 3px;
-    }
-
-    .switch-btn {
-      padding: 6px 13px;
-      font-size: 12.5px;
     }
 
     .toolbar {
@@ -1805,33 +1824,75 @@
     }
 
     .tb-btn {
-      width: 34px;
-      height: 34px;
-      font-size: 16px;
+      width: 32px;
+      height: 32px;
+      font-size: 15px;
     }
 
     .notes-subswitcher {
-      top: 102px;
+      top: 58px;
     }
 
     .subswitch-btn {
-      padding: 5px 11px;
-      font-size: 11px;
+      padding: 4px 10px;
+      font-size: 10.5px;
     }
 
-    /* Notes canvas: shrink default note size and toolbar so notes fit small screens */
+    .hint {
+      font-size: 10.5px;
+      bottom: 14px;
+    }
+
+    /* Notes canvas: smaller default note size and tighter text for mobile */
     .note {
-      width: 168px;
-      min-width: 140px;
-      min-height: 150px;
+      width: 132px;
+      min-width: 110px;
+      min-height: 92px;
+      border-radius: 12px;
+    }
+
+    .note-head {
+      padding: 5px 7px 2px;
+    }
+
+    .note-dot {
+      width: 10px;
+      height: 10px;
+    }
+
+    /* Smaller color picker popup on mobile \u2014 less overwhelming to tap */
+    .swatches {
+      width: 78px;
+      padding: 6px;
+      gap: 5px;
+      border-radius: 10px;
+    }
+
+    .swatch,
+    .swatch-custom {
+      width: 15px;
+      height: 15px;
     }
 
     .note-text {
-      font-size: 13px;
+      font-size: 11px;
+      line-height: 1.35;
+      padding: 1px 8px 6px;
+    }
+
+    .note-drag-handle {
+      height: 16px;
+    }
+
+    .note-drag-grip {
+      width: 24px;
+      height: 2.5px;
     }
 
     .note-toolbar2 {
       flex-wrap: wrap;
+      padding: 0 6px 4px;
+      gap: 3px;
     }
 
     .note-font-select {
@@ -1853,17 +1914,33 @@
     }
 
     /* Subject Notes: stack sidebar above canvas instead of side-by-side */
+    #sub-subjects.active {
+      padding-top: 100px;
+    }
+
     .subjects-wrap {
-      top: 144px;
       flex-direction: column;
     }
 
     .subjects-sidebar {
       width: 100%;
-      max-height: 130px;
+      max-height: 34vh;
       border-right: none;
       border-bottom: 0.5px solid rgba(255,255,255,0.14);
       padding: 10px 12px;
+    }
+
+    .mini-cal-toggle {
+      padding: 10px 6px;
+      font-size: 11.5px;
+    }
+
+    .mini-cal-collapse > div {
+      padding: 0 12px 14px;
+    }
+
+    .mini-cal-card {
+      padding: 12px 6px 12px;
     }
 
     .subjects-list {
@@ -1881,51 +1958,10 @@
       padding: 10px 14px;
     }
 
-    /* Calendar: shrink clock, cells, and expand-panel size for small screens */
-    .cal-wrap {
-      padding: 132px 10px 16px;
-    }
-
-    .timepiece {
-      margin-bottom: 14px;
-    }
-
-    .clock {
-      font-size: clamp(32px, 11vw, 46px);
-    }
-
-    .cal-card {
-      padding: 14px 12px 16px;
-      border-radius: 16px;
-    }
-
-    .cal-grid {
-      gap: 4px;
-    }
-
-    .cal-grid .cal-cell-outer {
-      min-height: 38px;
-    }
-
-    .cal-cell {
-      font-size: 11.5px;
-      border-radius: 8px;
-    }
-
-    .cal-daynum {
-      font-size: 11.5px;
-    }
-
-    .tag-badge {
-      font-size: 6.5px;
-      padding: 1px 5px;
-    }
-
-    /* Expanded day panel: fit within the viewport instead of a fixed 220px */
-    .cal-cell-outer:hover .cal-cell:not(.empty),
-    .cal-cell-outer.tap-expanded .cal-cell:not(.empty) {
-      width: min(78vw, 240px);
-      height: min(78vw, 240px);
+    /* Expanded day panel from the mini calendar: fit comfortably on small screens */
+    .mini-cal-grid .cal-cell-outer.tap-expanded .cal-cell:not(.empty) {
+      width: min(80vw, 230px);
+      height: min(80vw, 230px);
       max-height: 60vh;
     }
 
@@ -1940,24 +1976,6 @@
       height: 16px;
     }
 
-    .app-dock-row {
-      gap: 6px;
-    }
-
-    .app-icon {
-      width: 44px;
-    }
-
-    .app-icon-glyph {
-      width: 36px;
-      height: 36px;
-      font-size: 13px;
-    }
-
-    .app-icon-label {
-      font-size: 8.5px;
-    }
-
     /* Drop overlay: fit the prompt box on small screens */
     .drop-overlay-box {
       width: 84%;
@@ -1968,13 +1986,9 @@
   }
 
   @media (max-width: 420px) {
-    .switch-btn {
-      padding: 5px 10px;
-      font-size: 11.5px;
-    }
-
     .note {
-      width: 148px;
+      width: 118px;
+      min-height: 84px;
     }
 
     .cal-grid .cal-cell-outer {
@@ -1986,10 +2000,19 @@
     }
   }
 
-  /* Larger touch targets across the board on coarse-pointer (touch) devices */
+  /* Larger touch targets across the board on coarse-pointer (touch) devices,
+     but stay smaller on narrow screens where space is tight */
   body.touch-device .tb-btn {
     width: 42px;
     height: 42px;
+  }
+
+  @media (max-width: 720px) {
+    body.touch-device .tb-btn {
+      width: 34px;
+      height: 34px;
+      font-size: 15px;
+    }
   }
 
   body.touch-device .note-dot,
@@ -2033,11 +2056,6 @@
 
   <h1 class="app-title">Notesino</h1>
 
-  <div class="switcher">
-    <button class="switch-btn active" data-section="notes">Notes</button>
-    <button class="switch-btn" data-section="calendar">Calendar</button>
-  </div>
-
   <div class="toolbar" id="shareToolbar" style="left:24px; right:auto;">
     <button class="tb-btn" id="shareBtn" title="Collaborate live" aria-label="Collaborate live">
       &#128279;
@@ -2051,33 +2069,53 @@
     <button class="tb-btn" id="removeWorkspaceBg" title="Remove workspace background" aria-label="Remove workspace background" style="display:none;">&#8635;</button>
   </div>
 
-  <div class="section active" id="section-notes">
-    <div class="notes-subswitcher" id="notesSubswitcher">
-      <button class="subswitch-btn active" data-sub="canvas">Notes</button>
-      <button class="subswitch-btn" data-sub="subjects">Subject Notes</button>
-    </div>
+  <div class="notes-subswitcher" id="notesSubswitcher">
+    <button class="subswitch-btn active" data-sub="canvas">Notes</button>
+    <button class="subswitch-btn" data-sub="subjects">Subject Notes</button>
+  </div>
 
-    <div class="notes-sub active" id="sub-canvas">
-      <div class="notes-layer" id="notesLayer"></div>
-      <div class="hint" id="hint">Drag to move &middot; click the dot for color &middot; hover for B / I / U</div>
-    </div>
+  <div class="notes-sub active" id="sub-canvas">
+    <div class="notes-layer" id="notesLayer"></div>
+    <div class="hint" id="hint">Drag the handle to move &middot; click the dot for color &middot; hover for B / I / U</div>
+  </div>
 
-    <div class="notes-sub" id="sub-subjects">
-      <div class="subjects-wrap">
-        <div class="subjects-sidebar" id="subjectsSidebar">
-          <div class="subjects-sidebar-head">
-            <span>Subjects</span>
-            <button class="subject-add-btn" id="addSubject" aria-label="Add subject">+</button>
-          </div>
-          <div class="subjects-list" id="subjectsList"></div>
+  <div class="notes-sub" id="sub-subjects">
+    <div class="subjects-wrap">
+      <div class="subjects-sidebar" id="subjectsSidebar">
+        <div class="subjects-sidebar-head">
+          <span>Subjects</span>
+          <button class="subject-add-btn" id="addSubject" aria-label="Add subject">+</button>
         </div>
-        <div class="subject-canvas-wrap">
-          <div class="subject-canvas-head" id="subjectCanvasHead">
-            <span id="subjectCanvasTitle">Select a subject</span>
-            <button class="tb-btn subject-add-note-btn" id="addSubjectNote" title="Add note to subject" aria-label="Add note to subject" style="display:none;">+</button>
+        <div class="subjects-list" id="subjectsList"></div>
+      </div>
+      <div class="subject-canvas-wrap">
+        <div class="subject-canvas-head" id="subjectCanvasHead">
+          <span id="subjectCanvasTitle">Select a subject</span>
+          <button class="tb-btn subject-add-note-btn" id="addSubjectNote" title="Add note to subject" aria-label="Add note to subject" style="display:none;">+</button>
+        </div>
+        <div class="notes-layer subject-notes-layer" id="subjectNotesLayer"></div>
+        <div class="subjects-empty" id="subjectsEmpty">Create a subject to start adding notes for it.</div>
+      </div>
+    </div>
+
+    <div class="mini-cal-wrap">
+      <button class="mini-cal-toggle" id="miniCalToggle" aria-expanded="false">
+        <span>Calendar</span>
+        <svg class="mini-cal-chevron" width="10" height="6" viewBox="0 0 10 6" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M1 1L5 5L9 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
+      <div class="mini-cal-collapse" id="miniCalCollapse">
+        <div class="mini-cal-card">
+          <div class="cal-head">
+            <div class="cal-title" id="calTitle">Month Year</div>
+            <div class="cal-nav">
+              <button class="cal-nav-btn" id="calPrev" aria-label="Previous month">&lsaquo;</button>
+              <button class="cal-nav-btn" id="calToday" aria-label="Jump to today" style="width:auto; padding:0 12px; font-size:13px;">Today</button>
+              <button class="cal-nav-btn" id="calNext" aria-label="Next month">&rsaquo;</button>
+            </div>
           </div>
-          <div class="notes-layer subject-notes-layer" id="subjectNotesLayer"></div>
-          <div class="subjects-empty" id="subjectsEmpty">Create a subject to start adding notes for it.</div>
+          <div class="cal-grid mini-cal-grid" id="calGrid"></div>
         </div>
       </div>
     </div>
@@ -2140,38 +2178,6 @@
     </div>
   </div>
 
-  <div class="section" id="section-calendar">
-    <div class="cal-wrap">
-      <div class="timepiece">
-        <div class="clock"><span id="hm">--:--</span><span class="secs" id="ss">--</span></div>
-        <div class="datepiece" id="dateOut">Loading…</div>
-      </div>
-
-      <div class="cal-card">
-        <div class="cal-app-banner" id="calAppBanner">
-          <div class="swatch-sm" id="calAppBannerIcon"></div>
-          <span id="calAppBannerText">Viewing FL Studio calendar</span>
-          <button class="clear-app" id="calAppClear">Show all</button>
-        </div>
-
-        <div class="cal-head">
-          <div class="cal-title" id="calTitle">Month Year</div>
-          <div class="cal-nav">
-            <button class="cal-nav-btn" id="calPrev" aria-label="Previous month">&lsaquo;</button>
-            <button class="cal-nav-btn" id="calToday" aria-label="Jump to today" style="width:auto; padding:0 10px; font-size:12px;">Today</button>
-            <button class="cal-nav-btn" id="calNext" aria-label="Next month">&rsaquo;</button>
-          </div>
-        </div>
-        <div class="cal-grid" id="calGrid"></div>
-
-        <div class="app-dock">
-          <div class="app-dock-title">Apps</div>
-          <div class="app-dock-row" id="appDock"></div>
-        </div>
-      </div>
-    </div>
-  </div>
-
 </div>
 
 <script>
@@ -2180,40 +2186,16 @@
   var isTouchDevice = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0) || window.matchMedia('(pointer: coarse)').matches;
   if (isTouchDevice) document.body.classList.add('touch-device');
 
-  /* ---------- Section switching ---------- */
-  var switchBtns = document.querySelectorAll('.switch-btn');
-  var sections = {
-    notes: document.getElementById('section-notes'),
-    calendar: document.getElementById('section-calendar')
-  };
-  var notesToolbar = document.getElementById('notesToolbar');
-
-  switchBtns.forEach(function(btn) {
-    btn.addEventListener('click', function() {
-      switchBtns.forEach(function(b) { b.classList.remove('active'); });
-      btn.classList.add('active');
-      var target = btn.getAttribute('data-section');
-      Object.keys(sections).forEach(function(key) {
-        sections[key].classList.toggle('active', key === target);
-      });
-      updateToolbarVisibility();
-    });
-  });
-
-  /* ---------- Notes sub-switcher: Canvas vs Subject Notes ---------- */
+  /* ---------- Notes sub-switcher: Canvas vs Subject Notes (now the only navigation) ---------- */
   var subSwitchBtns = document.querySelectorAll('.subswitch-btn');
   var notesSubs = {
     canvas: document.getElementById('sub-canvas'),
     subjects: document.getElementById('sub-subjects')
   };
+  var notesToolbar = document.getElementById('notesToolbar');
   var activeNotesSub = 'canvas';
 
   function updateToolbarVisibility() {
-    var onNotes = sections.notes.classList.contains('active');
-    if (!onNotes) {
-      notesToolbar.style.display = 'none';
-      return;
-    }
     notesToolbar.style.display = activeNotesSub === 'canvas' ? 'flex' : 'none';
   }
 
@@ -2228,36 +2210,39 @@
       updateToolbarVisibility();
     });
   });
+  updateToolbarVisibility();
 
-  /* ---------- Clock / date (lives in Calendar section) ---------- */
-  var hmEl = document.getElementById('hm');
-  var ssEl = document.getElementById('ss');
-  var dateEl = document.getElementById('dateOut');
+  /* ---------- Collapsible mini calendar ---------- */
+  var miniCalToggle = document.getElementById('miniCalToggle');
+  var miniCalCollapse = document.getElementById('miniCalCollapse');
+  var MINI_CAL_OPEN_KEY = 'claude_workspace_minical_open_v1';
 
-  function pad(n) { return n < 10 ? '0' + n : '' + n; }
-
-  function tick() {
-    var now = new Date();
-    hmEl.textContent = pad(now.getHours()) + ':' + pad(now.getMinutes());
-    ssEl.textContent = pad(now.getSeconds());
-    var opts = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-    dateEl.textContent = now.toLocaleDateString(undefined, opts);
+  function setMiniCalOpen(open) {
+    miniCalCollapse.classList.toggle('open', open);
+    miniCalToggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+    try { localStorage.setItem(MINI_CAL_OPEN_KEY, open ? '1' : '0'); } catch (err) {}
   }
-  tick();
-  setInterval(tick, 1000);
+
+  miniCalToggle.addEventListener('click', function() {
+    setMiniCalOpen(!miniCalCollapse.classList.contains('open'));
+  });
+
+  (function initMiniCalOpenState() {
+    var saved;
+    try { saved = localStorage.getItem(MINI_CAL_OPEN_KEY); } catch (err) {}
+    setMiniCalOpen(saved === '1');
+  })();
 
   /* ---------- Calendar grid ---------- */
   var calTitle = document.getElementById('calTitle');
   var calGrid = document.getElementById('calGrid');
-  var appDock = document.getElementById('appDock');
-  var calAppBanner = document.getElementById('calAppBanner');
-  var calAppBannerIcon = document.getElementById('calAppBannerIcon');
-  var calAppBannerText = document.getElementById('calAppBannerText');
-  var calAppClear = document.getElementById('calAppClear');
   var today = new Date();
   var viewYear = today.getFullYear();
   var viewMonth = today.getMonth();
   var dows = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
+  /* App-filtered calendars were removed from the UI, but existing saved
+     data for any app-specific calendar stays intact under dayData in case
+     it's needed again \u2014 the calendar now always shows dayData.all. */
   var activeApp = null;
 
   var apps = [
@@ -2277,62 +2262,12 @@
   apps.forEach(function(a) { dayData[a.id] = {}; });
 
   function dataStore() {
-    return dayData[activeApp || 'all'];
+    return dayData.all;
   }
 
   function dayKey(y, m, d) {
     return y + '-' + m + '-' + d;
   }
-
-  function renderAppDock() {
-    appDock.innerHTML = '';
-    apps.forEach(function(app) {
-      var btn = document.createElement('button');
-      btn.className = 'app-icon' + (activeApp === app.id ? ' active' : '');
-
-      var glyph = document.createElement('div');
-      glyph.className = 'app-icon-glyph';
-      glyph.style.background = app.color;
-      glyph.textContent = app.short;
-
-      var label = document.createElement('div');
-      label.className = 'app-icon-label';
-      label.textContent = app.name;
-
-      btn.appendChild(glyph);
-      btn.appendChild(label);
-
-      btn.addEventListener('click', function() {
-        activeApp = activeApp === app.id ? null : app.id;
-        renderAppDock();
-        renderBanner();
-        renderCalendar();
-        saveWorkspace();
-      });
-
-      appDock.appendChild(btn);
-    });
-  }
-
-  function renderBanner() {
-    if (!activeApp) {
-      calAppBanner.classList.remove('show');
-      return;
-    }
-    var app = apps.filter(function(a) { return a.id === activeApp; })[0];
-    calAppBannerIcon.style.background = app.color;
-    calAppBannerIcon.textContent = app.short;
-    calAppBannerText.textContent = 'Viewing ' + app.name + ' calendar';
-    calAppBanner.classList.add('show');
-  }
-
-  calAppClear.addEventListener('click', function() {
-    activeApp = null;
-    renderAppDock();
-    renderBanner();
-    renderCalendar();
-    saveWorkspace();
-  });
 
   var ICON_CHOICES = [
     { key: 'flag', label: '\u2691' },
@@ -2546,10 +2481,9 @@
       outer.appendChild(cell);
       calGrid.appendChild(outer);
 
-      /* Touch devices have no hover — tap toggles the same expand state */
+      /* Click/tap toggles the expanded view for this day. */
       outer.addEventListener('click', function(o) {
         return function(e) {
-          if (!isTouchDevice) return;
           if (o.classList.contains('tap-expanded')) {
             if (e.target.closest('.exp-panel')) return;
             o.classList.remove('tap-expanded');
@@ -2805,6 +2739,15 @@
     note.appendChild(toolbar2);
     note.appendChild(body);
 
+    var dragHandle = document.createElement('div');
+    dragHandle.className = 'note-drag-handle';
+    dragHandle.title = 'Drag to move';
+    dragHandle.setAttribute('aria-label', 'Drag to move note');
+    var dragGrip = document.createElement('div');
+    dragGrip.className = 'note-drag-grip';
+    dragHandle.appendChild(dragGrip);
+    note.appendChild(dragHandle);
+
     var resizeHandle = document.createElement('div');
     resizeHandle.className = 'resize-handle';
     note.appendChild(resizeHandle);
@@ -2936,7 +2879,7 @@
       note.addEventListener('pointerup', saveWorkspace);
     }
 
-    makeDraggable(note, head);
+    makeDraggable(note, dragHandle);
     makeResizable(note, resizeHandle);
     return note;
   }
@@ -3315,7 +3258,14 @@
   function hideOverlay() { dropOverlay.classList.remove('show'); dragCounter = 0; }
 
   document.getElementById('addImage').addEventListener('click', function() {
-    showOverlay();
+    /* Touch devices have no real drag-and-drop \u2014 go straight to the native
+       photo/file picker (Photo Library, Take Photo, Choose File on iOS;
+       similar chooser on Android) instead of showing the drop overlay. */
+    if (isTouchDevice) {
+      imageFileInput.click();
+    } else {
+      showOverlay();
+    }
   });
 
   document.getElementById('dropOverlayClose').addEventListener('click', function(e) {
@@ -3349,7 +3299,8 @@
 
   ['dragenter'].forEach(function(evt) {
     document.addEventListener(evt, function(e) {
-      if (!sections.notes.classList.contains('active')) return;
+      if (isTouchDevice) return;
+      if (!notesSubs.canvas.classList.contains('active')) return;
       if (e.dataTransfer && Array.prototype.indexOf.call(e.dataTransfer.types || [], 'Files') > -1) {
         dragCounter++;
         showOverlay();
@@ -3522,10 +3473,10 @@
        instead of silently failing.
   */
   var FIREBASE_CONFIG = {
-    apiKey: 'YOUR_FIREBASE_API_KEY',
-    authDomain: 'YOUR_PROJECT.firebaseapp.com',
-    databaseURL: 'https://YOUR_PROJECT-default-rtdb.firebaseio.com',
-    projectId: 'YOUR_PROJECT'
+    apiKey: "AIzaSyB_caidDm1HRmYXgvDRigHwDXlfF-ztzxk",
+    authDomain: "notes-f111c.firebaseapp.com",
+    databaseURL: "https://notes-f111c-default-rtdb.firebaseio.com",
+    projectId: "notes-f111c",
   };
 
   function firebaseConfigured() {
@@ -3545,6 +3496,11 @@
   var roomRef = null;
   var currentRoomCode = null;
   var ROOM_CODE_KEY = 'claude_workspace_room_v1';
+  /* Everyone who opens this link joins the same shared room automatically,
+     so changes sync across devices with zero setup, unless a device has
+     explicitly left it or joined a different (private) room. */
+  var DEFAULT_ROOM_CODE = 'NOTESINO-MAIN';
+  var LEFT_DEFAULT_KEY = 'claude_workspace_left_default_v1';
   var applyingRemote = false; /* guards against our own remote-applied change re-triggering a write */
   var roomSaveTimer = null;
 
@@ -3609,8 +3565,6 @@
       applyingRemote = true;
       clearWorkspaceUI();
       applyState(state);
-      renderAppDock();
-      renderBanner();
       renderCalendar();
       renderSubjectsList();
       renderSubjectCanvas();
@@ -3638,7 +3592,10 @@
 
   function enterRoom(code, isNew) {
     currentRoomCode = code;
-    try { localStorage.setItem(ROOM_CODE_KEY, code); } catch (err) {}
+    try {
+      localStorage.setItem(ROOM_CODE_KEY, code);
+      localStorage.removeItem(LEFT_DEFAULT_KEY);
+    } catch (err) {}
     myShareCodeEl.textContent = code;
     showRoomView(true);
     setStatus(shareStatusMine, isNew ? 'Room created. Share this code \u2014 you\'re live.' : 'Connected. Everyone in this room sees your changes live.', 'ok');
@@ -3649,7 +3606,10 @@
   function leaveRoom() {
     stopListening();
     currentRoomCode = null;
-    try { localStorage.removeItem(ROOM_CODE_KEY); } catch (err) {}
+    try {
+      localStorage.removeItem(ROOM_CODE_KEY);
+      localStorage.setItem(LEFT_DEFAULT_KEY, '1');
+    } catch (err) {}
     showRoomView(false);
     setStatus(shareStatusTheirs, 'Joining replaces everything in your current workspace with the room\'s live data.', '');
   }
@@ -3740,24 +3700,29 @@
   });
 
   var restored = loadWorkspace();
-  renderAppDock();
-  renderBanner();
   renderCalendar();
   renderSubjectsList();
   renderSubjectCanvas();
 
-  /* Rejoin a room automatically if this device was already in one */
+  /* Everyone who opens this link joins the same shared room automatically,
+     so changes sync across devices with zero setup. A saved room from an
+     explicit Create/Join always takes priority (so private rooms still
+     work); otherwise everyone lands in DEFAULT_ROOM_CODE together. Tapping
+     "Leave room" opts a device out until it explicitly joins again. */
   waitForFirebase(function() {
     try {
       var savedRoom = localStorage.getItem(ROOM_CODE_KEY);
+      var optedOut = localStorage.getItem(LEFT_DEFAULT_KEY);
       if (savedRoom && firebaseConfigured()) {
         enterRoom(savedRoom, false);
+      } else if (firebaseConfigured() && !optedOut) {
+        enterRoom(DEFAULT_ROOM_CODE, false);
       }
     } catch (err) {}
   });
 
   if (!restored) {
-    createNote({ x: 60, y: 220, html: 'Welcome to your workspace.<br><br>Drag me anywhere, or click + to add a new note.<br><br>Click the colored dot to change color, or use <b>B</b> <i>I</i> <u>U</u> to format text.<br><br>Hover a note to reveal font, size, color, and background image controls.<br><br>Try <b>Subject Notes</b> above to organize notes by subject, or switch to <b>Calendar</b> up top for the date, time, and month view.<br><br>Use the &#128279; <b>Live Room</b> button (top-left) to create a room and get a code, or join a friend\'s room to collaborate live.', color: colors[4] }, layer);
+    createNote({ x: 60, y: 220, html: 'Welcome to your workspace.<br><br>Drag the handle at the bottom of a note to move it, or click + to add a new note.<br><br>Click the colored dot to change color, or use <b>B</b> <i>I</i> <u>U</u> to format text.<br><br>Try <b>Subject Notes</b> above to organize notes by subject \u2014 it now includes a small calendar too.<br><br>Everyone who opens this link is automatically synced together live. Use the &#128279; button (top-left) to leave and create a private room instead.', color: colors[4] }, layer);
     createNote({ x: 320, y: 300, html: '', color: colors[1] }, layer);
     document.getElementById('hint').style.display = 'none';
     saveWorkspace();

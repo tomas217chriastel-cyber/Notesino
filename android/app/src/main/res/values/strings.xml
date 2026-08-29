@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Notesino</string>
+    <string name="widget_label">Notesino Timetable</string>
+    <string name="widget_empty_text">No classes today — open Notesino to set up your timetable</string>
+</resources>

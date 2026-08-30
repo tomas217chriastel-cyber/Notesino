@@ -2122,6 +2122,106 @@
     width: 22px;
     height: 22px;
   }
+
+  /* Mind-map connections: a small "+" dot on every canvas instance (note,
+     sticky canvas, table, text line, image) that can be dragged onto
+     another one's dot to draw a soft, swaying link between them. Dots and
+     lines live in an overlay above the instances (not inside them) so
+     they aren't clipped by each card's own rounded-corner overflow, and
+     so a dot/line stays reachable even under a stack of overlapping
+     cards. The overlay is a child of #notesLayer itself, so it pans and
+     zooms together with everything else on the infinite canvas for free. */
+  /* #notesLayer is deliberately a zero-size anchor point (0,0) for the
+     infinite pan/zoom canvas — its children are placed with pixel
+     left/top regardless of the parent's own box size, and the real
+     viewport clipping happens on the ancestor .canvas-viewport instead.
+     A percentage-based inset:0 here would inherit that same 0x0 size and
+     silently fail to paint any SVG content, so this overlay gets an
+     explicit large fixed box instead, anchored at the same (0,0) origin. */
+  .link-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100000px;
+    height: 100000px;
+    pointer-events: none;
+    z-index: 500;
+  }
+
+  .connections-svg {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100000px;
+    height: 100000px;
+    overflow: visible;
+  }
+
+  .link-path {
+    fill: none;
+    stroke: rgba(255, 255, 255, 0.55);
+    stroke-width: 2.2;
+    stroke-linecap: round;
+    filter: drop-shadow(0 0 5px rgba(255, 255, 255, 0.35));
+    pointer-events: stroke;
+    cursor: pointer;
+  }
+
+  .link-path-hit {
+    fill: none;
+    stroke: transparent;
+    stroke-width: 20;
+    pointer-events: stroke;
+    cursor: pointer;
+  }
+
+  .link-path-hit:hover + .link-path {
+    stroke: #ff9bc7;
+    stroke-width: 2.8;
+    filter: drop-shadow(0 0 8px rgba(255, 123, 176, 0.65));
+  }
+
+  .link-path-temp {
+    fill: none;
+    stroke: rgba(255, 255, 255, 0.85);
+    stroke-width: 2.2;
+    stroke-dasharray: 7 7;
+    stroke-linecap: round;
+    filter: drop-shadow(0 0 6px rgba(255, 255, 255, 0.5));
+  }
+
+  .connect-dot {
+    position: absolute;
+    width: 20px;
+    height: 20px;
+    margin-left: -10px;
+    margin-top: -10px;
+    border-radius: 50%;
+    background: #ffffff;
+    color: #16161c;
+    font-size: 14px;
+    font-weight: 800;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: crosshair;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4), 0 0 0 2px rgba(255, 255, 255, 0.4);
+    pointer-events: auto;
+    touch-action: none;
+    user-select: none;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+  }
+
+  .connect-dot:hover,
+  .connect-dot.linking {
+    transform: scale(1.2);
+    box-shadow: 0 2px 14px rgba(255, 255, 255, 0.8), 0 0 0 2px rgba(255, 255, 255, 0.95);
+  }
+
+  body.linking-active {
+    cursor: crosshair;
+  }
 </style>
 </head>
 <body>
@@ -2714,6 +2814,7 @@
     note.appendChild(resizeHandle);
 
     targetLayer.appendChild(note);
+    attachConnectDot(note, canvasLinkLayer, data && data.linkId);
 
     setNoteColor(note, dot, color);
 
@@ -2822,6 +2923,7 @@
 
     closeBtn.addEventListener('click', function(e) {
       e.stopPropagation();
+      purgeConnectionsFor(note.dataset.linkId);
       note.remove();
       saveWorkspace();
     });
@@ -2943,6 +3045,7 @@
     closeBtn.setAttribute('aria-label', 'Remove sticky canvas');
     closeBtn.addEventListener('click', function(e) {
       e.stopPropagation();
+      purgeConnectionsFor(card.dataset.linkId);
       card.remove();
       saveWorkspace();
     });
@@ -3013,6 +3116,7 @@
     card.appendChild(resizeHandle);
 
     targetLayer.appendChild(card);
+    attachConnectDot(card, canvasLinkLayer, data && data.linkId);
     setNoteColor(card, dot, color);
 
     /* ---- drawing logic, scoped to this card's own canvas ---- */
@@ -3331,6 +3435,7 @@
     closeBtn.setAttribute('aria-label', 'Remove table');
     closeBtn.addEventListener('click', function(e) {
       e.stopPropagation();
+      purgeConnectionsFor(card.dataset.linkId);
       card.remove();
       saveWorkspace();
     });
@@ -3502,6 +3607,7 @@
     card.appendChild(resizeHandle);
 
     targetLayer.appendChild(card);
+    attachConnectDot(card, canvasLinkLayer, data && data.linkId);
     setNoteColor(card, dot, color);
 
     card.addEventListener('pointerdown', function() {
@@ -3600,9 +3706,11 @@
     wrap.appendChild(handle);
     wrap.appendChild(resizeHandle);
     targetLayer.appendChild(wrap);
+    attachConnectDot(wrap, canvasLinkLayer, data && data.linkId);
 
     wrap.__deleteTextLine = function() {
       if (activeTextLineWrap === wrap) deselectAllTextLines();
+      purgeConnectionsFor(wrap.dataset.linkId);
       wrap.remove();
       saveWorkspace();
     };
@@ -4352,6 +4460,7 @@
     closeBtn.setAttribute('aria-label', 'Remove image');
     closeBtn.addEventListener('click', function(e) {
       e.stopPropagation();
+      purgeConnectionsFor(fi.dataset.linkId);
       fi.remove();
       saveWorkspace();
     });
@@ -4377,6 +4486,7 @@
     fi.appendChild(fiResizeHandle);
 
     layer.appendChild(fi);
+    attachConnectDot(fi, canvasLinkLayer, data && data.linkId);
     makeImageDraggable(fi);
     makeResizable(fi, fiResizeHandle);
     if (window.ResizeObserver) {
@@ -4508,6 +4618,226 @@
     hideOverlay();
   });
 
+  /* ---------- Mind-map connections between canvas instances ----------
+     Every note / sticky canvas / table / text line / image gets a small
+     "+" connect dot. Dragging from one dot to another draws a persistent,
+     gently swaying line between them (click a line to remove it). Dots
+     and lines live in an overlay above the instances and recompute their
+     position from the owner element's current layout box every animation
+     frame, so they automatically follow drags, resizes, and the infinite
+     canvas's own pan/zoom without any extra wiring at the call sites
+     that move/resize/zoom things. */
+  var SVG_NS = 'http://www.w3.org/2000/svg';
+  var linkIdSeq = 0;
+  function nextLinkId() { return 'x' + (++linkIdSeq) + Math.random().toString(36).slice(2, 6); }
+
+  var canvasConnections = []; // [{a: linkId, b: linkId}]
+  var linkAnimT = 0;
+  var linkLoopRunning = false;
+  var activeLink = null; // in-progress drag from a dot, if any
+
+  function makeLinkLayer(root) {
+    var overlay = document.createElement('div');
+    overlay.className = 'link-overlay';
+    var svg = document.createElementNS(SVG_NS, 'svg');
+    svg.setAttribute('class', 'connections-svg');
+    overlay.appendChild(svg);
+    root.appendChild(overlay);
+    return { root: root, overlay: overlay, svg: svg, list: [], dotOwners: {}, pathEls: {} };
+  }
+
+  var canvasLinkLayer = makeLinkLayer(layer);
+
+  function connKey(a, b) { return a < b ? a + '|' + b : b + '|' + a; }
+
+  function cornerPoint(el) {
+    return { x: el.offsetLeft + el.offsetWidth, y: el.offsetTop };
+  }
+
+  function sagPath(p1, p2, phaseSeed) {
+    var dx = p2.x - p1.x, dy = p2.y - p1.y;
+    var dist = Math.sqrt(dx * dx + dy * dy);
+    var sag = Math.min(90, dist * 0.22) + 10;
+    var sway = Math.sin(linkAnimT / 900 + phaseSeed * 1.7) * Math.min(10, 4 + dist * 0.02);
+    var midX = (p1.x + p2.x) / 2;
+    var midY = (p1.y + p2.y) / 2 + sag + sway;
+    return 'M ' + p1.x + ',' + p1.y + ' Q ' + midX + ',' + midY + ' ' + p2.x + ',' + p2.y;
+  }
+
+  function updateLinkLayer(linkLayer) {
+    Object.keys(linkLayer.dotOwners).forEach(function(id) {
+      var owner = linkLayer.dotOwners[id];
+      if (!owner.el.isConnected) { delete linkLayer.dotOwners[id]; return; }
+      var p = cornerPoint(owner.el);
+      owner.dot.style.left = p.x + 'px';
+      owner.dot.style.top = p.y + 'px';
+    });
+
+    linkLayer.list.forEach(function(c, i) {
+      var pair = linkLayer.pathEls[connKey(c.a, c.b)];
+      var ownerA = linkLayer.dotOwners[c.a];
+      var ownerB = linkLayer.dotOwners[c.b];
+      if (!pair || !ownerA || !ownerB) return;
+      var d = sagPath(cornerPoint(ownerA.el), cornerPoint(ownerB.el), i);
+      pair.visible.setAttribute('d', d);
+      pair.hit.setAttribute('d', d);
+    });
+  }
+
+  function anyLinkActivity() {
+    return !!activeLink || Object.keys(canvasLinkLayer.dotOwners).length > 0;
+  }
+
+  function tickLinks(ts) {
+    linkAnimT = ts || 0;
+    updateLinkLayer(canvasLinkLayer);
+    if (activeLink) updateActiveLinkTemp();
+    if (anyLinkActivity()) {
+      requestAnimationFrame(tickLinks);
+    } else {
+      linkLoopRunning = false;
+    }
+  }
+
+  function ensureLinkLoop() {
+    if (linkLoopRunning) return;
+    linkLoopRunning = true;
+    requestAnimationFrame(tickLinks);
+  }
+
+  function rebuildLinkPaths(linkLayer) {
+    linkLayer.svg.innerHTML = '';
+    linkLayer.pathEls = {};
+    linkLayer.list.forEach(function(c) {
+      var key = connKey(c.a, c.b);
+
+      /* A wide, invisible stroke gives a much easier click target than the
+         thin decorative line itself, since the line is a swaying curve. */
+      var hit = document.createElementNS(SVG_NS, 'path');
+      hit.setAttribute('class', 'link-path-hit');
+      hit.addEventListener('pointerdown', function(e) { e.stopPropagation(); });
+      hit.addEventListener('click', function(e) {
+        e.stopPropagation();
+        linkLayer.list = linkLayer.list.filter(function(x) { return connKey(x.a, x.b) !== key; });
+        canvasConnections = linkLayer.list;
+        rebuildLinkPaths(linkLayer);
+        saveWorkspace();
+      });
+
+      var visible = document.createElementNS(SVG_NS, 'path');
+      visible.setAttribute('class', 'link-path');
+
+      linkLayer.svg.appendChild(hit);
+      linkLayer.svg.appendChild(visible);
+      linkLayer.pathEls[key] = { hit: hit, visible: visible };
+    });
+    ensureLinkLoop();
+  }
+
+  function resetLinkLayer(linkLayer) {
+    Object.keys(linkLayer.dotOwners).forEach(function(id) { linkLayer.dotOwners[id].dot.remove(); });
+    linkLayer.dotOwners = {};
+    linkLayer.list = [];
+    rebuildLinkPaths(linkLayer);
+  }
+
+  function attachConnectDot(el, linkLayer, existingId) {
+    var id = existingId || nextLinkId();
+    el.dataset.linkId = id;
+    var dot = document.createElement('div');
+    dot.className = 'connect-dot';
+    dot.textContent = '+';
+    dot.title = 'Drag to connect this to another instance';
+    dot.addEventListener('pointerdown', function(e) { startLinking(e, id, linkLayer, dot); });
+    linkLayer.overlay.appendChild(dot);
+    linkLayer.dotOwners[id] = { el: el, dot: dot };
+    ensureLinkLoop();
+    return dot;
+  }
+
+  function detachConnectDot(linkLayer, linkId) {
+    var owner = linkLayer.dotOwners[linkId];
+    if (owner) {
+      owner.dot.remove();
+      delete linkLayer.dotOwners[linkId];
+    }
+  }
+
+  function purgeConnectionsFor(linkId) {
+    if (!linkId) return;
+    canvasConnections = canvasConnections.filter(function(c) { return c.a !== linkId && c.b !== linkId; });
+    canvasLinkLayer.list = canvasConnections;
+    detachConnectDot(canvasLinkLayer, linkId);
+    rebuildLinkPaths(canvasLinkLayer);
+  }
+
+  function startLinking(e, fromId, linkLayer, dotEl) {
+    e.preventDefault();
+    e.stopPropagation();
+    var tempPath = document.createElementNS(SVG_NS, 'path');
+    tempPath.setAttribute('class', 'link-path-temp');
+    linkLayer.svg.appendChild(tempPath);
+    dotEl.classList.add('linking');
+    document.body.classList.add('linking-active');
+
+    var rootRect = linkLayer.root.getBoundingClientRect();
+    activeLink = {
+      fromId: fromId,
+      linkLayer: linkLayer,
+      dotEl: dotEl,
+      tempPath: tempPath,
+      x: e.clientX - rootRect.left + linkLayer.root.scrollLeft,
+      y: e.clientY - rootRect.top + linkLayer.root.scrollTop
+    };
+
+    window.addEventListener('pointermove', onLinkPointerMove);
+    window.addEventListener('pointerup', onLinkPointerUp);
+    ensureLinkLoop();
+  }
+
+  function onLinkPointerMove(e) {
+    if (!activeLink) return;
+    var rootRect = activeLink.linkLayer.root.getBoundingClientRect();
+    activeLink.x = e.clientX - rootRect.left + activeLink.linkLayer.root.scrollLeft;
+    activeLink.y = e.clientY - rootRect.top + activeLink.linkLayer.root.scrollTop;
+  }
+
+  function updateActiveLinkTemp() {
+    var owner = activeLink.linkLayer.dotOwners[activeLink.fromId];
+    if (!owner) return;
+    activeLink.tempPath.setAttribute('d', sagPath(cornerPoint(owner.el), { x: activeLink.x, y: activeLink.y }, 0));
+  }
+
+  function onLinkPointerUp(e) {
+    if (!activeLink) return;
+    var link = activeLink;
+    window.removeEventListener('pointermove', onLinkPointerMove);
+    window.removeEventListener('pointerup', onLinkPointerUp);
+    link.dotEl.classList.remove('linking');
+    document.body.classList.remove('linking-active');
+    link.tempPath.remove();
+    activeLink = null;
+
+    var targetDot = document.elementFromPoint(e.clientX, e.clientY);
+    targetDot = targetDot && targetDot.closest('.connect-dot');
+    if (!targetDot) return;
+
+    var toId = null;
+    Object.keys(link.linkLayer.dotOwners).forEach(function(id) {
+      if (link.linkLayer.dotOwners[id].dot === targetDot) toId = id;
+    });
+    if (!toId || toId === link.fromId) return;
+
+    var key = connKey(link.fromId, toId);
+    var exists = link.linkLayer.list.some(function(c) { return connKey(c.a, c.b) === key; });
+    if (exists) return;
+
+    link.linkLayer.list.push({ a: link.fromId, b: toId });
+    canvasConnections = link.linkLayer.list;
+    rebuildLinkPaths(link.linkLayer);
+    saveWorkspace();
+  }
+
   /* ---------- Persistence (localStorage) ---------- */
   var STORAGE_KEY = 'claude_workspace_v2';
   var saveTimer = null;
@@ -4524,7 +4854,8 @@
         h: n.offsetHeight,
         html: b ? b.innerHTML : '',
         color: n.querySelector('.note-dot').style.background,
-        bg: bgMatch ? bgMatch[2] : null
+        bg: bgMatch ? bgMatch[2] : null,
+        linkId: n.dataset.linkId
       };
     });
   }
@@ -4537,7 +4868,8 @@
         w: n.offsetWidth,
         h: n.offsetHeight,
         color: n.querySelector('.note-dot').style.background,
-        drawing: n.__getDrawing ? n.__getDrawing() : null
+        drawing: n.__getDrawing ? n.__getDrawing() : null,
+        linkId: n.dataset.linkId
       };
     });
   }
@@ -4553,7 +4885,8 @@
         color: n.querySelector('.note-dot').style.background,
         rows: tData.rows,
         cols: tData.cols,
-        grid: tData.grid
+        grid: tData.grid,
+        linkId: n.dataset.linkId
       };
     });
   }
@@ -4570,7 +4903,8 @@
         w: wrap.offsetWidth || undefined,
         h: wrap.offsetHeight || undefined,
         scale: scale,
-        html: el ? el.innerHTML : ''
+        html: el ? el.innerHTML : '',
+        linkId: wrap.dataset.linkId
       });
     });
     return out;
@@ -4588,7 +4922,8 @@
         y: parseFloat(fi.style.top) || 0,
         w: fi.offsetWidth,
         h: fi.offsetHeight,
-        src: fi.querySelector('img').src
+        src: fi.querySelector('img').src,
+        linkId: fi.dataset.linkId
       };
     });
 
@@ -4604,7 +4939,8 @@
       images: images,
       workspaceBg: workspaceBgSrc,
       subjects: subjectsOut,
-      activeSubjectId: activeSubjectId
+      activeSubjectId: activeSubjectId,
+      connections: canvasConnections
     };
   }
 
@@ -4625,6 +4961,8 @@
       if (el.__isTextLine) el.remove();
     });
     deselectAllTextLines();
+    resetLinkLayer(canvasLinkLayer);
+    canvasConnections = [];
     layer.style.backgroundImage = '';
     subjects = [];
     subjectQuickNotes = {};
@@ -4669,6 +5007,10 @@
     if (state.activeSubjectId) {
       activeSubjectId = state.activeSubjectId;
     }
+
+    canvasConnections = Array.isArray(state.connections) ? state.connections : [];
+    canvasLinkLayer.list = canvasConnections;
+    rebuildLinkPaths(canvasLinkLayer);
 
     return !!((state.notes && state.notes.length) ||
               (state.stickyCanvases && state.stickyCanvases.length) ||

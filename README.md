@@ -1,23 +1,14 @@
 # Notesino
 
-`index.html` at the repo root now serves **SchoolBoard**, a newer
-cross-platform (web/Android/iOS) rebuild that carries over Notesino's
-canvas, sticky-note, and formatting code — see
-[school-app-widget](https://github.com/tomas217chriastel-cyber/school-app-widget)
-for that project's full source and docs.
+A single-page workspace: draggable/resizable sticky notes, a sticky
+"canvas" drawing card, tables, free-floating text lines and images, a
+mind-map-style "+" connector between any two instances, and an editable
+weekly Timetable (subject / room / teacher / free-period marking, with a
+live "next lesson" banner) — all in one `index.html`, plus an installable
+Android app with a home-screen timetable widget.
 
-The original Notesino web app described below still exists, unchanged,
-at [`legacy/notesino-classic.html`](legacy/notesino-classic.html) — open
-that file directly for the classic sticky-notes/calendar/timetable
-experience. (Note: the Android build in `android/` still bundles
-whatever is at the repo-root `index.html`, i.e. SchoolBoard now, not the
-classic app — see `android/build.sh`.)
-
----
-
-A sticky-notes, calendar, subjects, and weekly-timetable workspace that runs
-as a single web page — and as an installable Android app with a home-screen
-timetable widget.
+Everything lives in this one repo, in this one file, on purpose — no
+separate project, no external repo.
 
 ## 📱 Get the Android app
 
@@ -36,6 +27,16 @@ Timetable home-screen widget does, and known limitations.
 ## 💻 Use it in a browser
 
 Just open [`index.html`](index.html) — no build step needed. Notes,
-calendar, subjects, and the Timetable tab all work the same as in the app,
-and (optionally) sync live with anyone else who opens the same shared
-room via the 🔗 button.
+subjects, the Timetable tab, and the mind-map connections all work the
+same as in the app, and (optionally) sync live with anyone else who opens
+the same shared room via the 🔗 button.
+
+## Accounts, friends, and live presence
+
+In progress — being added directly into this same `index.html`, using
+Firebase Authentication (email/password to start) plus the existing
+Firebase Realtime Database for friend lists, private rooms, and live
+presence circles. Those features need a real Firebase project with
+Authentication enabled; until that's wired up and enabled in the
+Firebase console, the app runs fully functional as a local/shared-room
+workspace with accounts simply turned off.

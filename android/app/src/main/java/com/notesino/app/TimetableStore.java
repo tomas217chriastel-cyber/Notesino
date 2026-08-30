@@ -41,20 +41,44 @@ class TimetableStore {
     static class Period {
         final String start;
         final String end;
-        final String subject;
+        final String subject; // plain text; the web app stores this field as HTML (bold/italic/underline)
         final String room;
+        final String teacher;
         final String color; // nullable
+        final boolean free;
 
-        Period(String start, String end, String subject, String room, String color) {
+        Period(String start, String end, String subject, String room, String teacher, String color, boolean free) {
             this.start = start;
             this.end = end;
             this.subject = subject;
             this.room = room;
+            this.teacher = teacher;
             this.color = color;
+            this.free = free;
         }
     }
 
-    /** Today's periods that have a subject filled in, in period order. */
+    /** Strips the small set of tags the web app's rich-text subject field can
+        produce (b/i/u only) and unescapes the handful of entities that come
+        with them. Not a general HTML parser - deliberately just enough for
+        this one controlled field, since a widget row is plain text anyway. */
+    private static String stripHtml(String html) {
+        if (html == null) return "";
+        String text = html
+                .replaceAll("<br\\s*/?>", " ")
+                .replaceAll("<[^>]*>", "");
+        text = text
+                .replace("&nbsp;", " ")
+                .replace("&amp;", "&")
+                .replace("&lt;", "<")
+                .replace("&gt;", ">")
+                .replace("&quot;", "\"")
+                .replace("&#39;", "'");
+        return text.trim();
+    }
+
+    /** Today's periods that have a subject filled in, or are explicitly
+        marked free, in period order. */
     static List<Period> todaysPeriods(Context ctx) {
         List<Period> out = new ArrayList<>();
         String rawJson = raw(ctx);
@@ -82,11 +106,13 @@ class TimetableStore {
                 if (period == null) continue;
 
                 JSONObject cell = cells.optJSONObject(dayIdx + "-" + p);
-                String subject = cell != null ? cell.optString("subject", "") : "";
-                if (subject.trim().length() == 0) continue;
+                boolean free = cell != null && cell.optBoolean("free", false);
+                String subject = stripHtml(cell != null ? cell.optString("subject", "") : "");
+                if (subject.length() == 0 && !free) continue;
 
-                String room = cell.optString("room", "");
-                String color = (cell.has("color") && !cell.isNull("color"))
+                String room = cell != null ? cell.optString("room", "") : "";
+                String teacher = cell != null ? cell.optString("teacher", "") : "";
+                String color = (cell != null && cell.has("color") && !cell.isNull("color"))
                         ? cell.optString("color", null) : null;
 
                 out.add(new Period(
@@ -94,7 +120,9 @@ class TimetableStore {
                         period.optString("end", ""),
                         subject,
                         room,
-                        color));
+                        teacher,
+                        color,
+                        free));
             }
         } catch (JSONException e) {
             // Corrupt/old data: show nothing rather than crash the widget.

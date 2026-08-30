@@ -16,8 +16,10 @@ of that and just import `app/` as a Gradle project instead.
   `assets/index.html` (a bundled copy of the repo's `index.html`), with
   JavaScript, DOM storage, and a `NotesinoNative` JS bridge enabled.
 - **Timetable tab** — added directly to `index.html` (so it also works in
-  a normal browser): a weekly grid of periods × days, each cell holding a
-  subject/room/color, persisted the same way as the rest of the workspace
+  a normal browser, collapsible alongside Subject Notes): a weekly grid of
+  periods × days, each cell holding subject (bold/italic/underline)/room/
+  teacher/color/a "mark free" toggle, plus a live "now / next lesson"
+  banner. Persisted the same way as the rest of the workspace
   (`localStorage`, and synced through the existing "live room" Firebase
   feature if one is active).
 - **TimetableBridge** — every time the Timetable tab changes, the page
@@ -26,7 +28,8 @@ of that and just import `app/` as a Gradle project instead.
 - **TimetableWidgetProvider** / **TimetableRemoteViewsService** — a native
   home-screen widget (`AppWidgetProvider` + `RemoteViewsService`, since
   widgets can't host a WebView) showing today's periods with subject, room,
-  and color. Tapping it opens the app straight to the Timetable tab.
+  teacher, and color — or "Free period" for periods marked free. Tapping
+  it opens the app straight to the Timetable tab.
 
 ## Building
 

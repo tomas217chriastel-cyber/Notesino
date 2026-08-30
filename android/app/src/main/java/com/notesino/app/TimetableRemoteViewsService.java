@@ -50,10 +50,21 @@ public class TimetableRemoteViewsService extends RemoteViewsService {
 
             String timeLabel = p.end != null && p.end.length() > 0 ? p.start + "–" + p.end : p.start;
             row.setTextViewText(R.id.item_time, timeLabel);
-            row.setTextViewText(R.id.item_subject, p.subject);
-            row.setTextViewText(R.id.item_room, p.room);
-            row.setViewVisibility(R.id.item_room,
-                    p.room != null && p.room.trim().length() > 0 ? View.VISIBLE : View.GONE);
+
+            if (p.free) {
+                row.setTextViewText(R.id.item_subject, "Free period");
+            } else {
+                row.setTextViewText(R.id.item_subject, p.subject);
+            }
+
+            StringBuilder detail = new StringBuilder();
+            if (p.room != null && p.room.trim().length() > 0) detail.append("Room ").append(p.room.trim());
+            if (p.teacher != null && p.teacher.trim().length() > 0) {
+                if (detail.length() > 0) detail.append(" · ");
+                detail.append(p.teacher.trim());
+            }
+            row.setTextViewText(R.id.item_room, detail.toString());
+            row.setViewVisibility(R.id.item_room, detail.length() > 0 ? View.VISIBLE : View.GONE);
 
             int color;
             try {

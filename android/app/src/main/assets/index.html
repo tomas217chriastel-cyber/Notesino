@@ -6,7 +6,7 @@
 <title>Notesino</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Open+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script type="module">
   /* Firebase is loaded here as an ES module and attached to window so the
      main (non-module) script block later in the page can use it. */
@@ -26,6 +26,8 @@
     width: 100%;
     height: 100%;
     overflow: hidden;
+    touch-action: none;
+    overscroll-behavior: none;
     font-family: -apple-system, "SF Pro Text", "SF Pro Display", BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif;
   }
 
@@ -140,7 +142,7 @@
     right: 0;
     text-align: center;
     padding-top: 26px;
-    font-family: "Montserrat", -apple-system, sans-serif;
+    font-family: "Poppins", -apple-system, sans-serif;
     font-weight: 700;
     font-size: clamp(28px, 4vw, 44px);
     letter-spacing: 0.04em;
@@ -200,6 +202,56 @@
     box-shadow: 0 0 6px rgba(74,222,128,0.8);
   }
 
+  .add-menu-wrap {
+    position: relative;
+  }
+
+  .add-menu {
+    position: absolute;
+    top: 46px;
+    right: 0;
+    left: auto;
+    display: none;
+    flex-direction: column;
+    width: max-content;
+    min-width: 190px;
+    max-width: min(240px, calc(100vw - 32px));
+    padding: 6px;
+    gap: 2px;
+    border-radius: 14px;
+    background: rgba(30,30,38,0.92);
+    backdrop-filter: blur(20px);
+    border: 0.5px solid rgba(255,255,255,0.18);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.35);
+    z-index: 50;
+  }
+
+  .add-menu.open {
+    display: flex;
+  }
+
+  .add-menu-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    border-radius: 9px;
+    background: none;
+    border: none;
+    color: #fff;
+    font-family: "Poppins", -apple-system, sans-serif;
+    font-weight: 700;
+    font-size: 16px;
+    text-align: left;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: background 0.15s ease;
+  }
+
+  .add-menu-item:hover {
+    background: rgba(255,255,255,0.1);
+  }
+
   .live-dot.on {
     display: block;
   }
@@ -251,13 +303,59 @@
     display: block;
   }
 
-  #sub-subjects.active {
-    display: flex;
-    flex-direction: column;
-    padding-top: 138px;
+  /* Subject Notes (nested inside the Timetable tab as a collapsible section) */
+  .subjects-collapse-wrap {
+    flex-shrink: 0;
+    margin-top: 12px;
+    border-radius: 16px;
+    border: 0.5px solid rgba(255, 255, 255, 0.14);
+    background: rgba(255, 255, 255, 0.04);
+    overflow: hidden;
   }
 
-  /* Subject Notes */
+  .subjects-collapse-toggle {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 12px 16px;
+    background: transparent;
+    border: none;
+    color: rgba(255, 255, 255, 0.8);
+    font-family: "Poppins", -apple-system, sans-serif;
+    font-weight: 600;
+    font-size: 12.5px;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    cursor: pointer;
+    touch-action: manipulation;
+  }
+
+  .subjects-collapse-toggle:hover {
+    color: #fff;
+  }
+
+  .subjects-collapse-chevron {
+    flex-shrink: 0;
+    transition: transform 0.2s ease;
+  }
+
+  .subjects-collapse-toggle[aria-expanded="true"] .subjects-collapse-chevron {
+    transform: rotate(180deg);
+  }
+
+  .subjects-collapse-body {
+    display: none;
+    height: 340px;
+    flex-direction: column;
+    border-top: 0.5px solid rgba(255, 255, 255, 0.14);
+  }
+
+  .subjects-collapse-body.open {
+    display: flex;
+  }
+
   .subjects-wrap {
     flex: 1;
     min-height: 0;
@@ -274,6 +372,7 @@
     flex-direction: column;
     padding: 16px 12px;
     overflow-y: auto;
+    touch-action: pan-y;
     scrollbar-width: thin;
     scrollbar-color: rgba(255,255,255,0.25) transparent;
   }
@@ -352,11 +451,19 @@
     color: #fff;
   }
 
+  .subject-dot-wrap {
+    position: relative;
+    flex-shrink: 0;
+  }
+
   .subject-item .subject-dot {
     width: 9px;
     height: 9px;
     border-radius: 50%;
-    flex-shrink: 0;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    display: block;
   }
 
   .subject-item .subject-name {
@@ -364,7 +471,7 @@
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-    font-family: "Montserrat", -apple-system, sans-serif;
+    font-family: "Poppins", -apple-system, sans-serif;
     text-transform: uppercase;
     letter-spacing: 0.03em;
     font-weight: 600;
@@ -398,56 +505,171 @@
     min-width: 0;
   }
 
-  .subject-canvas-head {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 14px 20px;
-    color: #fff;
-    font-size: 14px;
-    font-weight: 500;
-    border-bottom: 0.5px solid rgba(255,255,255,0.1);
-    flex-shrink: 0;
-  }
-
-  #subjectCanvasTitle {
-    font-family: "Montserrat", -apple-system, sans-serif;
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-    font-weight: 600;
-  }
-
-  .subject-canvas-head .tb-btn {
-    position: static;
-    width: 30px;
-    height: 30px;
-    font-size: 15px;
-  }
-
-  .subject-notes-layer {
-    position: relative;
+  .notebook-wrap {
     flex: 1;
-    overflow: auto;
+    min-height: 0;
+    position: relative;
+    --nb-font-size: 15px;
+  }
+
+  .notebook-input {
+    position: relative;
+    display: block;
+    width: 100%;
+    height: 100%;
+    box-sizing: border-box;
+    background: transparent;
+    padding: 0 28px;
+    color: #fff;
+    font-size: var(--nb-font-size);
+    font-family: -apple-system, "SF Pro Text", BlinkMacSystemFont, sans-serif;
+    text-align: left;
+    outline: none;
+    overflow-y: auto;
+    touch-action: pan-y;
     scrollbar-width: thin;
     scrollbar-color: rgba(255,255,255,0.25) transparent;
+    cursor: text;
   }
 
-  .subject-notes-layer::-webkit-scrollbar {
+  /* Each paragraph is its own ruled line \u2014 the border-bottom is the rule,
+     and each line's own height (set inline per-paragraph in JS) only grows
+     for the line that actually needs it, so a large header on line 1
+     doesn't inflate the spacing of normal body text below it. The rule
+     itself fades in (not blurs \u2014 that would blur real typed text) once
+     the notebook has any content. */
+  .notebook-input > div,
+  .notebook-input > p {
+    position: relative;
+    min-height: 32px;
+    line-height: 32px;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+    transition: border-color 0.25s ease;
+  }
+
+  .notebook-wrap.has-content .notebook-input > div,
+  .notebook-wrap.has-content .notebook-input > p {
+    border-bottom-color: rgba(255,255,255,0.14);
+  }
+
+  /* Placeholder overlay is a separate decorative element (below) rather
+     than a pseudo-element, so its blur never touches real text. */
+  .notebook-placeholder {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 28px;
+    color: rgba(255,255,255,0.4);
+    font-size: 26px;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    text-align: center;
+    pointer-events: none;
+  }
+
+  .notebook-wrap.has-content .notebook-placeholder {
+    display: none;
+  }
+
+  .notebook-input * {
+    vertical-align: middle;
+  }
+
+  .notebook-input::-webkit-scrollbar {
     width: 6px;
-    height: 6px;
   }
 
-  .subject-notes-layer::-webkit-scrollbar-track {
+  .notebook-input::-webkit-scrollbar-track {
     background: transparent;
   }
 
-  .subject-notes-layer::-webkit-scrollbar-thumb {
+  .notebook-input::-webkit-scrollbar-thumb {
     background: rgba(255,255,255,0.22);
     border-radius: 6px;
   }
 
-  .subject-notes-layer::-webkit-scrollbar-thumb:hover {
-    background: rgba(255,255,255,0.38);
+  .notebook-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 6px;
+    padding: 10px 20px;
+    border-bottom: 0.5px solid rgba(255,255,255,0.1);
+    flex-shrink: 0;
+  }
+
+  .notebook-toolbar select,
+  .notebook-toolbar .nb-color-wrap {
+    background: rgba(255,255,255,0.08);
+    border: 0.5px solid rgba(255,255,255,0.2);
+    border-radius: 6px;
+    color: #fff;
+    font-size: 11px;
+    padding: 4px 6px;
+    cursor: pointer;
+  }
+
+  .notebook-toolbar select option {
+    background: #1c1c24;
+    color: #fff;
+  }
+
+  .nb-color-wrap {
+    width: 22px;
+    height: 22px;
+    padding: 0;
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--fc, #fff);
+  }
+
+  .nb-color-wrap input[type="color"] {
+    position: absolute;
+    inset: -4px;
+    width: 30px;
+    height: 30px;
+    border: none;
+    cursor: pointer;
+    opacity: 0;
+  }
+
+  .nb-fmt-btn {
+    width: 26px;
+    height: 26px;
+    border-radius: 6px;
+    background: rgba(255,255,255,0.08);
+    border: 0.5px solid rgba(255,255,255,0.2);
+    color: #fff;
+    font-size: 12px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-shadow: 0 1px 3px rgba(0,0,0,0.4);
+  }
+
+  .nb-fmt-btn:hover {
+    background: rgba(255,255,255,0.18);
+  }
+
+  .nb-fmt-btn.active {
+    background: rgba(255,255,255,0.3);
+    border-color: rgba(255,255,255,0.4);
+  }
+
+  .nb-toolbar-divider {
+    width: 0.5px;
+    height: 18px;
+    background: rgba(255,255,255,0.2);
+    margin: 0 2px;
   }
 
   .subjects-empty {
@@ -558,7 +780,7 @@
     font-size: 15px;
     font-weight: 600;
     margin-bottom: 14px;
-    font-family: "Montserrat", -apple-system, sans-serif;
+    font-family: "Poppins", -apple-system, sans-serif;
   }
 
   .subject-modal-input {
@@ -569,7 +791,7 @@
     border: 0.5px solid rgba(255,255,255,0.2);
     color: #fff;
     font-size: 14px;
-    font-family: "Montserrat", -apple-system, sans-serif;
+    font-family: "Poppins", -apple-system, sans-serif;
     text-transform: uppercase;
     letter-spacing: 0.02em;
     outline: none;
@@ -771,29 +993,37 @@
     border-radius: 12px;
     box-shadow: 0 8px 28px rgba(0,0,0,0.35);
     cursor: grab;
-    overflow: hidden;
-    resize: both;
+    overflow: visible;
     min-width: 60px;
     min-height: 60px;
   }
 
+  .free-image .img-clip {
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    overflow: hidden;
+  }
+
   .resize-handle {
     position: absolute;
-    bottom: 0;
-    right: 0;
+    bottom: -12px;
+    right: -12px;
     width: 22px;
     height: 22px;
     cursor: nwse-resize;
     z-index: 5;
-    display: none;
+    display: block;
+    opacity: 0;
+    transition: opacity 0.15s ease;
     touch-action: none;
   }
 
   .resize-handle::after {
     content: '';
     position: absolute;
-    bottom: 5px;
-    right: 5px;
+    top: 6px;
+    left: 6px;
     width: 9px;
     height: 9px;
     border-right: 2px solid rgba(255,255,255,0.55);
@@ -801,8 +1031,10 @@
     border-radius: 0 0 2px 0;
   }
 
+  .note:hover .resize-handle,
+  .free-image:hover .resize-handle,
   body.touch-device .resize-handle {
-    display: block;
+    opacity: 1;
   }
 
   .free-image img {
@@ -811,6 +1043,7 @@
     object-fit: cover;
     display: block;
     pointer-events: none;
+    border-radius: inherit;
   }
 
   .free-image .fi-close {
@@ -858,9 +1091,26 @@
   }
 
   /* Notes layer */
-  .notes-layer {
+  .canvas-viewport {
     position: absolute;
     inset: 0;
+    overflow: hidden;
+    cursor: grab;
+    touch-action: none;
+  }
+
+  .canvas-viewport.panning {
+    cursor: grabbing;
+  }
+
+  .notes-layer {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 0;
+    height: 0;
+    transform-origin: 0 0;
+    backface-visibility: hidden;
   }
 
   .note {
@@ -878,8 +1128,7 @@
     transition: box-shadow 0.2s ease;
     background-size: cover;
     background-position: center;
-    resize: both;
-    overflow: hidden;
+    overflow: visible;
     min-width: 160px;
   }
 
@@ -893,6 +1142,8 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
+    flex-wrap: wrap;
+    row-gap: 4px;
     padding: 8px 10px 4px;
     flex-shrink: 0;
   }
@@ -927,6 +1178,383 @@
     border-radius: 3px;
     background: rgba(255,255,255,0.4);
     pointer-events: none;
+  }
+
+  /* Sticky Canvas card */
+  .sticky-canvas-card {
+    min-width: 140px;
+    min-height: 140px;
+  }
+
+  .sc-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding: 0 8px 6px;
+    flex-shrink: 0;
+    flex-wrap: nowrap;
+  }
+
+  .sc-color-wrap {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    position: relative;
+    overflow: hidden;
+    border: 1.5px solid #000;
+    background: #000;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: width 0.08s ease, height 0.08s ease, background 0.1s ease;
+  }
+
+  .sc-color-wrap input[type="color"] {
+    position: absolute;
+    inset: -4px;
+    width: 26px;
+    height: 26px;
+    border: none;
+    cursor: pointer;
+    opacity: 0;
+  }
+
+  .sc-size-slider {
+    flex: 1;
+    min-width: 20px;
+    height: 14px;
+    cursor: pointer;
+    -webkit-appearance: none;
+    appearance: none;
+    background: transparent;
+  }
+
+  .sc-size-slider::-webkit-slider-runnable-track {
+    height: 4px;
+    border-radius: 999px;
+    background: rgba(0,0,0,0.5);
+  }
+
+  .sc-size-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 11px;
+    height: 11px;
+    border-radius: 50%;
+    background: #fff;
+    border: 1.5px solid #000;
+    margin-top: -3.5px;
+    cursor: pointer;
+  }
+
+  .sc-size-slider::-moz-range-track {
+    height: 4px;
+    border-radius: 999px;
+    background: rgba(0,0,0,0.5);
+  }
+
+  .sc-size-slider::-moz-range-thumb {
+    width: 11px;
+    height: 11px;
+    border-radius: 50%;
+    background: #fff;
+    border: 1.5px solid #000;
+    cursor: pointer;
+  }
+
+  .sc-tool-btn {
+    width: 20px;
+    height: 20px;
+    border-radius: 5px;
+    background: rgba(0,0,0,0.2);
+    border: 0.5px solid rgba(255,255,255,0.25);
+    color: #fff;
+    font-size: 9.5px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .sc-tool-btn:hover,
+  .sc-tool-btn.active {
+    background: rgba(0,0,0,0.4);
+  }
+
+  .sc-canvas-wrap {
+    flex: 1;
+    min-height: 0;
+    position: relative;
+    background: #ffffff;
+  }
+
+  .sc-canvas {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    touch-action: none;
+    cursor: crosshair;
+    border-radius: 0 0 15px 15px;
+  }
+
+  /* Table card */
+  .table-card-wrap {
+    flex: 1;
+    min-height: 0;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .table-grid {
+    border-collapse: collapse;
+    table-layout: fixed;
+    width: 100%;
+    height: 100%;
+  }
+
+  .table-grid td {
+    border: 1px solid rgba(255,255,255,0.25);
+    padding: calc(3px * var(--note-scale, 1)) calc(5px * var(--note-scale, 1));
+    color: #fff;
+    font-family: "Poppins", -apple-system, sans-serif;
+    font-size: calc(12.5px * var(--note-scale, 1));
+    outline: none;
+    vertical-align: top;
+    word-break: break-word;
+    overflow: hidden;
+  }
+
+  .table-grid td:focus {
+    background: rgba(255,255,255,0.08);
+  }
+
+  .table-card {
+    overflow: visible;
+  }
+
+  .table-row-btn,
+  .table-col-btn {
+    position: absolute;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    width: calc(24px * var(--note-scale, 1));
+    height: calc(24px * var(--note-scale, 1));
+    border-radius: 50%;
+    background: rgba(20,20,26,0.9);
+    border: 1.5px solid rgba(255,255,255,0.5);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.35);
+    color: #fff;
+    font-size: calc(14px * var(--note-scale, 1));
+    line-height: 1;
+    cursor: pointer;
+    z-index: 6;
+  }
+
+  .table-card.selected .table-row-btn,
+  .table-card.selected .table-col-btn {
+    display: flex;
+  }
+
+  .table-add-row {
+    bottom: calc(-16px * var(--note-scale, 1) - 22px);
+    left: 50%;
+    transform: translateX(-50%);
+  }
+
+  .table-remove-row {
+    bottom: calc(-16px * var(--note-scale, 1) - 22px);
+    left: calc(50% + 32px);
+    transform: translateX(-50%);
+  }
+
+  .table-add-col {
+    right: calc(-16px * var(--note-scale, 1) - 22px);
+    top: 50%;
+    transform: translateY(-50%);
+  }
+
+  .table-remove-col {
+    right: calc(-16px * var(--note-scale, 1) - 22px);
+    top: calc(50% + 32px);
+    transform: translateY(-50%);
+  }
+
+  /* Floating text line \u2014 no card, just editable text on the canvas */
+  .text-line-wrap {
+    position: absolute;
+    display: inline-block;
+    width: fit-content;
+    height: fit-content;
+    min-width: 60px;
+    min-height: 34px;
+    max-width: 90vw;
+    overflow: visible;
+  }
+
+  .text-line-wrap.tl-manual-size {
+    display: block;
+  }
+
+  .text-line {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    padding: 4px 6px;
+    color: #fff;
+    font-family: "Poppins", -apple-system, sans-serif;
+    font-weight: 700;
+    font-size: calc(26px * var(--tl-scale, 1));
+    line-height: 1.3;
+    outline: none;
+    cursor: text;
+    white-space: pre-wrap;
+    word-break: break-word;
+    overflow-wrap: break-word;
+    background: transparent;
+    border-radius: 6px;
+    box-sizing: border-box;
+  }
+
+  .text-line:empty::before {
+    content: attr(data-placeholder);
+    color: rgba(255,255,255,0.35);
+  }
+
+  .text-line.selected {
+    box-shadow: 0 0 0 1px rgba(255,255,255,0.25);
+  }
+
+  .text-line-handle {
+    position: absolute;
+    bottom: -18px;
+    top: auto;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 26px;
+    height: 12px;
+    cursor: grab;
+    touch-action: none;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 2;
+  }
+
+  .text-line-handle::after {
+    content: '';
+    width: 20px;
+    height: 3px;
+    border-radius: 3px;
+    background: rgba(255,255,255,0.4);
+  }
+
+  .text-line-wrap.selected .text-line-handle {
+    display: flex;
+  }
+
+  .text-line-resize {
+    position: absolute;
+    bottom: -6px;
+    right: -6px;
+    width: 22px;
+    height: 22px;
+    cursor: nwse-resize;
+    touch-action: none;
+    display: none;
+    z-index: 2;
+  }
+
+  .text-line-resize::after {
+    content: '';
+    position: absolute;
+    bottom: 5px;
+    right: 5px;
+    width: 9px;
+    height: 9px;
+    border-right: 2px solid rgba(255,255,255,0.55);
+    border-bottom: 2px solid rgba(255,255,255,0.55);
+    border-radius: 0 0 2px 0;
+  }
+
+  .text-line-wrap.selected .text-line-resize {
+    display: block;
+  }
+
+  /* Minimal floating formatting bar for text lines */
+  .tl-toolbar {
+    position: absolute;
+    display: none;
+    align-items: center;
+    gap: 4px;
+    padding: 5px 6px;
+    border-radius: 10px;
+    background: rgba(20,20,26,0.55);
+    backdrop-filter: blur(16px) saturate(160%);
+    -webkit-backdrop-filter: blur(16px) saturate(160%);
+    border: 0.5px solid rgba(255,255,255,0.2);
+    box-shadow: 0 6px 18px rgba(0,0,0,0.3);
+    z-index: 70;
+  }
+
+  .tl-toolbar.open {
+    display: flex;
+  }
+
+  .tl-toolbar select {
+    background: rgba(255,255,255,0.1);
+    border: 0.5px solid rgba(255,255,255,0.2);
+    border-radius: 6px;
+    color: #fff;
+    font-size: 11px;
+    padding: 3px 4px;
+    cursor: pointer;
+  }
+
+  .tl-toolbar select option {
+    background: #1c1c24;
+    color: #fff;
+  }
+
+  .tl-color-wrap {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    position: relative;
+    overflow: hidden;
+    border: 1px solid rgba(255,255,255,0.4);
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+
+  .tl-color-wrap input[type="color"] {
+    position: absolute;
+    inset: -5px;
+    width: 30px;
+    height: 30px;
+    border: none;
+    cursor: pointer;
+    opacity: 0;
+  }
+
+  .tl-fmt-btn {
+    width: 22px;
+    height: 22px;
+    border-radius: 6px;
+    background: rgba(255,255,255,0.08);
+    border: 0.5px solid rgba(255,255,255,0.18);
+    color: #fff;
+    font-size: 11px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .tl-fmt-btn:hover {
+    background: rgba(255,255,255,0.18);
   }
 
   .note-dot-wrap {
@@ -1000,6 +1628,7 @@
   .note-head-right {
     display: flex;
     align-items: center;
+    flex-wrap: wrap;
     gap: 4px;
   }
 
@@ -1035,6 +1664,24 @@
     opacity: 1;
   }
 
+  /* Table-specific: font/size/color controls fade in on hover too, same
+     as the formatting buttons, since they now share the header row. */
+  .table-card .note-font-select,
+  .table-card .note-size-select,
+  .table-card .note-font-color-wrap {
+    opacity: 0;
+    transition: opacity 0.15s ease;
+  }
+
+  .table-card:hover .note-font-select,
+  .table-card:hover .note-size-select,
+  .table-card:hover .note-font-color-wrap,
+  body.touch-device .table-card .note-font-select,
+  body.touch-device .table-card .note-size-select,
+  body.touch-device .table-card .note-font-color-wrap {
+    opacity: 1;
+  }
+
   .fmt-btn:hover,
   .fmt-btn.active {
     background: rgba(0,0,0,0.32);
@@ -1064,6 +1711,7 @@
   .note-toolbar2 {
     display: flex;
     align-items: center;
+    flex-wrap: wrap;
     gap: 5px;
     padding: 0 10px 6px;
     margin-bottom: 2px;
@@ -1071,13 +1719,13 @@
     opacity: 0;
     max-height: 0;
     overflow: hidden;
-    transition: opacity 0.15s ease, max-height 0.2s ease;
+    transition: opacity 0.15s ease, max-height 0.25s ease;
   }
 
   .note:hover .note-toolbar2,
   body.touch-device .note-toolbar2 {
     opacity: 1;
-    max-height: 34px;
+    max-height: 120px;
     overflow: visible;
   }
 
@@ -1171,6 +1819,69 @@
     display: none;
   }
 
+  /* ---- Mobile/touch only: scale every note control relative to the
+     note's own current size, so buttons never end up cramped together
+     on a small note and each has its own reliably tappable space. This
+     never affects desktop, which keeps the fixed sizes above. ---- */
+  body.touch-device .note {
+    --note-scale: 1;
+  }
+
+  body.touch-device .note-head {
+    padding: calc(8px * var(--note-scale)) calc(10px * var(--note-scale)) calc(4px * var(--note-scale));
+    gap: calc(6px * var(--note-scale));
+  }
+
+  body.touch-device .note-dot {
+    width: calc(18px * var(--note-scale));
+    height: calc(18px * var(--note-scale));
+  }
+
+  body.touch-device .note-head-right {
+    gap: calc(6px * var(--note-scale));
+  }
+
+  body.touch-device .fmt-btn,
+  body.touch-device .note-close {
+    width: calc(26px * var(--note-scale));
+    height: calc(26px * var(--note-scale));
+    font-size: calc(13px * var(--note-scale));
+  }
+
+  body.touch-device .note-toolbar2 {
+    padding: 0 calc(10px * var(--note-scale)) calc(6px * var(--note-scale));
+    gap: calc(8px * var(--note-scale));
+    max-height: calc(140px * var(--note-scale));
+    flex-wrap: wrap;
+  }
+
+  body.touch-device .note-font-select {
+    font-size: calc(12px * var(--note-scale));
+    padding: calc(3px * var(--note-scale)) calc(5px * var(--note-scale));
+    max-width: calc(90px * var(--note-scale));
+  }
+
+  body.touch-device .note-size-select {
+    font-size: calc(12px * var(--note-scale));
+    padding: calc(3px * var(--note-scale)) calc(4px * var(--note-scale));
+    width: calc(50px * var(--note-scale));
+  }
+
+  body.touch-device .note-font-color-wrap {
+    width: calc(22px * var(--note-scale));
+    height: calc(22px * var(--note-scale));
+  }
+
+  body.touch-device .note-font-color-wrap::after {
+    font-size: calc(12px * var(--note-scale));
+  }
+
+  body.touch-device .note-bg-btn {
+    width: calc(26px * var(--note-scale));
+    height: calc(26px * var(--note-scale));
+    font-size: calc(13px * var(--note-scale));
+  }
+
   .note.has-bg-image .note-text,
   .note.has-bg-image .note-head {
     text-shadow: 0 1px 4px rgba(0,0,0,0.8);
@@ -1188,6 +1899,7 @@
   .note-text {
     flex: 1;
     overflow-y: auto;
+    touch-action: pan-y;
     outline: none;
     background: transparent;
     color: #fff;
@@ -1201,7 +1913,7 @@
     z-index: 1;
   }
 
-  .note-text:empty::before {
+  .note-text.is-empty::before {
     content: attr(data-placeholder);
     color: rgba(255,255,255,0.45);
   }
@@ -1228,585 +1940,44 @@
     pointer-events: none;
   }
 
-  /* Calendar section */
-  .cal-card {
-    width: 100%;
-    max-width: 1100px;
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    border-radius: 20px;
-    background: rgba(255,255,255,0.1);
-    border: 0.5px solid rgba(255,255,255,0.2);
-    backdrop-filter: blur(24px) saturate(140%);
-    -webkit-backdrop-filter: blur(24px) saturate(140%);
-    padding: 22px 24px 26px;
-    color: #fff;
-  }
-
-  .cal-grid {
-    display: grid;
-    grid-template-columns: repeat(7, 1fr);
-    grid-auto-rows: 1fr;
-    gap: 6px;
-    position: relative;
-    flex: 1;
-    min-height: 0;
-  }
-
-  .cal-grid .cal-cell-outer {
-    aspect-ratio: auto;
-    min-height: 46px;
-  }
-
-  .cal-head {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 18px;
-  }
-
-  .cal-title {
-    font-size: 17px;
-    font-weight: 500;
-    letter-spacing: -0.01em;
-  }
-
-  .cal-nav {
-    display: flex;
-    gap: 6px;
-  }
-
-  .cal-nav-btn {
-    width: 28px;
-    height: 28px;
-    border-radius: 6px;
-    background: rgba(255,255,255,0.1);
-    border: 0.5px solid rgba(255,255,255,0.2);
-    color: #fff;
-    font-size: 14px;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: background 0.15s ease;
-  }
-
-  .cal-nav-btn:hover {
-    background: rgba(255,255,255,0.22);
-  }
-
-  .cal-dow {
-    text-align: center;
-    font-size: 11px;
-    font-weight: 500;
-    color: rgba(255,255,255,0.4);
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
-    padding-bottom: 6px;
-  }
-
-  .cal-cell {
-    position: relative;
-    aspect-ratio: 1;
-    border-radius: 10px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 13.5px;
-    color: rgba(255,255,255,0.85);
-    cursor: pointer;
-    z-index: 1;
-    overflow: hidden;
-    transition: background 0.15s ease, border-color 0.15s ease, z-index 0s;
-  }
-
-  .cal-cell.empty {
-    visibility: hidden;
-    cursor: default;
-  }
-
-  .cal-cell.has-color {
-    color: var(--cell-text, rgba(255,255,255,0.9));
-  }
-
-  .cal-cell .cell-icons {
-    position: absolute;
-    top: 4px;
-    right: 5px;
-    display: flex;
-    gap: 3px;
-    font-size: 9px;
-    line-height: 1;
-    z-index: 2;
-    pointer-events: none;
-  }
-
-  .cal-cell .preview-snip {
-    position: absolute;
-    bottom: 3px;
-    left: 5px;
-    right: 5px;
-    font-size: 7.5px;
-    line-height: 1.15;
-    color: rgba(255,255,255,0.55);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    text-align: left;
-    pointer-events: none;
-  }
-
-  .cal-cell.has-color .preview-snip {
-    color: rgba(0,0,0,0.45);
-  }
-
-  .cal-cell .tag-badge {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    font-size: 9px;
-    font-weight: 700;
-    letter-spacing: 0.03em;
-    padding: 2px 7px;
-    border-radius: 6px;
-    background: rgba(255,255,255,0.24);
-    color: #fff;
-    text-transform: uppercase;
-    text-align: center;
-    z-index: 2;
-    pointer-events: none;
-    max-width: calc(100% - 8px);
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-
-  .cal-cell.has-color .tag-badge {
-    background: rgba(0,0,0,0.22);
-  }
-
-  .cal-cell.today {
-    font-weight: 500;
-    color: #fff;
-  }
-
-  .cal-cell.today::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    border-radius: 10px;
-    border: 1.5px solid rgba(255,255,255,0.55);
-    pointer-events: none;
-  }
-
-  .cal-cell-outer.tap-expanded .cal-cell.today::before {
-    display: none;
-  }
-
-  /* Expand mechanics \u2014 click/tap only, no hover-trigger. Hovering across a
-     dense grid used to expand multiple cells at once and glitch; now a day
-     only expands on a deliberate click. */
-  .cal-cell-outer {
-    position: relative;
-    aspect-ratio: 1;
-  }
-
-  .cal-cell {
-    position: absolute;
-    inset: 0;
-    width: 100%;
-    height: 100%;
-    transform-origin: center center;
-    transition: width 0.32s cubic-bezier(0.22, 1, 0.36, 1),
-                height 0.32s cubic-bezier(0.22, 1, 0.36, 1),
-                border-radius 0.32s cubic-bezier(0.22, 1, 0.36, 1),
-                box-shadow 0.32s cubic-bezier(0.22, 1, 0.36, 1),
-                background 0.32s cubic-bezier(0.22, 1, 0.36, 1);
-  }
-
-  .cal-cell-outer.tap-expanded .cal-cell:not(.empty) {
-    width: 220px;
-    height: 220px;
-    z-index: 40;
-    border-radius: 14px;
-    background: rgba(28,28,36,0.96) !important;
-    backdrop-filter: blur(28px) saturate(150%);
-    -webkit-backdrop-filter: blur(28px) saturate(150%);
-    box-shadow: 0 20px 48px rgba(0,0,0,0.45);
-    align-items: stretch;
-    justify-content: flex-start;
-    flex-direction: column;
-    padding: 12px;
-    cursor: default;
-    color: #fff !important;
-    overflow: visible;
-  }
-
-  /* keep expanded cell from clipping off the right/bottom edge of the grid */
-  .cal-cell-outer.tap-expanded:nth-child(7n) .cal-cell,
-  .cal-cell-outer.tap-expanded:nth-child(7n-1) .cal-cell {
-    left: auto;
-    right: 0;
-  }
-
-  /* Full-width collapsible calendar band above Subjects */
-  .mini-cal-wrap {
-    flex-shrink: 0;
-    width: 100%;
-    border-top: 0.5px solid rgba(255,255,255,0.14);
-  }
-
-  .mini-cal-toggle {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    width: 100%;
-    background: none;
-    border: none;
-    color: rgba(255,255,255,0.55);
-    font-size: 13px;
-    font-weight: 500;
-    letter-spacing: 0.03em;
-    text-transform: uppercase;
-    font-family: "Montserrat", -apple-system, sans-serif;
-    padding: 12px 6px;
-    cursor: pointer;
-    transition: color 0.15s ease;
-  }
-
-  .mini-cal-toggle:hover {
-    color: rgba(255,255,255,0.85);
-  }
-
-  .mini-cal-chevron {
-    flex-shrink: 0;
-    transition: transform 0.2s ease;
-  }
-
-  .mini-cal-toggle[aria-expanded="true"] .mini-cal-chevron {
-    transform: rotate(180deg);
-  }
-
-  .mini-cal-collapse {
-    display: grid;
-    grid-template-rows: 0fr;
-    transition: grid-template-rows 0.25s ease, visibility 0.25s;
-    visibility: hidden;
-  }
-
-  .mini-cal-collapse.open {
-    grid-template-rows: 1fr;
-    visibility: visible;
-  }
-
-  .mini-cal-collapse > div {
-    overflow: hidden;
-    min-height: 0;
-    display: flex;
-    justify-content: center;
-  }
-
-  .mini-cal-card {
-    width: 100%;
-    max-width: 720px;
-    max-height: 50vh;
-    overflow-y: auto;
-    border-radius: 16px;
-    background: rgba(255,255,255,0.06);
-    border: 0.5px solid rgba(255,255,255,0.14);
-    padding: 16px 8px 12px;
-    margin: 0 20px 20px;
-    color: #fff;
-    scrollbar-width: thin;
-    scrollbar-color: rgba(255,255,255,0.25) transparent;
-  }
-
-  .mini-cal-card::-webkit-scrollbar {
-    width: 6px;
-  }
-
-  .mini-cal-card::-webkit-scrollbar-track {
-    background: transparent;
-  }
-
-  .mini-cal-card::-webkit-scrollbar-thumb {
-    background: rgba(255,255,255,0.22);
-    border-radius: 6px;
-  }
-
-  .mini-cal-grid {
-    gap: 8px;
-  }
-
-  .mini-cal-grid .cal-dow {
-    font-size: 13px;
-    padding: 4px 0 12px;
-    text-align: center;
-  }
-
-  .mini-cal-grid .cal-cell-outer {
-    min-height: 48px;
-  }
-
-  .mini-cal-grid .cal-cell {
-    font-size: 14px;
-    border-radius: 9px;
-  }
-
-  .mini-cal-grid .cal-daynum {
-    font-size: 14px;
-    top: 4px;
-    left: 6px;
-  }
-
-  .mini-cal-grid .preview-snip {
-    display: none;
-  }
-
-  /* Expanding a day from the mini calendar centers a larger card over the
-     whole screen instead of trying to grow inside the narrow sidebar.
-     Click-only (no hover-expand) so moving the cursor across the grid
-     never triggers multiple cells expanding at once. */
-  .mini-cal-grid .cal-cell-outer.tap-expanded .cal-cell:not(.empty) {
-    position: fixed;
-    left: 50% !important;
-    right: auto !important;
-    top: 50%;
-    transform: translate(-50%, -50%);
-    width: min(86vw, 260px);
-    height: min(86vw, 260px);
-    max-height: 70vh;
-  }
-
-  .mini-cal-grid .cal-cell-outer.tap-expanded .cal-daynum {
-    font-size: 15px;
-  }
-
-  .mini-cal-card .cal-head {
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 10px;
-    margin-bottom: 18px;
-    text-align: center;
-  }
-
-  .mini-cal-card .cal-title {
-    font-size: 18px;
-  }
-
-  .mini-cal-card .cal-nav-btn {
-    width: 30px;
-    height: 30px;
-    font-size: 15px;
-  }
-
-  .cal-daynum {
-    position: absolute;
-    top: 3px;
-    left: 6px;
-    font-size: 13.5px;
-    transition: opacity 0.2s ease;
-  }
-
-  .cal-cell-outer.tap-expanded .cal-daynum {
-    position: static;
-    font-size: 15px;
-    font-weight: 500;
-    margin-bottom: 8px;
-  }
-
-  .cal-cell-outer.tap-expanded .cell-icons {
-    display: none;
-  }
-
-  .cal-cell-outer.tap-expanded .preview-snip {
-    display: none;
-  }
-
-  .exp-panel {
-    display: none;
-    flex-direction: column;
-    flex: 1;
-    min-height: 0;
-    opacity: 0;
-    transform: translateY(4px);
-    transition: opacity 0.22s ease 0.08s, transform 0.22s ease 0.08s;
-  }
-
-  .cal-cell-outer.tap-expanded .exp-panel {
-    display: flex;
-    opacity: 1;
-    transform: translateY(0);
-  }
-
-  .exp-head {
-    display: flex;
-    align-items: center;
-    justify-content: flex-end;
-    margin-bottom: 6px;
-    min-height: 4px;
-  }
-
-  .exp-icon-toggle {
-    display: flex;
-    gap: 4px;
-  }
-
-  .exp-swatches {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px;
-    margin-bottom: 10px;
-  }
-
-  .exp-tags {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 5px;
-    margin-bottom: 10px;
-  }
-
-  .exp-tag-btn {
-    padding: 3px 8px;
-    border-radius: 999px;
-    background: rgba(255,255,255,0.08);
-    border: 0.5px solid rgba(255,255,255,0.2);
-    color: rgba(255,255,255,0.75);
-    font-size: 10px;
-    font-weight: 500;
-    cursor: pointer;
-    transition: background 0.15s ease, color 0.15s ease;
-  }
-
-  .exp-tag-btn:hover {
-    background: rgba(255,255,255,0.16);
-  }
-
-  .exp-tag-btn.active {
-    background: #fff;
-    color: #16161c;
-  }
-
-  .exp-swatch {
-    width: 18px;
-    height: 18px;
-    border-radius: 50%;
-    cursor: pointer;
-    border: 1.5px solid transparent;
-  }
-
-  .exp-swatch:hover {
-    border-color: rgba(255,255,255,0.6);
-  }
-
-  .exp-swatch.none {
-    background: transparent;
-    border: 1.5px dashed rgba(255,255,255,0.4);
-    position: relative;
-  }
-
-  .exp-swatch.none::after {
-    content: '';
-    position: absolute;
-    top: 50%;
-    left: 15%;
-    right: 15%;
-    height: 1.5px;
-    background: rgba(255,255,255,0.5);
-    transform: rotate(45deg);
-  }
-
-  .exp-swatch-custom {
-    width: 18px;
-    height: 18px;
-    border-radius: 50%;
-    padding: 0;
-    border: 1.5px dashed rgba(255,255,255,0.5);
-    background: transparent;
-    cursor: pointer;
-    position: relative;
-    overflow: hidden;
-  }
-
-  .exp-swatch-custom input[type="color"] {
-    position: absolute;
-    inset: -4px;
-    width: 26px;
-    height: 26px;
-    border: none;
-    cursor: pointer;
-    opacity: 0;
-  }
-
-  .exp-text {
-    flex: 1;
-    min-height: 70px;
-    outline: none;
-    background: rgba(255,255,255,0.06);
-    border-radius: 8px;
-    border: 0.5px solid rgba(255,255,255,0.14);
-    padding: 8px;
-    font-size: 13px;
-    line-height: 1.5;
-    color: #fff;
-    overflow-y: auto;
-  }
-
-  .exp-text:empty::before {
-    content: attr(data-placeholder);
-    color: rgba(255,255,255,0.4);
-  }
-
-  .exp-icons {
-    display: flex;
-    gap: 6px;
-    margin-top: 10px;
-  }
-
-  .exp-icon-btn {
-    width: 26px;
-    height: 26px;
-    border-radius: 7px;
-    background: rgba(255,255,255,0.08);
-    border: 0.5px solid rgba(255,255,255,0.16);
-    color: rgba(255,255,255,0.75);
-    font-size: 13px;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: background 0.15s ease, color 0.15s ease;
-  }
-
-  .exp-icon-btn:hover {
-    background: rgba(255,255,255,0.18);
-    color: #fff;
-  }
-
-  .exp-icon-btn.active {
-    background: rgba(255,255,255,0.28);
-    color: #fff;
-  }
-
-  .cal-graph {
-    margin-top: 22px;
-    padding-top: 18px;
-    border-top: 0.5px solid rgba(255,255,255,0.15);
-  }
-
-  .cal-graph-title {
-    font-size: 12px;
-    color: rgba(255,255,255,0.5);
-    margin-bottom: 10px;
-    letter-spacing: 0.02em;
-  }
 
   /* ===================== Mobile responsiveness ===================== */
   @media (max-width: 720px) {
+    /* Mobile browsers (iOS Safari especially) automatically zoom the page
+       in when focusing any text input/editable area smaller than 16px,
+       regardless of the viewport meta tag. Force every one of them to
+       16px while focused so that auto-zoom never triggers in the first
+       place, no matter how small the field's normal display size is.
+       Text Line is exempt: its font-size is a deliberate, user-resizable
+       display size (already never goes below 16px by default anyway). */
+    input[type="text"],
+    input[type="color"],
+    textarea,
+    select,
+    [contenteditable="true"]:not(.text-line) {
+      font-size: 16px !important;
+    }
+
+    .text-line-wrap {
+      min-width: 50px;
+      min-height: 30px;
+    }
+
+    .text-line-handle,
+    .text-line-resize {
+      width: 26px;
+      height: 26px;
+    }
+
+    .text-line-handle {
+      bottom: -16px;
+    }
+
+    .text-line-resize {
+      bottom: -8px;
+      right: -8px;
+    }
+
     .app-title {
       padding-top: 14px;
       font-size: clamp(20px, 7vw, 28px);
@@ -1902,10 +2073,13 @@
 
     /* Always show note controls on touch/small screens \u2014 no hover to reveal them */
     .fmt-btn,
-    .note-close,
+    .note-close {
+      opacity: 1 !important;
+    }
+
     .note-toolbar2 {
       opacity: 1 !important;
-      max-height: 34px !important;
+      max-height: 140px !important;
     }
 
     .fi-close,
@@ -1913,8 +2087,10 @@
       opacity: 1 !important;
     }
 
-    /* Subject Notes: stack sidebar above canvas instead of side-by-side */
-    #sub-subjects.active {
+    /* Timetable (incl. nested Subject Notes): tighter header clearance,
+       and stack the subjects sidebar above the notebook instead of
+       side-by-side */
+    #sub-timetable.active {
       padding-top: 100px;
     }
 
@@ -1930,19 +2106,6 @@
       padding: 10px 12px;
     }
 
-    .mini-cal-toggle {
-      padding: 10px 6px;
-      font-size: 11.5px;
-    }
-
-    .mini-cal-collapse > div {
-      padding: 0 12px 14px;
-    }
-
-    .mini-cal-card {
-      padding: 12px 6px 12px;
-    }
-
     .subjects-list {
       flex-direction: row;
       flex-wrap: wrap;
@@ -1954,26 +2117,8 @@
       font-size: 12.5px;
     }
 
-    .subject-canvas-head {
-      padding: 10px 14px;
-    }
-
-    /* Expanded day panel from the mini calendar: fit comfortably on small screens */
-    .mini-cal-grid .cal-cell-outer.tap-expanded .cal-cell:not(.empty) {
-      width: min(80vw, 230px);
-      height: min(80vw, 230px);
-      max-height: 60vh;
-    }
-
-    .exp-tag-btn {
-      padding: 3px 7px;
-      font-size: 9px;
-    }
-
-    .exp-swatch,
-    .exp-swatch-custom {
-      width: 16px;
-      height: 16px;
+    .notebook-toolbar {
+      padding: 8px 12px;
     }
 
     /* Drop overlay: fit the prompt box on small screens */
@@ -1989,14 +2134,6 @@
     .note {
       width: 118px;
       min-height: 84px;
-    }
-
-    .cal-grid .cal-cell-outer {
-      min-height: 32px;
-    }
-
-    .cal-cell {
-      font-size: 10px;
     }
   }
 
@@ -2016,8 +2153,7 @@
   }
 
   body.touch-device .note-dot,
-  body.touch-device .swatch,
-  body.touch-device .exp-swatch {
+  body.touch-device .swatch {
     width: 22px;
     height: 22px;
   }
@@ -2035,9 +2171,95 @@
     height: 22px;
   }
 
-  body.touch-device .exp-icon-btn {
-    width: 30px;
-    height: 30px;
+  /* Mind-map connections: a small "+" dot on every canvas instance (note,
+     sticky canvas, table, text line, image) that can be dragged onto
+     another one's dot to draw a soft, swaying link between them. Dots and
+     lines live in an overlay above the instances (not inside them) so
+     they aren't clipped by each card's own rounded-corner overflow, and
+     so a dot/line stays reachable even under a stack of overlapping
+     cards. The overlay is a child of #notesLayer itself, so it pans and
+     zooms together with everything else on the infinite canvas for free. */
+  /* #notesLayer is deliberately a zero-size anchor point (0,0) for the
+     infinite pan/zoom canvas — its children are placed with pixel
+     left/top regardless of the parent's own box size, and the real
+     viewport clipping happens on the ancestor .canvas-viewport instead.
+     A percentage-based inset:0 here would inherit that same 0x0 size and
+     silently fail to paint any SVG content, so this overlay gets an
+     explicit large fixed box instead, anchored at the same (0,0) origin. */
+  .link-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100000px;
+    height: 100000px;
+    pointer-events: none;
+    z-index: 500;
+  }
+
+  .connections-svg {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100000px;
+    height: 100000px;
+    overflow: visible;
+  }
+
+  .link-path {
+    fill: none;
+    stroke: rgba(255, 255, 255, 0.55);
+    stroke-width: 2.2;
+    stroke-linecap: round;
+    filter: drop-shadow(0 0 5px rgba(255, 255, 255, 0.35));
+    pointer-events: stroke;
+    cursor: pointer;
+  }
+
+  .link-path-hit {
+    fill: none;
+    stroke: transparent;
+    stroke-width: 20;
+    pointer-events: stroke;
+    cursor: pointer;
+  }
+
+  .link-path-hit:hover + .link-path {
+    stroke: #ff9bc7;
+    stroke-width: 2.8;
+    filter: drop-shadow(0 0 8px rgba(255, 123, 176, 0.65));
+  }
+
+  .connect-dot {
+    position: absolute;
+    width: 20px;
+    height: 20px;
+    margin-left: -10px;
+    margin-top: -10px;
+    border-radius: 50%;
+    background: #ffffff;
+    color: #16161c;
+    font-size: 14px;
+    font-weight: 800;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: crosshair;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4), 0 0 0 2px rgba(255, 255, 255, 0.4);
+    pointer-events: auto;
+    touch-action: none;
+    user-select: none;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+  }
+
+  .connect-dot:hover,
+  .connect-dot.linking {
+    transform: scale(1.2);
+    box-shadow: 0 2px 14px rgba(255, 255, 255, 0.8), 0 0 0 2px rgba(255, 255, 255, 0.95);
+  }
+
+  body.linking-active {
+    cursor: crosshair;
   }
 
   /* Timetable */
@@ -2053,35 +2275,94 @@
     display: flex;
     flex-direction: column;
     padding: 0 24px 24px;
+    gap: 12px;
+  }
+
+  .tt-next-banner {
+    border-radius: 16px;
+    border: 0.5px solid rgba(255, 255, 255, 0.18);
+    background: rgba(255, 255, 255, 0.08);
+    padding: 12px 18px;
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    flex-wrap: wrap;
+    flex-shrink: 0;
+  }
+
+  .tt-next-banner.now {
+    background: rgba(74, 222, 128, 0.16);
+    border-color: rgba(74, 222, 128, 0.4);
+  }
+
+  .tt-next-banner.free {
+    background: rgba(255, 255, 255, 0.05);
+  }
+
+  .tt-next-label {
+    font-family: "Poppins", -apple-system, sans-serif;
+    font-weight: 700;
+    font-size: 14px;
+    color: #fff;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+  }
+
+  .tt-next-detail {
+    font-size: 13px;
+    color: rgba(255, 255, 255, 0.75);
   }
 
   .tt-toolbar {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 0 4px 14px;
+    flex-wrap: wrap;
+    gap: 10px;
     flex-shrink: 0;
   }
 
   .tt-title {
-    color: rgba(255,255,255,0.85);
-    font-family: "Montserrat", -apple-system, sans-serif;
-    font-weight: 600;
+    color: rgba(255, 255, 255, 0.85);
+    font-family: "Poppins", -apple-system, sans-serif;
+    font-weight: 700;
     font-size: 14px;
     text-transform: uppercase;
     letter-spacing: 0.03em;
   }
 
+  .tt-fmt-group {
+    display: flex;
+    gap: 4px;
+  }
+
+  .tt-fmt-btn {
+    width: 30px;
+    height: 30px;
+    border-radius: 8px;
+    border: 0.5px solid rgba(255, 255, 255, 0.18);
+    background: rgba(255, 255, 255, 0.08);
+    color: #fff;
+    font-size: 13px;
+    cursor: pointer;
+  }
+
+  .tt-fmt-btn:hover,
+  .tt-fmt-btn.active {
+    background: rgba(255, 255, 255, 0.22);
+  }
+
   .tt-actions {
     display: flex;
     gap: 8px;
+    flex-wrap: wrap;
   }
 
   .tt-btn {
     padding: 7px 14px;
     border-radius: 999px;
-    border: 0.5px solid rgba(255,255,255,0.18);
-    background: rgba(255,255,255,0.1);
+    border: 0.5px solid rgba(255, 255, 255, 0.18);
+    background: rgba(255, 255, 255, 0.1);
     color: #fff;
     font-size: 12.5px;
     font-weight: 500;
@@ -2090,7 +2371,7 @@
   }
 
   .tt-btn:hover {
-    background: rgba(255,255,255,0.2);
+    background: rgba(255, 255, 255, 0.2);
   }
 
   .tt-grid-scroll {
@@ -2098,53 +2379,61 @@
     min-height: 0;
     overflow: auto;
     border-radius: 16px;
-    border: 0.5px solid rgba(255,255,255,0.14);
-    background: rgba(255,255,255,0.05);
+    border: 0.5px solid rgba(255, 255, 255, 0.14);
+    background: rgba(255, 255, 255, 0.05);
   }
 
   .tt-grid {
     display: grid;
-    grid-template-columns: 110px repeat(var(--tt-cols, 6), minmax(120px, 1fr));
+    grid-template-columns: 100px repeat(var(--tt-cols, 5), minmax(130px, 1fr));
     min-width: max-content;
   }
 
   .tt-cell {
-    border-right: 0.5px solid rgba(255,255,255,0.08);
-    border-bottom: 0.5px solid rgba(255,255,255,0.08);
-    padding: 10px;
+    border-right: 0.5px solid rgba(255, 255, 255, 0.08);
+    border-bottom: 0.5px solid rgba(255, 255, 255, 0.08);
+    padding: 8px;
     position: relative;
   }
 
   .tt-corner {
-    background: rgba(255,255,255,0.07);
+    background: rgba(255, 255, 255, 0.07);
     position: sticky;
     left: 0;
     z-index: 2;
   }
 
   .tt-daycell {
-    background: rgba(255,255,255,0.07);
-    color: rgba(255,255,255,0.85);
-    font-family: "Montserrat", -apple-system, sans-serif;
-    font-weight: 600;
-    font-size: 12.5px;
+    background: rgba(255, 255, 255, 0.07);
+    color: rgba(255, 255, 255, 0.85);
+    font-family: "Poppins", -apple-system, sans-serif;
+    font-weight: 700;
+    font-size: 12px;
     text-transform: uppercase;
     letter-spacing: 0.03em;
     text-align: center;
     position: sticky;
     top: 0;
     z-index: 1;
-  }
-
-  .tt-timecell {
-    background: rgba(255,255,255,0.05);
-    color: rgba(255,255,255,0.65);
-    font-size: 11.5px;
-    text-align: center;
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 4px;
+  }
+
+  .tt-daycell.tt-today {
+    color: #4ade80;
+  }
+
+  .tt-timecell {
+    background: rgba(255, 255, 255, 0.05);
+    color: rgba(255, 255, 255, 0.65);
+    font-size: 11px;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
     position: sticky;
     left: 0;
     z-index: 1;
@@ -2161,9 +2450,19 @@
   }
 
   .tt-slot {
-    min-height: 62px;
+    min-height: 78px;
     cursor: default;
-    transition: background 0.15s ease;
+    transition: background 0.15s ease, box-shadow 0.15s ease;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .tt-slot-now {
+    box-shadow: inset 0 0 0 2px #4ade80;
+  }
+
+  .tt-slot-next {
+    box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.55);
   }
 
   .tt-dot {
@@ -2173,17 +2472,18 @@
     width: 12px;
     height: 12px;
     border-radius: 50%;
-    border: 1px solid rgba(0,0,0,0.15);
+    border: 1px solid rgba(0, 0, 0, 0.15);
     cursor: pointer;
     padding: 0;
+    z-index: 2;
   }
 
   .tt-swatches {
     position: absolute;
     top: 22px;
     right: 4px;
-    background: rgba(20,20,28,0.95);
-    border: 0.5px solid rgba(255,255,255,0.18);
+    background: rgba(20, 20, 28, 0.95);
+    border: 0.5px solid rgba(255, 255, 255, 0.18);
     border-radius: 10px;
     padding: 6px;
     display: none;
@@ -2202,7 +2502,7 @@
     width: 18px;
     height: 18px;
     border-radius: 50%;
-    border: 1px solid rgba(255,255,255,0.25);
+    border: 1px solid rgba(255, 255, 255, 0.25);
     cursor: pointer;
     padding: 0;
   }
@@ -2215,49 +2515,97 @@
   .tt-swatch.none::after {
     content: '';
     position: absolute;
-    top: 50%; left: 8%;
+    top: 50%;
+    left: 8%;
     width: 84%;
     height: 1.5px;
-    background: rgba(255,255,255,0.6);
+    background: rgba(255, 255, 255, 0.6);
     transform: rotate(45deg);
+  }
+
+  .tt-free-btn {
+    align-self: flex-start;
+    margin-top: 2px;
+    padding: 2px 8px;
+    border-radius: 999px;
+    border: 0.5px solid rgba(255, 255, 255, 0.3);
+    background: transparent;
+    color: rgba(255, 255, 255, 0.55);
+    font-size: 9.5px;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    cursor: pointer;
+  }
+
+  .tt-free-btn.active {
+    background: rgba(74, 222, 128, 0.25);
+    border-color: rgba(74, 222, 128, 0.6);
+    color: #4ade80;
+  }
+
+  .tt-fields {
+    margin-top: 4px;
+  }
+
+  .tt-slot.tt-is-free .tt-fields {
+    display: none;
+  }
+
+  .tt-free-label {
+    display: none;
+    color: #4ade80;
+    font-weight: 700;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    margin-top: 8px;
+  }
+
+  .tt-slot.tt-is-free .tt-free-label {
+    display: block;
   }
 
   .tt-subject {
     outline: none;
-    color: rgba(255,255,255,0.85);
+    color: rgba(255, 255, 255, 0.9);
     font-size: 13px;
-    font-weight: 600;
+    font-weight: 500;
     min-height: 16px;
-    margin-top: 4px;
     margin-right: 16px;
   }
 
-  .tt-room {
+  .tt-room,
+  .tt-teacher {
     outline: none;
-    color: rgba(255,255,255,0.6);
-    font-size: 11.5px;
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 11px;
     min-height: 14px;
     margin-top: 2px;
   }
 
   .tt-slot-colored .tt-subject,
-  .tt-slot-colored .tt-room {
+  .tt-slot-colored .tt-room,
+  .tt-slot-colored .tt-teacher {
     color: #1a1a1a;
     opacity: 0.85;
   }
 
   .tt-subject:empty:before,
-  .tt-room:empty:before {
+  .tt-room:empty:before,
+  .tt-teacher:empty:before {
     content: attr(data-placeholder);
     opacity: 0.35;
   }
 
   @media (max-width: 720px) {
     .tt-wrap {
-      padding: 0 12px 16px;
+      padding: 0 10px 14px;
     }
     .tt-grid {
-      grid-template-columns: 84px repeat(var(--tt-cols, 6), minmax(96px, 1fr));
+      grid-template-columns: 76px repeat(var(--tt-cols, 5), minmax(104px, 1fr));
+    }
+    .tt-next-banner {
+      padding: 10px 12px;
     }
   }
 </style>
@@ -2285,76 +2633,115 @@
   </div>
 
   <div class="toolbar" id="notesToolbar">
-    <button class="tb-btn" id="addNote" title="Add note" aria-label="Add note">+</button>
-    <button class="tb-btn" id="addImage" title="Add image" aria-label="Add image">&#128247;</button>
+    <div class="add-menu-wrap" id="addMenuWrap">
+      <button class="tb-btn" id="addMenuBtn" title="Add" aria-label="Add">+</button>
+      <div class="add-menu" id="addMenu">
+        <button class="add-menu-item" id="addNote">Note</button>
+        <button class="add-menu-item" id="addStickyCanvas">Sticky Canvas</button>
+        <button class="add-menu-item" id="addTextLine">Text Line</button>
+        <button class="add-menu-item" id="addTable">Table</button>
+        <button class="add-menu-item" id="addImage">Import Image</button>
+      </div>
+    </div>
     <button class="tb-btn" id="removeWorkspaceBg" title="Remove workspace background" aria-label="Remove workspace background" style="display:none;">&#8635;</button>
   </div>
 
   <div class="notes-subswitcher" id="notesSubswitcher">
-    <button class="subswitch-btn active" data-sub="canvas">Notes</button>
-    <button class="subswitch-btn" data-sub="subjects">Subject Notes</button>
+    <button class="subswitch-btn active" data-sub="board">Notes</button>
     <button class="subswitch-btn" data-sub="timetable">Timetable</button>
   </div>
 
-  <div class="notes-sub active" id="sub-canvas">
-    <div class="notes-layer" id="notesLayer"></div>
-    <div class="hint" id="hint">Drag the handle to move &middot; click the dot for color &middot; hover for B / I / U</div>
-  </div>
-
-  <div class="notes-sub" id="sub-subjects">
-    <div class="subjects-wrap">
-      <div class="subjects-sidebar" id="subjectsSidebar">
-        <div class="subjects-sidebar-head">
-          <span>Subjects</span>
-          <button class="subject-add-btn" id="addSubject" aria-label="Add subject">+</button>
-        </div>
-        <div class="subjects-list" id="subjectsList"></div>
-      </div>
-      <div class="subject-canvas-wrap">
-        <div class="subject-canvas-head" id="subjectCanvasHead">
-          <span id="subjectCanvasTitle">Select a subject</span>
-          <button class="tb-btn subject-add-note-btn" id="addSubjectNote" title="Add note to subject" aria-label="Add note to subject" style="display:none;">+</button>
-        </div>
-        <div class="notes-layer subject-notes-layer" id="subjectNotesLayer"></div>
-        <div class="subjects-empty" id="subjectsEmpty">Create a subject to start adding notes for it.</div>
-      </div>
+  <div class="notes-sub active" id="sub-board">
+    <div class="canvas-viewport" id="canvasViewport">
+      <div class="notes-layer" id="notesLayer"></div>
     </div>
-
-    <div class="mini-cal-wrap">
-      <button class="mini-cal-toggle" id="miniCalToggle" aria-expanded="false">
-        <span>Calendar</span>
-        <svg class="mini-cal-chevron" width="10" height="6" viewBox="0 0 10 6" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M1 1L5 5L9 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
-      </button>
-      <div class="mini-cal-collapse" id="miniCalCollapse">
-        <div class="mini-cal-card">
-          <div class="cal-head">
-            <div class="cal-title" id="calTitle">Month Year</div>
-            <div class="cal-nav">
-              <button class="cal-nav-btn" id="calPrev" aria-label="Previous month">&lsaquo;</button>
-              <button class="cal-nav-btn" id="calToday" aria-label="Jump to today" style="width:auto; padding:0 12px; font-size:13px;">Today</button>
-              <button class="cal-nav-btn" id="calNext" aria-label="Next month">&rsaquo;</button>
-            </div>
-          </div>
-          <div class="cal-grid mini-cal-grid" id="calGrid"></div>
-        </div>
+    <div class="hint" id="hint">Drag the handle to move &middot; click the dot for color &middot; hover for B / I / U</div>
+    <div class="tl-toolbar" id="tlToolbar">
+      <select id="tlFontSelect" title="Font family">
+        <option value="" disabled selected>Font</option>
+      </select>
+      <select id="tlSizeSelect" title="Font size">
+        <option value="" disabled selected>Size</option>
+      </select>
+      <div class="tl-color-wrap" id="tlColorWrap" title="Text color">
+        <input type="color" id="tlColorInput" value="#ffffff">
       </div>
+      <button class="tl-fmt-btn" id="tlBoldBtn" title="Bold"><b>B</b></button>
+      <button class="tl-fmt-btn" id="tlItalicBtn" title="Italic"><i>I</i></button>
+      <button class="tl-fmt-btn" id="tlUnderlineBtn" title="Underline"><u>U</u></button>
+      <span class="nb-toolbar-divider"></span>
+      <button class="tl-fmt-btn" id="tlDeleteBtn" title="Delete" aria-label="Remove text line">&times;</button>
     </div>
   </div>
 
   <div class="notes-sub" id="sub-timetable">
     <div class="tt-wrap">
+      <div class="tt-next-banner" id="ttNextBanner">
+        <div class="tt-next-label" id="ttNextLabel">No timetable yet</div>
+        <div class="tt-next-detail" id="ttNextDetail">Fill in the grid below to see your next lesson here.</div>
+      </div>
       <div class="tt-toolbar">
         <div class="tt-title">Weekly Timetable</div>
+        <div class="tt-fmt-group">
+          <button class="tt-fmt-btn" id="ttBoldBtn" title="Bold"><b>B</b></button>
+          <button class="tt-fmt-btn" id="ttItalicBtn" title="Italic"><i>I</i></button>
+          <button class="tt-fmt-btn" id="ttUnderlineBtn" title="Underline"><u>U</u></button>
+        </div>
         <div class="tt-actions">
           <button class="tt-btn" id="ttAddPeriod">+ Period</button>
           <button class="tt-btn" id="ttRemovePeriod">&minus; Period</button>
-          <button class="tt-btn" id="ttToggleSat">+ Saturday</button>
+          <button class="tt-btn" id="ttAddDay">+ Day</button>
+          <button class="tt-btn" id="ttRemoveDay">&minus; Day</button>
         </div>
       </div>
       <div class="tt-grid-scroll">
         <div class="tt-grid" id="ttGrid"></div>
+      </div>
+
+      <div class="subjects-collapse-wrap">
+        <button class="subjects-collapse-toggle" id="subjectsCollapseToggle" aria-expanded="false">
+          <span>Subject Notes</span>
+          <svg class="subjects-collapse-chevron" width="10" height="6" viewBox="0 0 10 6" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M1 1L5 5L9 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </button>
+        <div class="subjects-collapse-body" id="subjectsCollapseBody">
+          <div class="subjects-wrap">
+            <div class="subjects-sidebar" id="subjectsSidebar">
+              <div class="subjects-sidebar-head">
+                <span>Subjects</span>
+                <button class="subject-add-btn" id="addSubject" aria-label="Add subject">+</button>
+              </div>
+              <div class="subjects-list" id="subjectsList"></div>
+            </div>
+            <div class="subject-canvas-wrap">
+              <div class="notebook-toolbar" id="notebookToolbar" style="display:none;">
+                <select id="nbFontSelect" title="Font family for selected text">
+                  <option value="" disabled selected>Font</option>
+                </select>
+                <select id="nbSizeSelect" title="Font size for selected text">
+                  <option value="" disabled selected>Size</option>
+                </select>
+                <div class="nb-color-wrap" id="nbColorWrap" title="Text color for selected text">
+                  A
+                  <input type="color" id="nbColorInput" value="#ffffff">
+                </div>
+                <button class="nb-fmt-btn" id="nbBoldBtn" title="Bold"><b>B</b></button>
+                <button class="nb-fmt-btn" id="nbItalicBtn" title="Italic"><i>I</i></button>
+                <button class="nb-fmt-btn" id="nbUnderlineBtn" title="Underline"><u>U</u></button>
+                <span class="nb-toolbar-divider"></span>
+                <button class="nb-fmt-btn" id="nbAlignLeftBtn" title="Align left">&#8676;</button>
+                <button class="nb-fmt-btn" id="nbAlignCenterBtn" title="Align center">&#8596;</button>
+                <button class="nb-fmt-btn" id="nbAlignRightBtn" title="Align right">&#8677;</button>
+              </div>
+              <div class="notebook-wrap" id="notebookWrap">
+                <div class="notebook-placeholder" id="notebookPlaceholder">START NOTES</div>
+                <div class="notebook-input" id="quickNoteInput" contenteditable="true"></div>
+              </div>
+              <div class="subjects-empty" id="subjectsEmpty">Create a subject to start adding notes for it.</div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -2418,24 +2805,43 @@
 
 </div>
 
+<div id="debugErrorBanner" style="display:none; position:fixed; top:0; left:0; right:0; z-index:99999; background:#c0392b; color:#fff; padding:12px 16px; font-family:monospace; font-size:12px; white-space:pre-wrap; word-break:break-word; max-height:40vh; overflow-y:auto;"></div>
+<script>
+  function showDebugError(prefix, msg, loc) {
+    var banner = document.getElementById('debugErrorBanner');
+    if (!banner) return;
+    banner.style.display = 'block';
+    banner.textContent += '[' + prefix + '] ' + msg + (loc ? ('  @ ' + loc) : '') + '\n';
+  }
+  window.addEventListener('error', function(e) {
+    var msg = e.message || 'Unknown error';
+    var loc = (e.filename ? e.filename.split('/').pop() : '?') + ':' + (e.lineno || '?') + ':' + (e.colno || '?');
+    showDebugError('ERROR', msg, loc);
+  });
+  window.addEventListener('unhandledrejection', function(e) {
+    var reason = e.reason;
+    var msg = (reason && (reason.message || reason.toString())) || 'Unhandled promise rejection';
+    showDebugError('PROMISE', msg, '');
+  });
+</script>
+
 <script>
 (function() {
   /* ---------- Device detection ---------- */
   var isTouchDevice = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0) || window.matchMedia('(pointer: coarse)').matches;
   if (isTouchDevice) document.body.classList.add('touch-device');
 
-  /* ---------- Notes sub-switcher: Canvas vs Subject Notes (now the only navigation) ---------- */
+  /* ---------- Notes sub-switcher: Notes board / Subject Notes / Canvas ---------- */
   var subSwitchBtns = document.querySelectorAll('.subswitch-btn');
   var notesSubs = {
-    canvas: document.getElementById('sub-canvas'),
-    subjects: document.getElementById('sub-subjects'),
+    board: document.getElementById('sub-board'),
     timetable: document.getElementById('sub-timetable')
   };
   var notesToolbar = document.getElementById('notesToolbar');
-  var activeNotesSub = 'canvas';
+  var activeNotesSub = 'board';
 
   function updateToolbarVisibility() {
-    notesToolbar.style.display = activeNotesSub === 'canvas' ? 'flex' : 'none';
+    notesToolbar.style.display = activeNotesSub === 'board' ? 'flex' : 'none';
   }
 
   subSwitchBtns.forEach(function(btn) {
@@ -2451,563 +2857,182 @@
   });
   updateToolbarVisibility();
 
-  /* ---------- Collapsible mini calendar ---------- */
-  var miniCalToggle = document.getElementById('miniCalToggle');
-  var miniCalCollapse = document.getElementById('miniCalCollapse');
-  var MINI_CAL_OPEN_KEY = 'claude_workspace_minical_open_v1';
-
-  function setMiniCalOpen(open) {
-    miniCalCollapse.classList.toggle('open', open);
-    miniCalToggle.setAttribute('aria-expanded', open ? 'true' : 'false');
-    try { localStorage.setItem(MINI_CAL_OPEN_KEY, open ? '1' : '0'); } catch (err) {}
-  }
-
-  miniCalToggle.addEventListener('click', function() {
-    setMiniCalOpen(!miniCalCollapse.classList.contains('open'));
-  });
-
-  (function initMiniCalOpenState() {
-    var saved;
-    try { saved = localStorage.getItem(MINI_CAL_OPEN_KEY); } catch (err) {}
-    setMiniCalOpen(saved === '1');
-  })();
-
-  /* ---------- Calendar grid ---------- */
-  var calTitle = document.getElementById('calTitle');
-  var calGrid = document.getElementById('calGrid');
-  var today = new Date();
-  var viewYear = today.getFullYear();
-  var viewMonth = today.getMonth();
-  var dows = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
-  /* App-filtered calendars were removed from the UI, but existing saved
-     data for any app-specific calendar stays intact under dayData in case
-     it's needed again \u2014 the calendar now always shows dayData.all. */
-  var activeApp = null;
-
-  var apps = [
-    { id: 'flstudio', name: 'FL Studio', short: 'FL', color: '#e6622c' },
-    { id: 'photoshop', name: 'Photoshop', short: 'Ps', color: '#31a8ff' },
-    { id: 'lightroom', name: 'Lightroom', short: 'Lr', color: '#31c5f0' },
-    { id: 'premiere', name: 'Premiere', short: 'Pr', color: '#9999ff' },
-    { id: 'aftereffects', name: 'After Effects', short: 'Ae', color: '#b4a0ff' },
-    { id: 'illustrator', name: 'Illustrator', short: 'Ai', color: '#ff9a00' },
-    { id: 'blender', name: 'Blender', short: 'Bl', color: '#e87d0d' }
-  ];
-
-  var dayColors = ['#ffd6a5', '#a0e7e5', '#ffadad', '#caffbf', '#bdb2ff', '#fdffb6'];
-
-  /* dayData[appKey][ "YYYY-M-D" ] = { color, html } ; appKey 'all' = general calendar */
-  var dayData = { all: {} };
-  apps.forEach(function(a) { dayData[a.id] = {}; });
-
-  function dataStore() {
-    return dayData.all;
-  }
-
-  function dayKey(y, m, d) {
-    return y + '-' + m + '-' + d;
-  }
-
-  var ICON_CHOICES = [
-    { key: 'flag', label: '\u2691' },
-    { key: 'star', label: '\u2605' },
-    { key: 'check', label: '\u2713' },
-    { key: 'alert', label: '!' }
-  ];
-
-  function stripHtml(html) {
-    var tmp = document.createElement('div');
-    tmp.innerHTML = html || '';
-    return (tmp.textContent || tmp.innerText || '').trim();
-  }
-
-  var DAY_TAGS = ['Test', 'Poznámky', 'Volno'];
-
-  function buildCell(outer, cell, key, d) {
-    cell.innerHTML = '';
-
-    var store = dataStore();
-    var entry = store[key] || {};
-
-    if (entry.color) {
-      cell.classList.add('has-color');
-      cell.style.background = entry.color;
-      cell.style.setProperty('--cell-text', '#1a1a1a');
-    } else {
-      cell.classList.remove('has-color');
-      cell.style.background = '';
-    }
-
-    var daynum = document.createElement('div');
-    daynum.className = 'cal-daynum';
-    daynum.textContent = d;
-    cell.appendChild(daynum);
-
-    if (entry.tag) {
-      var tagBadge = document.createElement('div');
-      tagBadge.className = 'tag-badge';
-      tagBadge.textContent = entry.tag;
-      cell.appendChild(tagBadge);
-    }
-
-    if (entry.icons && entry.icons.length) {
-      var iconsWrap = document.createElement('div');
-      iconsWrap.className = 'cell-icons';
-      entry.icons.forEach(function(iconKey) {
-        var found = ICON_CHOICES.filter(function(ic) { return ic.key === iconKey; })[0];
-        if (found) {
-          var span = document.createElement('span');
-          span.textContent = found.label;
-          iconsWrap.appendChild(span);
-        }
-      });
-      cell.appendChild(iconsWrap);
-    }
-
-    var plainText = stripHtml(entry.html);
-    if (plainText) {
-      var snip = document.createElement('div');
-      snip.className = 'preview-snip';
-      snip.textContent = plainText;
-      cell.appendChild(snip);
-    }
-
-    var panel = document.createElement('div');
-    panel.className = 'exp-panel';
-
-    var head = document.createElement('div');
-    head.className = 'exp-head';
-
-    var tagRow = document.createElement('div');
-    tagRow.className = 'exp-tags';
-    DAY_TAGS.forEach(function(tag) {
-      var tb = document.createElement('button');
-      tb.className = 'exp-tag-btn' + (entry.tag === tag ? ' active' : '');
-      tb.textContent = tag;
-      tb.addEventListener('click', function(e) {
-        e.stopPropagation();
-        entry.tag = entry.tag === tag ? null : tag;
-        store[key] = entry;
-        buildCell(outer, cell, key, d);
-        saveWorkspace();
-      });
-      tagRow.appendChild(tb);
-    });
-
-    var swatchRow = document.createElement('div');
-    swatchRow.className = 'exp-swatches';
-
-    var noneSw = document.createElement('button');
-    noneSw.className = 'exp-swatch none';
-    noneSw.title = 'No color';
-    noneSw.addEventListener('click', function(e) {
-      e.stopPropagation();
-      entry.color = null;
-      store[key] = entry;
-      buildCell(outer, cell, key, d);
-      saveWorkspace();
-    });
-    swatchRow.appendChild(noneSw);
-
-    dayColors.forEach(function(c) {
-      var sw = document.createElement('button');
-      sw.className = 'exp-swatch';
-      sw.style.background = c;
-      sw.addEventListener('click', function(e) {
-        e.stopPropagation();
-        entry.color = c;
-        store[key] = entry;
-        buildCell(outer, cell, key, d);
-        saveWorkspace();
-      });
-      swatchRow.appendChild(sw);
-    });
-
-    var customWrap = document.createElement('div');
-    customWrap.className = 'exp-swatch-custom';
-    var customInput = document.createElement('input');
-    customInput.type = 'color';
-    customInput.value = entry.color || '#ffffff';
-    customInput.addEventListener('input', function(e) {
-      entry.color = e.target.value;
-      store[key] = entry;
-      buildCell(outer, cell, key, d);
-      saveWorkspace();
-    });
-    customWrap.appendChild(customInput);
-    swatchRow.appendChild(customWrap);
-
-    var textBox = document.createElement('div');
-    textBox.className = 'exp-text';
-    textBox.contentEditable = 'true';
-    textBox.setAttribute('data-placeholder', 'Add a note for this day…');
-    textBox.innerHTML = entry.html || '';
-    textBox.addEventListener('pointerdown', function(e) { e.stopPropagation(); });
-    textBox.addEventListener('click', function(e) { e.stopPropagation(); });
-    textBox.addEventListener('input', function() {
-      entry.html = textBox.innerHTML;
-      store[key] = entry;
-      saveWorkspace();
-    });
-    textBox.addEventListener('blur', function() {
-      entry.html = textBox.innerHTML;
-      store[key] = entry;
-      buildCell(outer, cell, key, d);
-    });
-
-    var iconRow = document.createElement('div');
-    iconRow.className = 'exp-icons';
-    if (!entry.icons) entry.icons = [];
-    ICON_CHOICES.forEach(function(ic) {
-      var ib = document.createElement('button');
-      ib.className = 'exp-icon-btn' + (entry.icons.indexOf(ic.key) > -1 ? ' active' : '');
-      ib.textContent = ic.label;
-      ib.addEventListener('click', function(e) {
-        e.stopPropagation();
-        var idx = entry.icons.indexOf(ic.key);
-        if (idx > -1) { entry.icons.splice(idx, 1); } else { entry.icons.push(ic.key); }
-        store[key] = entry;
-        buildCell(outer, cell, key, d);
-        saveWorkspace();
-      });
-      iconRow.appendChild(ib);
-    });
-
-    head.appendChild(tagRow);
-    panel.appendChild(head);
-    panel.appendChild(swatchRow);
-    panel.appendChild(textBox);
-    panel.appendChild(iconRow);
-    cell.appendChild(panel);
-  }
-
-  function renderCalendar() {
-    calGrid.innerHTML = '';
-    dows.forEach(function(d) {
-      var el = document.createElement('div');
-      el.className = 'cal-dow';
-      el.textContent = d;
-      calGrid.appendChild(el);
-    });
-
-    var first = new Date(viewYear, viewMonth, 1);
-    var startDow = first.getDay();
-    var daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
-
-    calTitle.textContent = first.toLocaleDateString(undefined, { month: 'long', year: 'numeric' });
-
-    for (var i = 0; i < startDow; i++) {
-      var emptyOuter = document.createElement('div');
-      emptyOuter.className = 'cal-cell-outer';
-      var empty = document.createElement('div');
-      empty.className = 'cal-cell empty';
-      emptyOuter.appendChild(empty);
-      calGrid.appendChild(emptyOuter);
-    }
-
-    for (var d = 1; d <= daysInMonth; d++) {
-      var key = dayKey(viewYear, viewMonth, d);
-      var outer = document.createElement('div');
-      outer.className = 'cal-cell-outer';
-
-      var cell = document.createElement('div');
-      cell.className = 'cal-cell';
-      var isToday = d === today.getDate() && viewMonth === today.getMonth() && viewYear === today.getFullYear();
-      if (isToday) cell.classList.add('today');
-
-      buildCell(outer, cell, key, d);
-
-      outer.appendChild(cell);
-      calGrid.appendChild(outer);
-
-      /* Click/tap toggles the expanded view for this day. */
-      outer.addEventListener('click', function(o) {
-        return function(e) {
-          if (o.classList.contains('tap-expanded')) {
-            if (e.target.closest('.exp-panel')) return;
-            o.classList.remove('tap-expanded');
-          } else {
-            Array.prototype.forEach.call(calGrid.querySelectorAll('.tap-expanded'), function(el) {
-              el.classList.remove('tap-expanded');
-            });
-            o.classList.add('tap-expanded');
-          }
-        };
-      }(outer));
-    }
-  }
-
-  document.getElementById('calPrev').addEventListener('click', function() {
-    viewMonth--;
-    if (viewMonth < 0) { viewMonth = 11; viewYear--; }
-    renderCalendar();
-    saveWorkspace();
-  });
-
-  document.getElementById('calNext').addEventListener('click', function() {
-    viewMonth++;
-    if (viewMonth > 11) { viewMonth = 0; viewYear++; }
-    renderCalendar();
-    saveWorkspace();
-  });
-
-  document.getElementById('calToday').addEventListener('click', function() {
-    viewYear = today.getFullYear();
-    viewMonth = today.getMonth();
-    renderCalendar();
-    saveWorkspace();
-  });
-
-  setInterval(function() {
-    var now = new Date();
-    if (now.getDate() !== today.getDate()) {
-      today = now;
-      renderCalendar();
-    }
-  }, 60000);
-
-  /* ---------- Timetable ---------- */
-  var ttGrid = document.getElementById('ttGrid');
-  var ttAddPeriodBtn = document.getElementById('ttAddPeriod');
-  var ttRemovePeriodBtn = document.getElementById('ttRemovePeriod');
-  var ttToggleSatBtn = document.getElementById('ttToggleSat');
-  var DAY_FULL_NAMES = { Mon: 'Monday', Tue: 'Tuesday', Wed: 'Wednesday', Thu: 'Thursday', Fri: 'Friday', Sat: 'Saturday', Sun: 'Sunday' };
-
-  function defaultTimetable() {
-    return {
-      days: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'],
-      periods: [
-        { start: '08:00', end: '08:45' },
-        { start: '08:55', end: '09:40' },
-        { start: '09:50', end: '10:35' },
-        { start: '10:55', end: '11:40' },
-        { start: '11:50', end: '12:35' },
-        { start: '12:45', end: '13:30' }
-      ],
-      cells: {}
-    };
-  }
-
-  var timetable = defaultTimetable();
-
-  function normalizeTimetable(t) {
-    var base = defaultTimetable();
-    if (!t) return base;
-    return {
-      days: Array.isArray(t.days) && t.days.length ? t.days : base.days,
-      periods: Array.isArray(t.periods) && t.periods.length ? t.periods : base.periods,
-      cells: t.cells && typeof t.cells === 'object' ? t.cells : {}
-    };
-  }
-
-  function ttKey(dayIdx, periodIdx) {
-    return dayIdx + '-' + periodIdx;
-  }
-
-  /* Pushes the timetable to the Android wrapper app (if this page is running
-     inside it), so the home-screen widget can show today's classes without
-     needing its own separate data entry UI. No-op in a normal browser. */
-  function pushTimetableToNative() {
-    if (window.NotesinoNative && window.NotesinoNative.saveTimetable) {
-      try { window.NotesinoNative.saveTimetable(JSON.stringify(timetable)); } catch (err) {}
-    }
-  }
-
-  function renderTimetable() {
-    ttToggleSatBtn.textContent = timetable.days.indexOf('Sat') > -1 ? '− Saturday' : '+ Saturday';
-    ttGrid.innerHTML = '';
-    ttGrid.style.setProperty('--tt-cols', timetable.days.length);
-
-    var corner = document.createElement('div');
-    corner.className = 'tt-cell tt-corner';
-    ttGrid.appendChild(corner);
-
-    timetable.days.forEach(function(day) {
-      var head = document.createElement('div');
-      head.className = 'tt-cell tt-daycell';
-      head.textContent = DAY_FULL_NAMES[day] || day;
-      ttGrid.appendChild(head);
-    });
-
-    timetable.periods.forEach(function(period, pIdx) {
-      var timeCell = document.createElement('div');
-      timeCell.className = 'tt-cell tt-timecell';
-
-      var startEl = document.createElement('span');
-      startEl.className = 'tt-time-part';
-      startEl.contentEditable = 'true';
-      startEl.textContent = period.start;
-      startEl.addEventListener('pointerdown', function(e) { e.stopPropagation(); });
-      startEl.addEventListener('blur', function() {
-        period.start = startEl.textContent.trim();
-        saveWorkspace();
-      });
-
-      var sep = document.createElement('span');
-      sep.className = 'tt-time-sep';
-      sep.textContent = '–';
-
-      var endEl = document.createElement('span');
-      endEl.className = 'tt-time-part';
-      endEl.contentEditable = 'true';
-      endEl.textContent = period.end;
-      endEl.addEventListener('pointerdown', function(e) { e.stopPropagation(); });
-      endEl.addEventListener('blur', function() {
-        period.end = endEl.textContent.trim();
-        saveWorkspace();
-      });
-
-      timeCell.appendChild(startEl);
-      timeCell.appendChild(sep);
-      timeCell.appendChild(endEl);
-      ttGrid.appendChild(timeCell);
-
-      timetable.days.forEach(function(day, dIdx) {
-        var key = ttKey(dIdx, pIdx);
-        var entry = timetable.cells[key] || {};
-
-        var cell = document.createElement('div');
-        cell.className = 'tt-cell tt-slot';
-        if (entry.color) {
-          cell.style.background = entry.color;
-          cell.classList.add('tt-slot-colored');
-        }
-
-        var panel = document.createElement('div');
-        panel.className = 'tt-swatches';
-
-        function pickColor(c) {
-          entry.color = c;
-          timetable.cells[key] = entry;
-          if (c) {
-            cell.style.background = c;
-            cell.classList.add('tt-slot-colored');
-          } else {
-            cell.style.background = '';
-            cell.classList.remove('tt-slot-colored');
-          }
-          dot.style.background = c || 'rgba(255,255,255,0.25)';
-          panel.classList.remove('open');
-          saveWorkspace();
-        }
-
-        dayColors.forEach(function(c) {
-          var sw = document.createElement('button');
-          sw.className = 'tt-swatch';
-          sw.style.background = c;
-          sw.addEventListener('click', function(e) { e.stopPropagation(); pickColor(c); });
-          panel.appendChild(sw);
-        });
-        var noneSw = document.createElement('button');
-        noneSw.className = 'tt-swatch none';
-        noneSw.title = 'No color';
-        noneSw.addEventListener('click', function(e) { e.stopPropagation(); pickColor(null); });
-        panel.appendChild(noneSw);
-
-        var dot = document.createElement('button');
-        dot.className = 'tt-dot';
-        dot.style.background = entry.color || 'rgba(255,255,255,0.25)';
-        dot.title = 'Color';
-        dot.addEventListener('click', function(e) {
-          e.stopPropagation();
-          var isOpen = panel.classList.contains('open');
-          document.querySelectorAll('.tt-swatches.open').forEach(function(p) { p.classList.remove('open'); });
-          panel.classList.toggle('open', !isOpen);
-        });
-
-        var subjectEl = document.createElement('div');
-        subjectEl.className = 'tt-subject';
-        subjectEl.contentEditable = 'true';
-        subjectEl.setAttribute('data-placeholder', 'Subject');
-        subjectEl.textContent = entry.subject || '';
-        subjectEl.addEventListener('pointerdown', function(e) { e.stopPropagation(); });
-        subjectEl.addEventListener('blur', function() {
-          entry.subject = subjectEl.textContent.trim();
-          timetable.cells[key] = entry;
-          saveWorkspace();
-        });
-
-        var roomEl = document.createElement('div');
-        roomEl.className = 'tt-room';
-        roomEl.contentEditable = 'true';
-        roomEl.setAttribute('data-placeholder', 'Room');
-        roomEl.textContent = entry.room || '';
-        roomEl.addEventListener('pointerdown', function(e) { e.stopPropagation(); });
-        roomEl.addEventListener('blur', function() {
-          entry.room = roomEl.textContent.trim();
-          timetable.cells[key] = entry;
-          saveWorkspace();
-        });
-
-        cell.appendChild(dot);
-        cell.appendChild(panel);
-        cell.appendChild(subjectEl);
-        cell.appendChild(roomEl);
-        ttGrid.appendChild(cell);
-      });
-    });
-  }
-
-  document.addEventListener('pointerdown', function(e) {
-    if (!e.target.closest('.tt-slot')) {
-      document.querySelectorAll('.tt-swatches.open').forEach(function(p) { p.classList.remove('open'); });
-    }
-  });
-
-  ttAddPeriodBtn.addEventListener('click', function() {
-    if (timetable.periods.length >= 12) return;
-    timetable.periods.push({ start: '', end: '' });
-    renderTimetable();
-    saveWorkspace();
-  });
-
-  ttRemovePeriodBtn.addEventListener('click', function() {
-    if (timetable.periods.length <= 1) return;
-    var removedIdx = timetable.periods.length - 1;
-    timetable.periods.pop();
-    timetable.days.forEach(function(d, dIdx) { delete timetable.cells[ttKey(dIdx, removedIdx)]; });
-    renderTimetable();
-    saveWorkspace();
-  });
-
-  ttToggleSatBtn.addEventListener('click', function() {
-    var satIdx = timetable.days.indexOf('Sat');
-    if (satIdx > -1) {
-      timetable.periods.forEach(function(p, pIdx) { delete timetable.cells[ttKey(satIdx, pIdx)]; });
-      timetable.days.splice(satIdx, 1);
-    } else {
-      timetable.days.push('Sat');
-    }
-    renderTimetable();
-    saveWorkspace();
-  });
-
   /* ---------- Notes ---------- */
   var colors = ['#ffd6a5', '#a0e7e5', '#ffadad', '#caffbf', '#bdb2ff', '#fdffb6'];
   var layer = document.getElementById('notesLayer');
+  var canvasViewport = document.getElementById('canvasViewport');
   var noteCount = 0;
   var topZ = 10;
   var openSwatchPanel = null;
+
+  /* ---------- Infinite pan/zoom canvas ---------- */
+  var canvasPanX = 0, canvasPanY = 0, canvasZoom = 1;
+  var CANVAS_ZOOM_MIN = 0.15, CANVAS_ZOOM_MAX = 4;
+  var canvasPersistTimer = null;
+
+  function applyCanvasTransform() {
+    layer.style.transform = 'translate3d(' + canvasPanX + 'px, ' + canvasPanY + 'px, 0) scale3d(' + canvasZoom + ', ' + canvasZoom + ', 1)';
+  }
+
+  var canvasSettleTimer = null;
+  function canvasBeginGesture() {
+    clearTimeout(canvasSettleTimer);
+    layer.style.willChange = 'transform';
+  }
+  function canvasEndGestureSoon() {
+    /* Drop the GPU-layer hint shortly after a gesture ends so the browser
+       re-rasterizes the content crisply at the final zoom level, instead
+       of continuing to stretch a lower-resolution cached texture. */
+    clearTimeout(canvasSettleTimer);
+    canvasSettleTimer = setTimeout(function() {
+      layer.style.willChange = 'auto';
+    }, 120);
+  }
+
+  function canvasSaveViewDebounced() {
+    clearTimeout(canvasPersistTimer);
+    canvasPersistTimer = setTimeout(function() {
+      try {
+        localStorage.setItem(CANVAS_VIEW_KEY, JSON.stringify({ x: canvasPanX, y: canvasPanY, z: canvasZoom }));
+      } catch (err) {}
+    }, 300);
+  }
+
+  /* Something is "selected" (blocking canvas pan/zoom) if the gesture
+     starts on an actual item, or a text line / table is currently
+     showing its own selection UI. This is checked fresh at gesture time
+     rather than tracked as one global flag, since selection state lives
+     in a few different places (notes, tables, text lines). */
+  function isCanvasInteractionBlocked(target) {
+    if (target && target.closest && target.closest('.note, .text-line-wrap, .free-image, .tl-toolbar, .swatches, .table-row-btn, .table-col-btn, .table-card-wrap, .sc-canvas-wrap, .sc-toolbar')) return true;
+    if (typeof activeTextLineWrap !== 'undefined' && activeTextLineWrap) return true;
+    if (document.querySelector('.table-card.selected')) return true;
+    return false;
+  }
+
+  canvasViewport.addEventListener('wheel', function(e) {
+    if (isCanvasInteractionBlocked(e.target)) return;
+    e.preventDefault();
+    canvasBeginGesture();
+    var rect = canvasViewport.getBoundingClientRect();
+    var cx = e.clientX - rect.left;
+    var cy = e.clientY - rect.top;
+    /* zoom toward the cursor: keep the point under the cursor fixed */
+    var prevZoom = canvasZoom;
+    var delta = -e.deltaY * 0.0016;
+    var newZoom = Math.max(CANVAS_ZOOM_MIN, Math.min(CANVAS_ZOOM_MAX, canvasZoom * (1 + delta)));
+    if (newZoom === prevZoom) return;
+    var worldX = (cx - canvasPanX) / prevZoom;
+    var worldY = (cy - canvasPanY) / prevZoom;
+    canvasZoom = newZoom;
+    canvasPanX = cx - worldX * canvasZoom;
+    canvasPanY = cy - worldY * canvasZoom;
+    applyCanvasTransform();
+    canvasSaveViewDebounced();
+    canvasEndGestureSoon();
+  }, { passive: false });
+
+  (function() {
+    var panning = false, startX = 0, startY = 0, startPanX = 0, startPanY = 0;
+
+    canvasViewport.addEventListener('pointerdown', function(e) {
+      if (isCanvasInteractionBlocked(e.target)) return;
+      panning = true;
+      canvasViewport.classList.add('panning');
+      canvasBeginGesture();
+      startX = e.clientX;
+      startY = e.clientY;
+      startPanX = canvasPanX;
+      startPanY = canvasPanY;
+      canvasViewport.setPointerCapture(e.pointerId);
+    });
+
+    canvasViewport.addEventListener('pointermove', function(e) {
+      if (!panning) return;
+      canvasPanX = startPanX + (e.clientX - startX);
+      canvasPanY = startPanY + (e.clientY - startY);
+      applyCanvasTransform();
+    });
+
+    function endPan() {
+      if (panning) {
+        panning = false;
+        canvasViewport.classList.remove('panning');
+        canvasSaveViewDebounced();
+        canvasEndGestureSoon();
+      }
+    }
+    canvasViewport.addEventListener('pointerup', endPan);
+    canvasViewport.addEventListener('pointercancel', endPan);
+  })();
+
+  var CANVAS_VIEW_KEY = 'claude_workspace_canvasview_v1';
+  (function restoreCanvasView() {
+    try {
+      var saved = JSON.parse(localStorage.getItem(CANVAS_VIEW_KEY) || 'null');
+      if (saved) {
+        canvasPanX = saved.x || 0;
+        canvasPanY = saved.y || 0;
+        canvasZoom = saved.z || 1;
+      }
+    } catch (err) {}
+    applyCanvasTransform();
+  })();
+
+  /* Converts a viewport (screen) coordinate into the notes-layer's own
+     coordinate space, accounting for the current pan/zoom \u2014 used so new
+     items are placed where they're actually visible right now. */
+  function screenToCanvas(clientX, clientY) {
+    var rect = canvasViewport.getBoundingClientRect();
+    return {
+      x: (clientX - rect.left - canvasPanX) / canvasZoom,
+      y: (clientY - rect.top - canvasPanY) / canvasZoom
+    };
+  }
+
   var FONT_OPTIONS = [
     { id: 'system', label: 'SF Pro', css: '-apple-system, "SF Pro Text", "SF Pro Display", BlinkMacSystemFont, sans-serif' },
-    { id: 'inter', label: 'Inter', css: '"Inter", -apple-system, sans-serif' },
-    { id: 'montserrat', label: 'Montserrat', css: '"Montserrat", -apple-system, sans-serif' },
-    { id: 'georgia', label: 'Georgia', css: 'Georgia, "Times New Roman", serif' },
+    { id: 'poppins', label: 'Poppins', css: '"Poppins", -apple-system, sans-serif' },
+    { id: 'opensans', label: 'Open Sans', css: '"Open Sans", -apple-system, sans-serif' },
     { id: 'mono', label: 'Mono', css: '"SF Mono", "Courier New", monospace' }
   ];
-  var FONT_SIZES = [11, 12, 13, 14.5, 16, 18, 21, 24];
+  /* Desktop gets a wide range of sizes; mobile gets a narrower,
+     screen-appropriate range so text never ends up unreadably large or
+     small on a small screen. Shared by both sticky notes and the
+     Subject Notes notebook. */
+  var FONT_SIZES_DESKTOP = [11, 12, 13, 14.5, 16, 18, 21, 24, 28, 32, 40, 48];
+  var FONT_SIZES_MOBILE = [13, 15, 17, 19, 22, 26];
+  var FONT_SIZES = (isTouchDevice || window.matchMedia('(max-width: 720px)').matches)
+    ? FONT_SIZES_MOBILE
+    : FONT_SIZES_DESKTOP;
 
   document.addEventListener('pointerdown', function(e) {
-    if (openSwatchPanel && !openSwatchPanel.contains(e.target) && !e.target.closest('.note-dot')) {
+    if (openSwatchPanel && !openSwatchPanel.contains(e.target) && !e.target.closest('.note-dot') && !e.target.closest('.subject-dot')) {
       openSwatchPanel.classList.remove('open');
       openSwatchPanel = null;
     }
   });
 
-  function randomPos() {
+  function randomPos(container, needsHeaderClearance) {
+    if (container === layer) {
+      /* Main canvas is pan/zoomable \u2014 place new items somewhere within
+         the area actually visible right now, converted into the layer's
+         own (unbounded) coordinate space. */
+      var vrect = canvasViewport.getBoundingClientRect();
+      var topMin = needsHeaderClearance ? 220 : 20;
+      var sx = Math.random() * Math.max(40, vrect.width - 260) + 20;
+      var sy = Math.random() * Math.max(40, vrect.height - topMin - 200) + topMin;
+      return screenToCanvas(vrect.left + sx, vrect.top + sy);
+    }
     var w = window.innerWidth, h = window.innerHeight;
-    var x = Math.max(20, Math.random() * (w - 260));
-    var y = Math.max(220, Math.random() * (h - 420) + 200);
+    if (container) {
+      var rect = container.getBoundingClientRect();
+      if (rect.width > 40) w = rect.width;
+      if (rect.height > 40) h = rect.height;
+    }
+    var topMin = needsHeaderClearance ? 220 : 20;
+    var x = Math.max(20, Math.random() * Math.max(40, w - 260));
+    var y = Math.max(topMin, Math.random() * Math.max(40, h - topMin - 200) + topMin);
     return { x: x, y: y };
   }
 
@@ -3020,7 +3045,7 @@
     targetLayer = targetLayer || layer;
     noteCount++;
     var color = data && data.color ? data.color : colors[Math.floor(Math.random() * colors.length)];
-    var pos = data && data.x !== undefined ? { x: data.x, y: data.y } : randomPos();
+    var pos = data && data.x !== undefined ? { x: data.x, y: data.y } : randomPos(targetLayer, targetLayer === layer);
 
     var note = document.createElement('div');
     note.className = 'note';
@@ -3189,6 +3214,7 @@
     body.contentEditable = 'true';
     body.setAttribute('data-placeholder', 'Type something…');
     body.innerHTML = (data && data.html) || '';
+    body.classList.toggle('is-empty', !(body.textContent || '').trim());
 
     note.appendChild(head);
     note.appendChild(toolbar2);
@@ -3208,6 +3234,7 @@
     note.appendChild(resizeHandle);
 
     targetLayer.appendChild(note);
+    attachConnectDot(note, canvasLinkLayer, data && data.linkId);
 
     setNoteColor(note, dot, color);
 
@@ -3316,40 +3343,985 @@
 
     closeBtn.addEventListener('click', function(e) {
       e.stopPropagation();
+      purgeConnectionsFor(note.dataset.linkId);
       note.remove();
       saveWorkspace();
     });
 
-    body.addEventListener('input', saveWorkspace);
+    body.addEventListener('input', function() {
+      body.classList.toggle('is-empty', !(body.textContent || '').trim());
+      saveWorkspace();
+    });
     body.addEventListener('pointerdown', function(e) {
       e.stopPropagation();
       note.style.zIndex = ++topZ;
     });
 
-    /* Persist size changes from the native CSS resize handle */
+    /* Persist size changes from the native CSS resize handle, and on
+       touch devices keep this note's control-scale variable in sync so
+       its buttons stay proportional to its actual current size. */
+    var NOTE_SCALE_REF_WIDTH = 220; /* width at which scale = 1, matches the default note width */
+    var NOTE_SCALE_MIN = 0.55;
+    var NOTE_SCALE_MAX = 1.6;
+
+    function updateNoteScale() {
+      if (!isTouchDevice) return;
+      var w = note.getBoundingClientRect().width;
+      var scale = Math.max(NOTE_SCALE_MIN, Math.min(NOTE_SCALE_MAX, w / NOTE_SCALE_REF_WIDTH));
+      note.style.setProperty('--note-scale', scale);
+    }
+
     if (window.ResizeObserver) {
-      var ro = new ResizeObserver(function() { saveWorkspace(); });
+      var noteScaleRaf = null;
+      var ro = new ResizeObserver(function() {
+        if (noteScaleRaf) cancelAnimationFrame(noteScaleRaf);
+        noteScaleRaf = requestAnimationFrame(function() {
+          noteScaleRaf = null;
+          updateNoteScale();
+          saveWorkspace();
+        });
+      });
       ro.observe(note);
     } else {
-      note.addEventListener('pointerup', saveWorkspace);
+      note.addEventListener('pointerup', function() {
+        updateNoteScale();
+        saveWorkspace();
+      });
     }
+    updateNoteScale();
 
     makeDraggable(note, dragHandle);
     makeResizable(note, resizeHandle);
     return note;
   }
 
-  function makeResizable(el, handle) {
-    var startX = 0, startY = 0, startW = 0, startH = 0, resizing = false;
+  /* ---------- Sticky Canvas: a note-card-sized drawable area ---------- */
+  var stickyCanvasColors = ['#000000', '#ffffff', '#ff5c5c', '#5cc8ff', '#5cff8a', '#ffd25c', '#c88aff'];
+
+  function createStickyCanvas(data, targetLayer) {
+    targetLayer = targetLayer || layer;
+    var color = data && data.color ? data.color : colors[Math.floor(Math.random() * colors.length)];
+    var pos = data && data.x !== undefined ? { x: data.x, y: data.y } : randomPos(targetLayer, targetLayer === layer);
+
+    var card = document.createElement('div');
+    card.className = 'note sticky-canvas-card';
+    card.style.left = pos.x + 'px';
+    card.style.top = pos.y + 'px';
+    card.style.width = (data && data.w ? data.w : 220) + 'px';
+    card.style.height = (data && data.h ? data.h : 220) + 'px';
+    card.style.zIndex = ++topZ;
+
+    var head = document.createElement('div');
+    head.className = 'note-head';
+
+    var dotWrap = document.createElement('div');
+    dotWrap.className = 'note-dot-wrap';
+    var dot = document.createElement('button');
+    dot.className = 'note-dot';
+    dot.setAttribute('aria-label', 'Change card color');
+    var swatchPanel = document.createElement('div');
+    swatchPanel.className = 'swatches';
+    colors.forEach(function(c) {
+      var sw = document.createElement('button');
+      sw.className = 'swatch';
+      sw.style.background = c;
+      sw.addEventListener('click', function(e) {
+        e.stopPropagation();
+        setNoteColor(card, dot, c);
+        swatchPanel.classList.remove('open');
+        openSwatchPanel = null;
+        saveWorkspace();
+      });
+      swatchPanel.appendChild(sw);
+    });
+    var customWrap = document.createElement('div');
+    customWrap.className = 'swatch-custom';
+    var customInput = document.createElement('input');
+    customInput.type = 'color';
+    customInput.value = '#ffffff';
+    customInput.addEventListener('input', function(e) {
+      setNoteColor(card, dot, e.target.value);
+      saveWorkspace();
+    });
+    customWrap.appendChild(customInput);
+    swatchPanel.appendChild(customWrap);
+    dot.addEventListener('click', function(e) {
+      e.stopPropagation();
+      var isOpen = swatchPanel.classList.contains('open');
+      if (openSwatchPanel) openSwatchPanel.classList.remove('open');
+      if (!isOpen) {
+        swatchPanel.classList.add('open');
+        openSwatchPanel = swatchPanel;
+      } else {
+        openSwatchPanel = null;
+      }
+    });
+    dotWrap.appendChild(dot);
+    dotWrap.appendChild(swatchPanel);
+
+    var closeBtn = document.createElement('button');
+    closeBtn.className = 'note-close';
+    closeBtn.innerHTML = '&times;';
+    closeBtn.setAttribute('aria-label', 'Remove sticky canvas');
+    closeBtn.addEventListener('click', function(e) {
+      e.stopPropagation();
+      purgeConnectionsFor(card.dataset.linkId);
+      card.remove();
+      saveWorkspace();
+    });
+
+    head.appendChild(dotWrap);
+    head.appendChild(closeBtn);
+
+    /* Mini brush toolbar, same tools as the full Canvas tab, scaled down */
+    var scToolbar = document.createElement('div');
+    scToolbar.className = 'sc-toolbar';
+
+    var scColorWrap = document.createElement('div');
+    scColorWrap.className = 'sc-color-wrap';
+    var scColorInput = document.createElement('input');
+    scColorInput.type = 'color';
+    scColorInput.value = '#000000';
+    scColorWrap.appendChild(scColorInput);
+
+    var scSizeSlider = document.createElement('input');
+    scSizeSlider.type = 'range';
+    scSizeSlider.className = 'sc-size-slider';
+    scSizeSlider.min = '1';
+    scSizeSlider.max = '24';
+    scSizeSlider.value = '3';
+    scSizeSlider.title = 'Brush size';
+
+    var scEraserBtn = document.createElement('button');
+    scEraserBtn.className = 'sc-tool-btn';
+    scEraserBtn.title = 'Eraser';
+    scEraserBtn.innerHTML = '&#10005;';
+
+    var scUndoBtn = document.createElement('button');
+    scUndoBtn.className = 'sc-tool-btn';
+    scUndoBtn.title = 'Undo';
+    scUndoBtn.innerHTML = '&#8630;';
+
+    var scClearBtn = document.createElement('button');
+    scClearBtn.className = 'sc-tool-btn';
+    scClearBtn.title = 'Clear';
+    scClearBtn.textContent = 'Clr';
+
+    scToolbar.appendChild(scColorWrap);
+    scToolbar.appendChild(scSizeSlider);
+    scToolbar.appendChild(scEraserBtn);
+    scToolbar.appendChild(scUndoBtn);
+    scToolbar.appendChild(scClearBtn);
+
+    var scCanvasWrap = document.createElement('div');
+    scCanvasWrap.className = 'sc-canvas-wrap';
+    var canvas = document.createElement('canvas');
+    canvas.className = 'sc-canvas';
+    scCanvasWrap.appendChild(canvas);
+
+    card.appendChild(head);
+    card.appendChild(scToolbar);
+    card.appendChild(scCanvasWrap);
+
+    var dragHandle = document.createElement('div');
+    dragHandle.className = 'note-drag-handle';
+    dragHandle.title = 'Drag to move';
+    var dragGrip = document.createElement('div');
+    dragGrip.className = 'note-drag-grip';
+    dragHandle.appendChild(dragGrip);
+    card.appendChild(dragHandle);
+
+    var resizeHandle = document.createElement('div');
+    resizeHandle.className = 'resize-handle';
+    card.appendChild(resizeHandle);
+
+    targetLayer.appendChild(card);
+    attachConnectDot(card, canvasLinkLayer, data && data.linkId);
+    setNoteColor(card, dot, color);
+
+    /* ---- drawing logic, scoped to this card's own canvas ---- */
+    var ctx = canvas.getContext('2d');
+    var scColor = '#000000';
+    var scSize = 3;
+    var scErasing = false;
+    var scDrawing = false;
+    var scUndoStack = [];
+    var scSavedDataUrl = (data && data.drawing) || null;
+
+    var SC_PREVIEW_MIN = 10, SC_PREVIEW_MAX = 26; /* keep the dot within the toolbar's own height */
+    function scUpdateColorPreview() {
+      var px = Math.max(SC_PREVIEW_MIN, Math.min(SC_PREVIEW_MAX, SC_PREVIEW_MIN + scSize));
+      scColorWrap.style.width = px + 'px';
+      scColorWrap.style.height = px + 'px';
+      scColorWrap.style.background = scErasing ? 'transparent' : scColor;
+    }
+    scUpdateColorPreview();
+
+    var scLastLogicalW = 0, scLastLogicalH = 0;
+
+    function scResize(preserve) {
+      /* Use the card's own logical (unzoomed) size for the canvas's
+         internal resolution, not its current on-screen rendered size \u2014
+         otherwise zooming the outer infinite canvas out and back in
+         would permanently bake in a lower resolution for anything
+         drawn while zoomed out. */
+      var logicalW = scCanvasWrap.offsetWidth;
+      var logicalH = scCanvasWrap.offsetHeight;
+      if (logicalW < 1 || logicalH < 1) return;
+      /* A genuine resize (the card itself got bigger/smaller) should NOT
+         stretch existing artwork \u2014 it should stay at its original size,
+         anchored top-left, same as resizing a canvas in a real drawing
+         app. Only a pure zoom change (logical size unchanged) re-scales
+         the drawing along with everything else on screen. */
+      var isRealResize = scLastLogicalW > 0 &&
+        (Math.abs(logicalW - scLastLogicalW) > 0.5 || Math.abs(logicalH - scLastLogicalH) > 0.5);
+      var ratio = (window.devicePixelRatio || 1) * Math.max(1, canvasZoom || 1);
+      var prev = null;
+      var prevLogicalW = scLastLogicalW, prevLogicalH = scLastLogicalH;
+      if (preserve && canvas.width > 0 && canvas.height > 0) {
+        try { prev = canvas.toDataURL(); } catch (err) { prev = null; }
+      }
+      canvas.width = Math.round(logicalW * ratio);
+      canvas.height = Math.round(logicalH * ratio);
+      canvas.style.width = '100%';
+      canvas.style.height = '100%';
+      ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+      if (prev) {
+        var img = new Image();
+        img.onload = function() {
+          if (isRealResize && prevLogicalW > 0) {
+            /* draw at the ORIGINAL size, not stretched to the new box */
+            ctx.drawImage(img, 0, 0, prevLogicalW, prevLogicalH);
+          } else {
+            ctx.drawImage(img, 0, 0, logicalW, logicalH);
+          }
+        };
+        img.src = prev;
+      } else if (scSavedDataUrl) {
+        var img2 = new Image();
+        img2.onload = function() { ctx.drawImage(img2, 0, 0, logicalW, logicalH); };
+        img2.src = scSavedDataUrl;
+        scSavedDataUrl = null;
+      }
+      scLastLogicalW = logicalW;
+      scLastLogicalH = logicalH;
+    }
+
+    var scSaveTimer = null;
+    function scSaveDebounced() {
+      clearTimeout(scSaveTimer);
+      scSaveTimer = setTimeout(saveWorkspace, 500);
+    }
+
+    function scPushUndo() {
+      try {
+        scUndoStack.push(canvas.toDataURL());
+        if (scUndoStack.length > 20) scUndoStack.shift();
+      } catch (err) {}
+    }
+
+    function scGetPos(e) {
+      var rect = canvas.getBoundingClientRect();
+      return { x: e.clientX - rect.left, y: e.clientY - rect.top };
+    }
+
+    canvas.style.touchAction = 'none';
+    canvas.addEventListener('pointerdown', function(e) {
+      scDrawing = true;
+      scPushUndo();
+      canvas.setPointerCapture(e.pointerId);
+      var p = scGetPos(e);
+      ctx.beginPath();
+      ctx.moveTo(p.x, p.y);
+      ctx.lineTo(p.x + 0.01, p.y + 0.01);
+      ctx.strokeStyle = scErasing ? 'rgba(0,0,0,1)' : scColor;
+      ctx.lineWidth = scSize;
+      ctx.globalCompositeOperation = scErasing ? 'destination-out' : 'source-over';
+      ctx.stroke();
+      e.preventDefault();
+      e.stopPropagation();
+    });
+    canvas.addEventListener('pointermove', function(e) {
+      if (!scDrawing) return;
+      var p = scGetPos(e);
+      ctx.lineTo(p.x, p.y);
+      ctx.strokeStyle = scErasing ? 'rgba(0,0,0,1)' : scColor;
+      ctx.lineWidth = scSize;
+      ctx.globalCompositeOperation = scErasing ? 'destination-out' : 'source-over';
+      ctx.stroke();
+      e.preventDefault();
+      e.stopPropagation();
+    });
+    function scEndStroke() {
+      if (!scDrawing) return;
+      scDrawing = false;
+      ctx.closePath();
+      scSaveDebounced();
+    }
+    canvas.addEventListener('pointerup', scEndStroke);
+    canvas.addEventListener('pointercancel', scEndStroke);
+    canvas.addEventListener('pointerleave', function() { if (scDrawing) scEndStroke(); });
+
+    scColorInput.addEventListener('input', function(e) {
+      scColor = e.target.value;
+      if (scErasing) { scErasing = false; scEraserBtn.classList.remove('active'); }
+      scUpdateColorPreview();
+    });
+    scColorInput.addEventListener('pointerdown', function(e) { e.stopPropagation(); });
+    scSizeSlider.addEventListener('input', function(e) {
+      scSize = parseFloat(e.target.value);
+      scUpdateColorPreview();
+    });
+    scSizeSlider.addEventListener('pointerdown', function(e) { e.stopPropagation(); });
+    scEraserBtn.addEventListener('pointerdown', function(e) { e.stopPropagation(); });
+    scEraserBtn.addEventListener('click', function() {
+      scErasing = !scErasing;
+      scEraserBtn.classList.toggle('active', scErasing);
+      scUpdateColorPreview();
+    });
+    scUndoBtn.addEventListener('pointerdown', function(e) { e.stopPropagation(); });
+    scUndoBtn.addEventListener('click', function() {
+      if (!scUndoStack.length) return;
+      var prev = scUndoStack.pop();
+      var rect = scCanvasWrap.getBoundingClientRect();
+      var img = new Image();
+      img.onload = function() {
+        ctx.clearRect(0, 0, rect.width, rect.height);
+        ctx.drawImage(img, 0, 0, rect.width, rect.height);
+        scSaveDebounced();
+      };
+      img.src = prev;
+    });
+    scClearBtn.addEventListener('pointerdown', function(e) { e.stopPropagation(); });
+    scClearBtn.addEventListener('click', function() {
+      scPushUndo();
+      ctx.save();
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.restore();
+      scSaveDebounced();
+    });
+
+    if (window.ResizeObserver) {
+      var scRaf = null;
+      var scRo = new ResizeObserver(function() {
+        if (scRaf) cancelAnimationFrame(scRaf);
+        scRaf = requestAnimationFrame(function() {
+          scRaf = null;
+          scResize(true);
+          saveWorkspace();
+        });
+      });
+      scRo.observe(scCanvasWrap);
+    } else {
+      window.addEventListener('resize', function() { scResize(true); });
+    }
+    requestAnimationFrame(function() { scResize(false); });
+
+    card.__getDrawing = function() {
+      try { return canvas.width > 0 ? canvas.toDataURL() : null; } catch (err) { return null; }
+    };
+
+    makeDraggable(card, dragHandle);
+    makeResizable(card, resizeHandle, 140, 140, true);
+    return card;
+  }
+
+  /* ---------- Table: a note-card-style grid, resizable/draggable, with
+     the same font/size/color/bold/italic/underline controls as sticky
+     notes, plus +/- buttons on its edges (shown when selected) to add
+     or remove rows and columns. ---------- */
+  function createTable(data, targetLayer) {
+    targetLayer = targetLayer || layer;
+    var color = data && data.color ? data.color : colors[Math.floor(Math.random() * colors.length)];
+    var pos = data && data.x !== undefined ? { x: data.x, y: data.y } : randomPos(targetLayer, targetLayer === layer);
+    var rows = (data && data.rows) || 3;
+    var cols = (data && data.cols) || 3;
+
+    var card = document.createElement('div');
+    card.className = 'note table-card';
+    card.style.left = pos.x + 'px';
+    card.style.top = pos.y + 'px';
+    card.style.width = (data && data.w ? data.w : 280) + 'px';
+    card.style.height = (data && data.h ? data.h : 200) + 'px';
+    card.style.zIndex = ++topZ;
+
+    var head = document.createElement('div');
+    head.className = 'note-head';
+
+    var dotWrap = document.createElement('div');
+    dotWrap.className = 'note-dot-wrap';
+    var dot = document.createElement('button');
+    dot.className = 'note-dot';
+    dot.setAttribute('aria-label', 'Change table color');
+    var swatchPanel = document.createElement('div');
+    swatchPanel.className = 'swatches';
+    colors.forEach(function(c) {
+      var sw = document.createElement('button');
+      sw.className = 'swatch';
+      sw.style.background = c;
+      sw.addEventListener('click', function(e) {
+        e.stopPropagation();
+        setNoteColor(card, dot, c);
+        swatchPanel.classList.remove('open');
+        openSwatchPanel = null;
+        saveWorkspace();
+      });
+      swatchPanel.appendChild(sw);
+    });
+    var customWrap = document.createElement('div');
+    customWrap.className = 'swatch-custom';
+    var customInput = document.createElement('input');
+    customInput.type = 'color';
+    customInput.value = '#ffffff';
+    customInput.addEventListener('input', function(e) {
+      setNoteColor(card, dot, e.target.value);
+      saveWorkspace();
+    });
+    customWrap.appendChild(customInput);
+    swatchPanel.appendChild(customWrap);
+    dot.addEventListener('click', function(e) {
+      e.stopPropagation();
+      var isOpen = swatchPanel.classList.contains('open');
+      if (openSwatchPanel) openSwatchPanel.classList.remove('open');
+      if (!isOpen) {
+        swatchPanel.classList.add('open');
+        openSwatchPanel = swatchPanel;
+      } else {
+        openSwatchPanel = null;
+      }
+    });
+    dotWrap.appendChild(dot);
+    dotWrap.appendChild(swatchPanel);
+
+    var headRight = document.createElement('div');
+    headRight.className = 'note-head-right';
+
+    var fontSelect = document.createElement('select');
+    fontSelect.className = 'note-font-select';
+    fontSelect.title = 'Font family for selected text';
+    var fontPlaceholder = document.createElement('option');
+    fontPlaceholder.textContent = 'Font';
+    fontPlaceholder.disabled = true;
+    fontPlaceholder.selected = true;
+    fontSelect.appendChild(fontPlaceholder);
+    FONT_OPTIONS.forEach(function(f) {
+      var opt = document.createElement('option');
+      opt.value = f.id;
+      opt.textContent = f.label;
+      fontSelect.appendChild(opt);
+    });
+
+    var sizeSelect = document.createElement('select');
+    sizeSelect.className = 'note-size-select';
+    sizeSelect.title = 'Font size for selected text';
+    var sizePlaceholder = document.createElement('option');
+    sizePlaceholder.textContent = 'Size';
+    sizePlaceholder.disabled = true;
+    sizePlaceholder.selected = true;
+    sizeSelect.appendChild(sizePlaceholder);
+    FONT_SIZES.forEach(function(s) {
+      var opt = document.createElement('option');
+      opt.value = s;
+      opt.textContent = s;
+      sizeSelect.appendChild(opt);
+    });
+
+    var fontColorWrap = document.createElement('div');
+    fontColorWrap.className = 'note-font-color-wrap';
+    fontColorWrap.title = 'Text color for selected text';
+    var fontColorInput = document.createElement('input');
+    fontColorInput.type = 'color';
+    fontColorInput.value = '#ffffff';
+    fontColorWrap.appendChild(fontColorInput);
+
+    var boldBtn = document.createElement('button');
+    boldBtn.className = 'fmt-btn';
+    boldBtn.innerHTML = '<b>B</b>';
+    boldBtn.title = 'Bold';
+    var italicBtn = document.createElement('button');
+    italicBtn.className = 'fmt-btn italic';
+    italicBtn.innerHTML = 'I';
+    italicBtn.title = 'Italic';
+    var underlineBtn = document.createElement('button');
+    underlineBtn.className = 'fmt-btn underline';
+    underlineBtn.innerHTML = 'U';
+    underlineBtn.title = 'Underline';
+    var closeBtn = document.createElement('button');
+    closeBtn.className = 'note-close';
+    closeBtn.innerHTML = '&times;';
+    closeBtn.setAttribute('aria-label', 'Remove table');
+    closeBtn.addEventListener('click', function(e) {
+      e.stopPropagation();
+      purgeConnectionsFor(card.dataset.linkId);
+      card.remove();
+      saveWorkspace();
+    });
+
+    headRight.appendChild(fontSelect);
+    headRight.appendChild(sizeSelect);
+    headRight.appendChild(fontColorWrap);
+    headRight.appendChild(boldBtn);
+    headRight.appendChild(italicBtn);
+    headRight.appendChild(underlineBtn);
+    headRight.appendChild(closeBtn);
+    head.appendChild(dotWrap);
+    head.appendChild(headRight);
+
+    var tableSavedRange = null;
+    document.addEventListener('selectionchange', function() {
+      var sel = window.getSelection();
+      if (sel && sel.rangeCount > 0 && !sel.isCollapsed) {
+        var anchor = sel.anchorNode;
+        if (anchor && card.contains(anchor)) {
+          tableSavedRange = sel.getRangeAt(0).cloneRange();
+        }
+      }
+    });
+
+    function tableRestoreSelection() {
+      if (!tableSavedRange) return false;
+      var sel = window.getSelection();
+      sel.removeAllRanges();
+      sel.addRange(tableSavedRange);
+      return true;
+    }
+
+    function tableApplyFormat(cmd, value) {
+      if (!tableRestoreSelection()) return;
+      document.execCommand(cmd, false, value);
+      saveWorkspace();
+    }
+
+    boldBtn.addEventListener('mousedown', function(e) { e.preventDefault(); });
+    boldBtn.addEventListener('click', function() { tableApplyFormat('bold'); });
+    italicBtn.addEventListener('mousedown', function(e) { e.preventDefault(); });
+    italicBtn.addEventListener('click', function() { tableApplyFormat('italic'); });
+    underlineBtn.addEventListener('mousedown', function(e) { e.preventDefault(); });
+    underlineBtn.addEventListener('click', function() { tableApplyFormat('underline'); });
+
+    fontSelect.addEventListener('change', function(e) {
+      var found = FONT_OPTIONS.filter(function(f) { return f.id === e.target.value; })[0];
+      if (found) tableApplyFormat('fontName', found.css.split(',')[0].replace(/['"]/g, ''));
+      fontSelect.selectedIndex = 0;
+    });
+    sizeSelect.addEventListener('change', function(e) {
+      var px = e.target.value;
+      if (!px || !tableRestoreSelection()) { sizeSelect.selectedIndex = 0; return; }
+      document.execCommand('fontSize', false, '7');
+      Array.prototype.forEach.call(card.querySelectorAll('font[size="7"]'), function(f) {
+        f.removeAttribute('size');
+        f.style.fontSize = px + 'px';
+      });
+      saveWorkspace();
+      sizeSelect.selectedIndex = 0;
+    });
+    fontColorInput.addEventListener('input', function(e) {
+      tableApplyFormat('foreColor', e.target.value);
+    });
+
+    /* --- The grid itself --- */
+    var tableWrap = document.createElement('div');
+    tableWrap.className = 'table-card-wrap';
+    var grid = document.createElement('table');
+    grid.className = 'table-grid';
+
+    function buildGrid(gridData) {
+      grid.innerHTML = '';
+      for (var r = 0; r < rows; r++) {
+        var tr = document.createElement('tr');
+        for (var c = 0; c < cols; c++) {
+          var td = document.createElement('td');
+          td.contentEditable = 'true';
+          if (gridData && gridData[r] && gridData[r][c] !== undefined) {
+            td.innerHTML = gridData[r][c];
+          }
+          td.addEventListener('input', function() { saveWorkspace(); });
+          td.addEventListener('pointerdown', function(e) { e.stopPropagation(); });
+          tr.appendChild(td);
+        }
+        grid.appendChild(tr);
+      }
+    }
+    buildGrid(data && data.grid);
+    tableWrap.appendChild(grid);
+
+    /* --- Row/column +/\u2212 controls, shown only while selected --- */
+    var addRowBtn = document.createElement('button');
+    addRowBtn.className = 'table-row-btn table-add-row';
+    addRowBtn.textContent = '+';
+    addRowBtn.title = 'Add row';
+    var removeRowBtn = document.createElement('button');
+    removeRowBtn.className = 'table-row-btn table-remove-row';
+    removeRowBtn.textContent = '\u2212';
+    removeRowBtn.title = 'Remove row';
+    var addColBtn = document.createElement('button');
+    addColBtn.className = 'table-col-btn table-add-col';
+    addColBtn.textContent = '+';
+    addColBtn.title = 'Add column';
+    var removeColBtn = document.createElement('button');
+    removeColBtn.className = 'table-col-btn table-remove-col';
+    removeColBtn.textContent = '\u2212';
+    removeColBtn.title = 'Remove column';
+
+    function currentGridData() {
+      var out = [];
+      Array.prototype.forEach.call(grid.rows, function(tr) {
+        var rowOut = [];
+        Array.prototype.forEach.call(tr.cells, function(td) { rowOut.push(td.innerHTML); });
+        out.push(rowOut);
+      });
+      return out;
+    }
+
+    [addRowBtn, removeRowBtn, addColBtn, removeColBtn].forEach(function(btn) {
+      btn.addEventListener('pointerdown', function(e) { e.preventDefault(); e.stopPropagation(); });
+    });
+
+    addRowBtn.addEventListener('click', function() {
+      var gridData = currentGridData();
+      rows++;
+      buildGrid(gridData);
+      saveWorkspace();
+    });
+    removeRowBtn.addEventListener('click', function() {
+      if (rows <= 1) return;
+      var gridData = currentGridData();
+      rows--;
+      buildGrid(gridData);
+      saveWorkspace();
+    });
+    addColBtn.addEventListener('click', function() {
+      var gridData = currentGridData();
+      cols++;
+      buildGrid(gridData);
+      saveWorkspace();
+    });
+    removeColBtn.addEventListener('click', function() {
+      if (cols <= 1) return;
+      var gridData = currentGridData();
+      cols--;
+      buildGrid(gridData);
+      saveWorkspace();
+    });
+
+    card.appendChild(head);
+    card.appendChild(tableWrap);
+    card.appendChild(addRowBtn);
+    card.appendChild(removeRowBtn);
+    card.appendChild(addColBtn);
+    card.appendChild(removeColBtn);
+
+    var dragHandle = document.createElement('div');
+    dragHandle.className = 'note-drag-handle';
+    dragHandle.title = 'Drag to move';
+    var dragGrip = document.createElement('div');
+    dragGrip.className = 'note-drag-grip';
+    dragHandle.appendChild(dragGrip);
+    card.appendChild(dragHandle);
+
+    var resizeHandle = document.createElement('div');
+    resizeHandle.className = 'resize-handle';
+    card.appendChild(resizeHandle);
+
+    targetLayer.appendChild(card);
+    attachConnectDot(card, canvasLinkLayer, data && data.linkId);
+    setNoteColor(card, dot, color);
+
+    card.addEventListener('pointerdown', function() {
+      document.querySelectorAll('.table-card.selected').forEach(function(t) {
+        if (t !== card) t.classList.remove('selected');
+      });
+      card.classList.add('selected');
+    });
+    document.addEventListener('pointerdown', function(e) {
+      if (card.classList.contains('selected') && !card.contains(e.target)) {
+        card.classList.remove('selected');
+      }
+    });
+
+    if (window.ResizeObserver) {
+      var tblRaf = null;
+      var tblRo = new ResizeObserver(function() {
+        if (tblRaf) cancelAnimationFrame(tblRaf);
+        tblRaf = requestAnimationFrame(function() {
+          tblRaf = null;
+          saveWorkspace();
+        });
+      });
+      tblRo.observe(card);
+    }
+
+    card.__getTableData = function() {
+      return { rows: rows, cols: cols, grid: currentGridData() };
+    };
+
+    makeDraggable(card, dragHandle);
+    makeResizable(card, resizeHandle, 160, 100);
+    return card;
+  }
+
+  /* ---------- Text Line: plain floating editable text, no card ---------- */
+  var activeTextLineWrap = null;
+  var activeTextLine = null;
+
+  function deselectAllTextLines() {
+    if (activeTextLineWrap) {
+      activeTextLineWrap.classList.remove('selected');
+      activeTextLineWrap = null;
+      activeTextLine = null;
+    }
+    tlToolbar.classList.remove('open');
+  }
+
+  function positionTlToolbar(wrap) {
+    var parentRect = tlToolbar.offsetParent.getBoundingClientRect();
+    var wrapRect = wrap.getBoundingClientRect();
+    var top = wrapRect.top - parentRect.top - 44;
+    var left = wrapRect.left - parentRect.left;
+    if (top < 4) top = wrapRect.bottom - parentRect.top + 8;
+    tlToolbar.style.top = top + 'px';
+    tlToolbar.style.left = Math.max(4, left) + 'px';
+  }
+
+  function selectTextLine(wrap, el) {
+    if (activeTextLineWrap === wrap) return;
+    deselectAllTextLines();
+    activeTextLineWrap = wrap;
+    activeTextLine = el;
+    wrap.classList.add('selected');
+    tlToolbar.classList.add('open');
+    positionTlToolbar(wrap);
+  }
+
+  function createTextLine(data, targetLayer) {
+    targetLayer = targetLayer || layer;
+    var pos = data && data.x !== undefined ? { x: data.x, y: data.y } : randomPos(targetLayer, targetLayer === layer);
+
+    var wrap = document.createElement('div');
+    wrap.className = 'text-line-wrap';
+    wrap.style.left = pos.x + 'px';
+    wrap.style.top = pos.y + 'px';
+    wrap.style.zIndex = ++topZ;
+    if (data && data.w) { wrap.style.width = data.w + 'px'; wrap.classList.add('tl-manual-size'); }
+    if (data && data.h) { wrap.style.height = data.h + 'px'; wrap.classList.add('tl-manual-size'); }
+    if (data && data.scale) wrap.style.setProperty('--tl-scale', data.scale);
+
+    var el = document.createElement('div');
+    el.className = 'text-line';
+    el.contentEditable = 'true';
+    el.setAttribute('data-placeholder', 'Type\u2026');
+    el.innerHTML = (data && data.html) || '';
+
+    var handle = document.createElement('div');
+    handle.className = 'text-line-handle';
+    handle.title = 'Drag to move';
+
+    var resizeHandle = document.createElement('div');
+    resizeHandle.className = 'text-line-resize';
+
+    wrap.appendChild(el);
+    wrap.appendChild(handle);
+    wrap.appendChild(resizeHandle);
+    targetLayer.appendChild(wrap);
+    attachConnectDot(wrap, canvasLinkLayer, data && data.linkId);
+
+    wrap.__deleteTextLine = function() {
+      if (activeTextLineWrap === wrap) deselectAllTextLines();
+      purgeConnectionsFor(wrap.dataset.linkId);
+      wrap.remove();
+      saveWorkspace();
+    };
+
+    el.addEventListener('pointerdown', function(e) {
+      e.stopPropagation();
+      selectTextLine(wrap, el);
+      wrap.style.zIndex = ++topZ;
+    });
+
+    el.addEventListener('input', function() {
+      saveWorkspace();
+    });
+
+    makeDraggable(wrap, handle, function() {
+      if (activeTextLineWrap === wrap) positionTlToolbar(wrap);
+    });
+
+    /* Resizing scales the text itself (via --tl-scale) as well as the
+       box, so the text stays proportional to how big you drag the
+       corner \u2014 works the same with mouse drag or touch drag. */
+    (function() {
+      var startX = 0, startY = 0, startW = 0, startH = 0, startScale = 1, resizing = false;
+      resizeHandle.style.touchAction = 'none';
+
+      resizeHandle.addEventListener('pointerdown', function(e) {
+        resizing = true;
+        selectTextLine(wrap, el);
+        startX = e.clientX;
+        startY = e.clientY;
+        var rect = wrap.getBoundingClientRect();
+        startW = rect.width;
+        startH = rect.height;
+        startScale = parseFloat(getComputedStyle(wrap).getPropertyValue('--tl-scale')) || 1;
+        wrap.classList.add('tl-manual-size');
+        wrap.style.zIndex = ++topZ;
+        resizeHandle.setPointerCapture(e.pointerId);
+        e.preventDefault();
+        e.stopPropagation();
+      });
+
+      resizeHandle.addEventListener('pointermove', function(e) {
+        if (!resizing) return;
+        var dx = e.clientX - startX;
+        var dy = e.clientY - startY;
+        var newW = Math.max(50, startW + dx);
+        var newH = Math.max(30, startH + dy);
+        wrap.style.width = newW + 'px';
+        wrap.style.height = newH + 'px';
+        /* scale text proportionally to the larger dimension change */
+        var ratio = Math.max(newW / startW, newH / startH);
+        var newScale = Math.max(0.5, Math.min(6, startScale * ratio));
+        wrap.style.setProperty('--tl-scale', newScale);
+        positionTlToolbar(wrap);
+        e.preventDefault();
+        e.stopPropagation();
+      });
+
+      function endResize() {
+        if (resizing) {
+          resizing = false;
+          saveWorkspace();
+        }
+      }
+      resizeHandle.addEventListener('pointerup', endResize);
+      resizeHandle.addEventListener('pointercancel', endResize);
+    })();
+
+    /* Any pointer down outside this line deselects it */
+    document.addEventListener('pointerdown', function(e) {
+      if (activeTextLineWrap === wrap && !wrap.contains(e.target) && !e.target.closest('.tl-toolbar')) {
+        deselectAllTextLines();
+      }
+    });
+
+    wrap.__isTextLine = true;
+    return wrap;
+  }
+
+  var tlToolbar = document.getElementById('tlToolbar');
+  var tlFontSelect = document.getElementById('tlFontSelect');
+  var tlSizeSelect = document.getElementById('tlSizeSelect');
+  var tlColorWrap = document.getElementById('tlColorWrap');
+  var tlColorInput = document.getElementById('tlColorInput');
+  var tlBoldBtn = document.getElementById('tlBoldBtn');
+  var tlItalicBtn = document.getElementById('tlItalicBtn');
+  var tlUnderlineBtn = document.getElementById('tlUnderlineBtn');
+  var tlSavedRange = null;
+
+  FONT_OPTIONS.forEach(function(f) {
+    var opt = document.createElement('option');
+    opt.value = f.id;
+    opt.textContent = f.label;
+    tlFontSelect.appendChild(opt);
+  });
+  FONT_SIZES.forEach(function(s) {
+    var opt = document.createElement('option');
+    opt.value = s;
+    opt.textContent = s;
+    tlSizeSelect.appendChild(opt);
+  });
+
+  document.addEventListener('selectionchange', function() {
+    if (!activeTextLine) return;
+    var sel = window.getSelection();
+    if (sel && sel.rangeCount > 0 && !sel.isCollapsed && activeTextLine.contains(sel.anchorNode)) {
+      tlSavedRange = sel.getRangeAt(0).cloneRange();
+    }
+  });
+
+  function tlRestoreSelectionOrSelectAll() {
+    if (!activeTextLine) return;
+    var sel = window.getSelection();
+    if (tlSavedRange && !tlSavedRange.collapsed) {
+      sel.removeAllRanges();
+      sel.addRange(tlSavedRange);
+      return;
+    }
+    var range = document.createRange();
+    range.selectNodeContents(activeTextLine);
+    sel.removeAllRanges();
+    sel.addRange(range);
+  }
+
+  function tlApplyFormat(cmd, value) {
+    if (!activeTextLine) return;
+    activeTextLine.focus();
+    tlRestoreSelectionOrSelectAll();
+    document.execCommand(cmd, false, value);
+    saveWorkspace();
+  }
+
+  tlFontSelect.addEventListener('mousedown', function(e) { e.stopPropagation(); });
+  tlFontSelect.addEventListener('change', function(e) {
+    var found = FONT_OPTIONS.filter(function(f) { return f.id === e.target.value; })[0];
+    if (!found) return;
+    tlApplyFormat('fontName', found.css.split(',')[0].replace(/['"]/g, ''));
+    tlFontSelect.selectedIndex = 0;
+  });
+
+  tlSizeSelect.addEventListener('mousedown', function(e) { e.stopPropagation(); });
+  tlSizeSelect.addEventListener('change', function(e) {
+    var px = e.target.value;
+    if (!px || !activeTextLine) return;
+    activeTextLine.focus();
+    tlRestoreSelectionOrSelectAll();
+    document.execCommand('fontSize', false, '7');
+    Array.prototype.forEach.call(activeTextLine.querySelectorAll('font[size="7"]'), function(f) {
+      f.removeAttribute('size');
+      f.style.fontSize = px + 'px';
+    });
+    saveWorkspace();
+    tlSizeSelect.selectedIndex = 0;
+  });
+
+  tlColorWrap.addEventListener('mousedown', function(e) { e.stopPropagation(); });
+  tlColorInput.addEventListener('input', function(e) {
+    tlColorWrap.style.setProperty('--fc', e.target.value);
+  });
+  tlColorInput.addEventListener('change', function(e) {
+    tlApplyFormat('foreColor', e.target.value);
+  });
+
+  tlBoldBtn.addEventListener('mousedown', function(e) { e.preventDefault(); e.stopPropagation(); tlApplyFormat('bold'); });
+  tlItalicBtn.addEventListener('mousedown', function(e) { e.preventDefault(); e.stopPropagation(); tlApplyFormat('italic'); });
+  tlUnderlineBtn.addEventListener('mousedown', function(e) { e.preventDefault(); e.stopPropagation(); tlApplyFormat('underline'); });
+
+  var tlDeleteBtn = document.getElementById('tlDeleteBtn');
+  tlDeleteBtn.addEventListener('pointerdown', function(e) { e.preventDefault(); e.stopPropagation(); });
+  tlDeleteBtn.addEventListener('click', function() {
+    if (activeTextLineWrap && activeTextLineWrap.__deleteTextLine) {
+      activeTextLineWrap.__deleteTextLine();
+    }
+  });
+
+  tlToolbar.addEventListener('pointerdown', function(e) { e.stopPropagation(); });
+
+  function makeResizable(el, handle, minW, minH, lockSquare) {
+    minW = minW || 140;
+    minH = minH || 120;
+    var startX = 0, startY = 0, startW = 0, startH = 0, resizing = false, inZoomCanvas = false;
 
     handle.style.touchAction = 'none';
 
     handle.addEventListener('pointerdown', function(e) {
       resizing = true;
+      inZoomCanvas = layer.contains(el);
       startX = e.clientX;
       startY = e.clientY;
-      startW = el.offsetWidth;
-      startH = el.offsetHeight;
+      startW = el.offsetWidth / (inZoomCanvas ? canvasZoom : 1);
+      startH = el.offsetHeight / (inZoomCanvas ? canvasZoom : 1);
       el.style.zIndex = ++topZ;
       handle.setPointerCapture(e.pointerId);
       e.preventDefault();
@@ -3358,8 +4330,19 @@
 
     handle.addEventListener('pointermove', function(e) {
       if (!resizing) return;
-      var newW = Math.max(140, startW + (e.clientX - startX));
-      var newH = Math.max(120, startH + (e.clientY - startY));
+      var dx = e.clientX - startX;
+      var dy = e.clientY - startY;
+      if (inZoomCanvas) { dx /= canvasZoom; dy /= canvasZoom; }
+      var newW = Math.max(minW, startW + dx);
+      var newH = Math.max(minH, startH + dy);
+      if (lockSquare) {
+        /* single corner handle, but the box always stays a perfect
+           square \u2014 driven by whichever dimension moved furthest, so it
+           tracks the direction you're actually dragging in. */
+        var side = Math.max(newW, newH, Math.max(minW, minH));
+        newW = side;
+        newH = side;
+      }
       el.style.width = newW + 'px';
       el.style.height = newH + 'px';
       e.preventDefault();
@@ -3381,12 +4364,13 @@
     return !!target.closest('button, select, input, label, [contenteditable="true"], .swatches, .note-toolbar2');
   }
 
-  function makeDraggable(note, handle) {
-    var offsetX = 0, offsetY = 0, dragging = false;
+  function makeDraggable(note, handle, onMove) {
+    var offsetX = 0, offsetY = 0, dragging = false, inZoomCanvas = false;
 
     handle.addEventListener('pointerdown', function(e) {
       if (isInteractiveTarget(e.target)) return;
       dragging = true;
+      inZoomCanvas = layer.contains(note);
       note.classList.add('dragging');
       note.style.zIndex = ++topZ;
       var rect = note.getBoundingClientRect();
@@ -3398,12 +4382,23 @@
 
     handle.addEventListener('pointermove', function(e) {
       if (!dragging) return;
-      var x = e.clientX - offsetX;
-      var y = e.clientY - offsetY;
-      x = Math.max(-40, Math.min(window.innerWidth - 60, x));
-      y = Math.max(-20, Math.min(window.innerHeight - 40, y));
-      note.style.left = x + 'px';
-      note.style.top = y + 'px';
+      if (inZoomCanvas) {
+        /* note's left/top live in the zoomed canvas's own coordinate
+           space, so screen-pixel movement has to be divided by the
+           current zoom level to land in the right place \u2014 and since
+           this canvas is infinite, there's no edge to clamp to. */
+        var p = screenToCanvas(e.clientX - offsetX, e.clientY - offsetY);
+        note.style.left = p.x + 'px';
+        note.style.top = p.y + 'px';
+      } else {
+        var x = e.clientX - offsetX;
+        var y = e.clientY - offsetY;
+        x = Math.max(-40, Math.min(window.innerWidth - 60, x));
+        y = Math.max(-20, Math.min(window.innerHeight - 40, y));
+        note.style.left = x + 'px';
+        note.style.top = y + 'px';
+      }
+      if (onMove) onMove();
       e.preventDefault();
     });
 
@@ -3418,23 +4413,88 @@
     handle.addEventListener('pointercancel', endDrag);
   }
 
+  /* ---------- Collapsible + menu (Note / Sticky Canvas / Import Image) ---------- */
+  var addMenuBtn = document.getElementById('addMenuBtn');
+  var addMenu = document.getElementById('addMenu');
+
+  addMenuBtn.addEventListener('click', function(e) {
+    e.stopPropagation();
+    addMenu.classList.toggle('open');
+  });
+
+  document.addEventListener('pointerdown', function(e) {
+    if (addMenu.classList.contains('open') && !e.target.closest('.add-menu-wrap')) {
+      addMenu.classList.remove('open');
+    }
+  });
+
   document.getElementById('addNote').addEventListener('click', function() {
     createNote(undefined, layer);
     var hint = document.getElementById('hint');
     hint.style.display = 'none';
     saveWorkspace();
+    addMenu.classList.remove('open');
+  });
+
+  document.getElementById('addStickyCanvas').addEventListener('click', function() {
+    createStickyCanvas(undefined, layer);
+    var hint = document.getElementById('hint');
+    hint.style.display = 'none';
+    saveWorkspace();
+    addMenu.classList.remove('open');
+  });
+
+  document.getElementById('addTextLine').addEventListener('click', function() {
+    var wrap = createTextLine(undefined, layer);
+    var hint = document.getElementById('hint');
+    hint.style.display = 'none';
+    saveWorkspace();
+    addMenu.classList.remove('open');
+    var el = wrap.querySelector('.text-line');
+    selectTextLine(wrap, el);
+    el.focus();
+  });
+
+  document.getElementById('addTable').addEventListener('click', function() {
+    createTable(undefined, layer);
+    var hint = document.getElementById('hint');
+    hint.style.display = 'none';
+    saveWorkspace();
+    addMenu.classList.remove('open');
   });
 
   /* ---------- Subject Notes ---------- */
   var subjects = [];
-  var subjectNotesData = {};
   var activeSubjectId = null;
-  var subjectNotesLayer = document.getElementById('subjectNotesLayer');
   var subjectsList = document.getElementById('subjectsList');
-  var subjectCanvasTitle = document.getElementById('subjectCanvasTitle');
   var subjectsEmpty = document.getElementById('subjectsEmpty');
-  var addSubjectNoteBtn = document.getElementById('addSubjectNote');
+  var quickNoteInput = document.getElementById('quickNoteInput');
+  var notebookWrap = document.getElementById('notebookWrap');
+  var notebookToolbar = document.getElementById('notebookToolbar');
+  var subjectQuickNotes = {};
   var SUBJECT_COLORS = ['#ff8a8a', '#8ad0ff', '#8affb0', '#ffd28a', '#c68aff', '#ff8ae0'];
+
+  /* Subject Notes now lives inside the Timetable tab as a collapsible
+     section, so both live together in one place instead of two tabs. */
+  var subjectsCollapseToggle = document.getElementById('subjectsCollapseToggle');
+  var subjectsCollapseBody = document.getElementById('subjectsCollapseBody');
+  var SUBJECTS_COLLAPSE_KEY = 'claude_workspace_subjects_open_v1';
+
+  function setSubjectsCollapseOpen(open) {
+    subjectsCollapseBody.classList.toggle('open', open);
+    subjectsCollapseToggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+    try { localStorage.setItem(SUBJECTS_COLLAPSE_KEY, open ? '1' : '0'); } catch (err) {}
+  }
+
+  subjectsCollapseToggle.addEventListener('click', function() {
+    setSubjectsCollapseOpen(!subjectsCollapseBody.classList.contains('open'));
+  });
+
+  (function initSubjectsCollapseState() {
+    var saved;
+    try { saved = localStorage.getItem(SUBJECTS_COLLAPSE_KEY); } catch (err) {}
+    setSubjectsCollapseOpen(saved === '1');
+  })();
 
   function renderSubjectsList() {
     subjectsList.innerHTML = '';
@@ -3442,9 +4502,61 @@
       var item = document.createElement('div');
       item.className = 'subject-item' + (s.id === activeSubjectId ? ' active' : '');
 
-      var dot = document.createElement('div');
+      var dotWrap = document.createElement('div');
+      dotWrap.className = 'subject-dot-wrap';
+
+      var dot = document.createElement('button');
       dot.className = 'subject-dot';
       dot.style.background = s.color;
+      dot.setAttribute('aria-label', 'Change subject color');
+      dot.title = 'Change color';
+
+      var swatchPanel = document.createElement('div');
+      swatchPanel.className = 'swatches';
+
+      SUBJECT_COLORS.forEach(function(c) {
+        var sw = document.createElement('button');
+        sw.className = 'swatch';
+        sw.style.background = c;
+        sw.addEventListener('click', function(e) {
+          e.stopPropagation();
+          s.color = c;
+          dot.style.background = c;
+          swatchPanel.classList.remove('open');
+          openSwatchPanel = null;
+          saveWorkspace();
+        });
+        swatchPanel.appendChild(sw);
+      });
+
+      var customWrap = document.createElement('div');
+      customWrap.className = 'swatch-custom';
+      var customInput = document.createElement('input');
+      customInput.type = 'color';
+      customInput.value = s.color;
+      customInput.addEventListener('click', function(e) { e.stopPropagation(); });
+      customInput.addEventListener('input', function(e) {
+        s.color = e.target.value;
+        dot.style.background = e.target.value;
+        saveWorkspace();
+      });
+      customWrap.appendChild(customInput);
+      swatchPanel.appendChild(customWrap);
+
+      dot.addEventListener('click', function(e) {
+        e.stopPropagation();
+        var isOpen = swatchPanel.classList.contains('open');
+        if (openSwatchPanel) openSwatchPanel.classList.remove('open');
+        if (!isOpen) {
+          swatchPanel.classList.add('open');
+          openSwatchPanel = swatchPanel;
+        } else {
+          openSwatchPanel = null;
+        }
+      });
+
+      dotWrap.appendChild(dot);
+      dotWrap.appendChild(swatchPanel);
 
       var name = document.createElement('div');
       name.className = 'subject-name';
@@ -3457,17 +4569,16 @@
       del.addEventListener('click', function(e) {
         e.stopPropagation();
         subjects = subjects.filter(function(x) { return x.id !== s.id; });
-        delete subjectNotesData[s.id];
+        delete subjectQuickNotes[s.id];
         if (activeSubjectId === s.id) {
           activeSubjectId = null;
-          subjectNotesLayer.innerHTML = '';
         }
         renderSubjectsList();
         renderSubjectCanvas();
         saveWorkspace();
       });
 
-      item.appendChild(dot);
+      item.appendChild(dotWrap);
       item.appendChild(name);
       item.appendChild(del);
 
@@ -3481,10 +4592,6 @@
 
   function switchToSubject(id) {
     if (activeSubjectId === id) return;
-    /* save the notes of the subject we're leaving */
-    if (activeSubjectId) {
-      subjectNotesData[activeSubjectId] = collectNotesFrom(subjectNotesLayer);
-    }
     activeSubjectId = id;
     renderSubjectsList();
     renderSubjectCanvas();
@@ -3492,21 +4599,21 @@
   }
 
   function renderSubjectCanvas() {
-    subjectNotesLayer.innerHTML = '';
     var subject = subjects.filter(function(s) { return s.id === activeSubjectId; })[0];
     if (!subject) {
-      subjectCanvasTitle.textContent = 'Select a subject';
-      addSubjectNoteBtn.style.display = 'none';
+      notebookToolbar.style.display = 'none';
+      notebookWrap.style.display = 'none';
+      quickNoteInput.innerHTML = '';
       subjectsEmpty.style.display = subjects.length ? 'none' : 'flex';
       if (subjects.length && !activeSubjectId) subjectsEmpty.textContent = 'Select a subject on the left.';
       return;
     }
-    subjectCanvasTitle.textContent = subject.name;
-    addSubjectNoteBtn.style.display = 'flex';
+    notebookToolbar.style.display = 'flex';
+    notebookWrap.style.display = 'block';
+    quickNoteInput.innerHTML = subjectQuickNotes[subject.id] || '';
+    notebookWrap.classList.toggle('has-content', !!(subjectQuickNotes[subject.id] && subjectQuickNotes[subject.id].trim()));
+    nbRecalcLineHeights();
     subjectsEmpty.style.display = 'none';
-
-    var notes = subjectNotesData[subject.id] || [];
-    notes.forEach(function(n) { createNote(n, subjectNotesLayer); });
   }
 
   /* ---------- Subject creation modal ---------- */
@@ -3553,7 +4660,6 @@
   function openSubjectModal() {
     selectedSubjectColor = SUBJECT_COLORS[subjects.length % SUBJECT_COLORS.length];
     buildSubjectModalSwatches();
-    var firstSwatch = subjectModalSwatches.querySelector('.subject-modal-swatch');
     Array.prototype.forEach.call(subjectModalSwatches.querySelectorAll('.subject-modal-swatch'), function(el, i) {
       el.classList.toggle('selected', el.style.background === selectedSubjectColor || (i === subjects.length % SUBJECT_COLORS.length));
     });
@@ -3574,7 +4680,6 @@
     }
     var id = 'subj_' + Date.now() + '_' + Math.floor(Math.random() * 1000);
     subjects.push({ id: id, name: name, color: selectedSubjectColor });
-    subjectNotesData[id] = [];
     renderSubjectsList();
     switchToSubject(id);
     closeSubjectModal();
@@ -3597,30 +4702,199 @@
     }
   });
 
-  addSubjectNoteBtn.addEventListener('click', function() {
+  var quickNoteSaveTimer = null;
+
+  function saveQuickNote() {
     if (!activeSubjectId) return;
-    createNote(undefined, subjectNotesLayer);
-    saveWorkspace();
+    var html = quickNoteInput.innerHTML;
+    var text = quickNoteInput.textContent || '';
+    if (text.trim()) {
+      subjectQuickNotes[activeSubjectId] = html;
+    } else {
+      delete subjectQuickNotes[activeSubjectId];
+    }
+    notebookWrap.classList.toggle('has-content', !!text.trim());
+    nbRecalcLineHeights();
+    clearTimeout(quickNoteSaveTimer);
+    quickNoteSaveTimer = setTimeout(saveWorkspace, 400);
+  }
+
+  quickNoteInput.addEventListener('input', saveQuickNote);
+
+  /* Remember the last real text selection inside the notebook, since
+     clicking a toolbar control (a <select>, a color swatch) moves focus
+     away and would otherwise lose what the user had selected. */
+  var nbSavedRange = null;
+  quickNoteInput.addEventListener('mouseup', saveNbSelection);
+  quickNoteInput.addEventListener('keyup', saveNbSelection);
+  quickNoteInput.addEventListener('touchend', saveNbSelection);
+
+  function saveNbSelection() {
+    var sel = window.getSelection();
+    if (sel && sel.rangeCount > 0 && quickNoteInput.contains(sel.anchorNode)) {
+      nbSavedRange = sel.getRangeAt(0).cloneRange();
+    }
+  }
+
+  /* If the user had real selected text, restore exactly that selection.
+     Otherwise (nothing selected) select the whole notebook so the format
+     applies to everything, per how this toolbar is meant to work. */
+  function restoreNbSelectionOrSelectAll() {
+    var sel = window.getSelection();
+    if (nbSavedRange && !nbSavedRange.collapsed) {
+      sel.removeAllRanges();
+      sel.addRange(nbSavedRange);
+      return;
+    }
+    var range = document.createRange();
+    range.selectNodeContents(quickNoteInput);
+    sel.removeAllRanges();
+    sel.addRange(range);
+  }
+
+  /* ---------- Notebook formatting toolbar ---------- */
+  var nbFontSelect = document.getElementById('nbFontSelect');
+  var nbSizeSelect = document.getElementById('nbSizeSelect');
+  var nbColorWrap = document.getElementById('nbColorWrap');
+  var nbColorInput = document.getElementById('nbColorInput');
+  var nbBoldBtn = document.getElementById('nbBoldBtn');
+  var nbItalicBtn = document.getElementById('nbItalicBtn');
+  var nbUnderlineBtn = document.getElementById('nbUnderlineBtn');
+  var nbAlignLeftBtn = document.getElementById('nbAlignLeftBtn');
+  var nbAlignCenterBtn = document.getElementById('nbAlignCenterBtn');
+  var nbAlignRightBtn = document.getElementById('nbAlignRightBtn');
+
+  /* Same responsive size list used by sticky notes \u2014 wide on desktop,
+     narrower on mobile so text stays readable and tappable. */
+  var NB_FONT_SIZES = FONT_SIZES;
+  var NB_DEFAULT_LINE_HEIGHT = (isTouchDevice || window.matchMedia('(max-width: 720px)').matches) ? 26 : 32;
+  var NB_DEFAULT_FONT_SIZE = (isTouchDevice || window.matchMedia('(max-width: 720px)').matches) ? 14 : 15;
+
+  notebookWrap.style.setProperty('--nb-font-size', NB_DEFAULT_FONT_SIZE + 'px');
+
+  FONT_OPTIONS.forEach(function(f) {
+    var opt = document.createElement('option');
+    opt.value = f.id;
+    opt.textContent = f.label;
+    nbFontSelect.appendChild(opt);
+  });
+  NB_FONT_SIZES.forEach(function(s) {
+    var opt = document.createElement('option');
+    opt.value = s;
+    opt.textContent = s;
+    nbSizeSelect.appendChild(opt);
   });
 
-  /* ---------- Free-floating images ---------- */
-  var freeImages = [];
+  /* Each physical line (paragraph) gets its own line-height, sized only to
+     the largest font-size actually used within THAT line \u2014 not the whole
+     notebook. A big 48px header on line 1 only grows line 1's own rule
+     spacing; normal body text on the lines below keeps its normal
+     spacing, like a textbook heading followed by regular paragraphs. */
+  function nbLineHeightFor(px) {
+    return Math.max(NB_DEFAULT_LINE_HEIGHT, Math.round(px * 1.35));
+  }
 
+  function nbRecalcLineHeights() {
+    var paragraphs = quickNoteInput.querySelectorAll(':scope > div, :scope > p');
+    if (!paragraphs.length) {
+      /* No paragraph wrappers yet (e.g. a single unwrapped first line) \u2014
+         measure the editable root itself as one line. */
+      var maxPxRoot = NB_DEFAULT_FONT_SIZE;
+      Array.prototype.forEach.call(quickNoteInput.querySelectorAll('[style*="font-size"]'), function(el) {
+        var m = /font-size:\s*([\d.]+)px/.exec(el.getAttribute('style') || '');
+        if (m) maxPxRoot = Math.max(maxPxRoot, parseFloat(m[1]));
+      });
+      var lh = nbLineHeightFor(maxPxRoot);
+      quickNoteInput.style.lineHeight = lh + 'px';
+      return;
+    }
+    quickNoteInput.style.lineHeight = '';
+    paragraphs.forEach(function(p) {
+      var maxPx = NB_DEFAULT_FONT_SIZE;
+      Array.prototype.forEach.call(p.querySelectorAll('[style*="font-size"]'), function(el) {
+        var m = /font-size:\s*([\d.]+)px/.exec(el.getAttribute('style') || '');
+        if (m) maxPx = Math.max(maxPx, parseFloat(m[1]));
+      });
+      var lh = nbLineHeightFor(maxPx);
+      p.style.lineHeight = lh + 'px';
+      p.style.minHeight = lh + 'px';
+    });
+  }
+
+  function nbApplyFormat(cmd, value) {
+    quickNoteInput.focus();
+    restoreNbSelectionOrSelectAll();
+    document.execCommand(cmd, false, value);
+    saveQuickNote();
+  }
+
+  nbFontSelect.addEventListener('change', function(e) {
+    var found = FONT_OPTIONS.filter(function(f) { return f.id === e.target.value; })[0];
+    if (!found) return;
+    nbApplyFormat('fontName', found.css.split(',')[0].replace(/['"]/g, ''));
+    nbFontSelect.selectedIndex = 0;
+  });
+
+  nbSizeSelect.addEventListener('change', function(e) {
+    var px = e.target.value;
+    if (!px) return;
+    quickNoteInput.focus();
+    restoreNbSelectionOrSelectAll();
+    document.execCommand('fontSize', false, '7');
+    Array.prototype.forEach.call(quickNoteInput.querySelectorAll('font[size="7"]'), function(f) {
+      f.removeAttribute('size');
+      f.style.fontSize = px + 'px';
+    });
+    nbRecalcLineHeights();
+    saveQuickNote();
+    nbSizeSelect.selectedIndex = 0;
+  });
+
+  nbColorInput.addEventListener('input', function(e) {
+    nbColorWrap.style.setProperty('--fc', e.target.value);
+  });
+  nbColorInput.addEventListener('change', function(e) {
+    nbApplyFormat('foreColor', e.target.value);
+  });
+
+  nbBoldBtn.addEventListener('mousedown', function(e) { e.preventDefault(); });
+  nbBoldBtn.addEventListener('click', function() { nbApplyFormat('bold'); });
+  nbItalicBtn.addEventListener('mousedown', function(e) { e.preventDefault(); });
+  nbItalicBtn.addEventListener('click', function() { nbApplyFormat('italic'); });
+  nbUnderlineBtn.addEventListener('mousedown', function(e) { e.preventDefault(); });
+  nbUnderlineBtn.addEventListener('click', function() { nbApplyFormat('underline'); });
+
+  var nbAlignBtns = [nbAlignLeftBtn, nbAlignCenterBtn, nbAlignRightBtn];
+  function nbSetAlignActive(btn) {
+    nbAlignBtns.forEach(function(b) { b.classList.toggle('active', b === btn); });
+  }
+  nbAlignLeftBtn.addEventListener('mousedown', function(e) { e.preventDefault(); });
+  nbAlignLeftBtn.addEventListener('click', function() { nbApplyFormat('justifyLeft'); nbSetAlignActive(nbAlignLeftBtn); });
+  nbAlignCenterBtn.addEventListener('mousedown', function(e) { e.preventDefault(); });
+  nbAlignCenterBtn.addEventListener('click', function() { nbApplyFormat('justifyCenter'); nbSetAlignActive(nbAlignCenterBtn); });
+  nbAlignRightBtn.addEventListener('mousedown', function(e) { e.preventDefault(); });
+  nbAlignRightBtn.addEventListener('click', function() { nbApplyFormat('justifyRight'); nbSetAlignActive(nbAlignRightBtn); });
+
+  /* ---------- Free-floating images ---------- */
   function createFreeImage(data) {
     var fi = document.createElement('div');
     fi.className = 'free-image';
-    var x = (data && data.x !== undefined) ? data.x : (window.innerWidth / 2 - 90);
-    var y = (data && data.y !== undefined) ? data.y : (window.innerHeight / 2 - 90);
+    var defaultPos = screenToCanvas(window.innerWidth / 2 - 90, window.innerHeight / 2 - 90);
+    var x = (data && data.x !== undefined) ? data.x : defaultPos.x;
+    var y = (data && data.y !== undefined) ? data.y : defaultPos.y;
     fi.style.left = x + 'px';
     fi.style.top = y + 'px';
     fi.style.width = ((data && data.w) || 180) + 'px';
     fi.style.height = ((data && data.h) || 180) + 'px';
     fi.style.zIndex = ++topZ;
 
+    var imgClip = document.createElement('div');
+    imgClip.className = 'img-clip';
     var img = document.createElement('img');
     img.src = data.src;
     img.draggable = false;
-    fi.appendChild(img);
+    imgClip.appendChild(img);
+    fi.appendChild(imgClip);
 
     var closeBtn = document.createElement('button');
     closeBtn.className = 'fi-close';
@@ -3628,6 +4902,7 @@
     closeBtn.setAttribute('aria-label', 'Remove image');
     closeBtn.addEventListener('click', function(e) {
       e.stopPropagation();
+      purgeConnectionsFor(fi.dataset.linkId);
       fi.remove();
       saveWorkspace();
     });
@@ -3653,6 +4928,7 @@
     fi.appendChild(fiResizeHandle);
 
     layer.appendChild(fi);
+    attachConnectDot(fi, canvasLinkLayer, data && data.linkId);
     makeImageDraggable(fi);
     makeResizable(fi, fiResizeHandle);
     if (window.ResizeObserver) {
@@ -3679,8 +4955,9 @@
 
     fi.addEventListener('pointermove', function(e) {
       if (!dragging) return;
-      fi.style.left = (e.clientX - offsetX) + 'px';
-      fi.style.top = (e.clientY - offsetY) + 'px';
+      var p = screenToCanvas(e.clientX - offsetX, e.clientY - offsetY);
+      fi.style.left = p.x + 'px';
+      fi.style.top = p.y + 'px';
       e.preventDefault();
     });
 
@@ -3721,6 +4998,7 @@
     } else {
       showOverlay();
     }
+    addMenu.classList.remove('open');
   });
 
   document.getElementById('dropOverlayClose').addEventListener('click', function(e) {
@@ -3739,7 +5017,8 @@
     if (!file || file.type.indexOf('image/') !== 0) return;
     var reader = new FileReader();
     reader.onload = function(ev) {
-      createFreeImage({ src: ev.target.result, x: window.innerWidth / 2 - 90, y: window.innerHeight / 2 - 90 });
+      var pos = screenToCanvas(window.innerWidth / 2 - 90, window.innerHeight / 2 - 90);
+      createFreeImage({ src: ev.target.result, x: pos.x, y: pos.y });
       saveWorkspace();
     };
     reader.readAsDataURL(file);
@@ -3755,7 +5034,7 @@
   ['dragenter'].forEach(function(evt) {
     document.addEventListener(evt, function(e) {
       if (isTouchDevice) return;
-      if (!notesSubs.canvas.classList.contains('active')) return;
+      if (!notesSubs.board.classList.contains('active')) return;
       if (e.dataTransfer && Array.prototype.indexOf.call(e.dataTransfer.types || [], 'Files') > -1) {
         dragCounter++;
         showOverlay();
@@ -3781,12 +5060,649 @@
     hideOverlay();
   });
 
+  /* ---------- Mind-map connections between canvas instances ----------
+     Every note / sticky canvas / table / text line / image gets a small
+     "+" connect dot. Dragging from one dot to another draws a persistent,
+     gently swaying line between them (click a line to remove it). Dots
+     and lines live in an overlay above the instances and recompute their
+     position from the owner element's current layout box every animation
+     frame, so they automatically follow drags, resizes, and the infinite
+     canvas's own pan/zoom without any extra wiring at the call sites
+     that move/resize/zoom things. */
+  var SVG_NS = 'http://www.w3.org/2000/svg';
+  var linkIdSeq = 0;
+  function nextLinkId() { return 'x' + (++linkIdSeq) + Math.random().toString(36).slice(2, 6); }
+
+  var canvasConnections = []; // [{a: linkId, b: linkId}]
+  var linkAnimT = 0;
+  var linkLoopRunning = false;
+  var activeLink = null; // in-progress drag from a dot, if any
+
+  function makeLinkLayer(root) {
+    var overlay = document.createElement('div');
+    overlay.className = 'link-overlay';
+    var svg = document.createElementNS(SVG_NS, 'svg');
+    svg.setAttribute('class', 'connections-svg');
+    overlay.appendChild(svg);
+    root.appendChild(overlay);
+    return { root: root, overlay: overlay, svg: svg, list: [], dotOwners: {}, pathEls: {} };
+  }
+
+  var canvasLinkLayer = makeLinkLayer(layer);
+
+  function connKey(a, b) { return a < b ? a + '|' + b : b + '|' + a; }
+
+  function cornerPoint(el) {
+    return { x: el.offsetLeft + el.offsetWidth, y: el.offsetTop };
+  }
+
+  function sagPath(p1, p2, phaseSeed) {
+    var dx = p2.x - p1.x, dy = p2.y - p1.y;
+    var dist = Math.sqrt(dx * dx + dy * dy);
+    var sag = Math.min(90, dist * 0.22) + 10;
+    var sway = Math.sin(linkAnimT / 900 + phaseSeed * 1.7) * Math.min(10, 4 + dist * 0.02);
+    var midX = (p1.x + p2.x) / 2;
+    var midY = (p1.y + p2.y) / 2 + sag + sway;
+    return 'M ' + p1.x + ',' + p1.y + ' Q ' + midX + ',' + midY + ' ' + p2.x + ',' + p2.y;
+  }
+
+  function updateLinkLayer(linkLayer) {
+    Object.keys(linkLayer.dotOwners).forEach(function(id) {
+      var owner = linkLayer.dotOwners[id];
+      if (!owner.el.isConnected) { delete linkLayer.dotOwners[id]; return; }
+      var p = cornerPoint(owner.el);
+      owner.dot.style.left = p.x + 'px';
+      owner.dot.style.top = p.y + 'px';
+    });
+
+    linkLayer.list.forEach(function(c, i) {
+      var pair = linkLayer.pathEls[connKey(c.a, c.b)];
+      var ownerA = linkLayer.dotOwners[c.a];
+      var ownerB = linkLayer.dotOwners[c.b];
+      if (!pair || !ownerA || !ownerB) return;
+      var d = sagPath(cornerPoint(ownerA.el), cornerPoint(ownerB.el), i);
+      pair.visible.setAttribute('d', d);
+      pair.hit.setAttribute('d', d);
+    });
+  }
+
+  function anyLinkActivity() {
+    return !!activeLink || Object.keys(canvasLinkLayer.dotOwners).length > 0;
+  }
+
+  function tickLinks(ts) {
+    linkAnimT = ts || 0;
+    updateLinkLayer(canvasLinkLayer);
+    if (anyLinkActivity()) {
+      requestAnimationFrame(tickLinks);
+    } else {
+      linkLoopRunning = false;
+    }
+  }
+
+  function ensureLinkLoop() {
+    if (linkLoopRunning) return;
+    linkLoopRunning = true;
+    requestAnimationFrame(tickLinks);
+  }
+
+  function rebuildLinkPaths(linkLayer) {
+    linkLayer.svg.innerHTML = '';
+    linkLayer.pathEls = {};
+    linkLayer.list.forEach(function(c) {
+      var key = connKey(c.a, c.b);
+
+      /* A wide, invisible stroke gives a much easier click target than the
+         thin decorative line itself, since the line is a swaying curve. */
+      var hit = document.createElementNS(SVG_NS, 'path');
+      hit.setAttribute('class', 'link-path-hit');
+      hit.addEventListener('pointerdown', function(e) { e.stopPropagation(); });
+      hit.addEventListener('click', function(e) {
+        e.stopPropagation();
+        linkLayer.list = linkLayer.list.filter(function(x) { return connKey(x.a, x.b) !== key; });
+        canvasConnections = linkLayer.list;
+        rebuildLinkPaths(linkLayer);
+        saveWorkspace();
+      });
+
+      var visible = document.createElementNS(SVG_NS, 'path');
+      visible.setAttribute('class', 'link-path');
+
+      linkLayer.svg.appendChild(hit);
+      linkLayer.svg.appendChild(visible);
+      linkLayer.pathEls[key] = { hit: hit, visible: visible };
+    });
+    ensureLinkLoop();
+  }
+
+  function resetLinkLayer(linkLayer) {
+    Object.keys(linkLayer.dotOwners).forEach(function(id) { linkLayer.dotOwners[id].dot.remove(); });
+    linkLayer.dotOwners = {};
+    linkLayer.list = [];
+    rebuildLinkPaths(linkLayer);
+  }
+
+  function attachConnectDot(el, linkLayer, existingId) {
+    var id = existingId || nextLinkId();
+    el.dataset.linkId = id;
+    var dot = document.createElement('div');
+    dot.className = 'connect-dot';
+    dot.textContent = '+';
+    dot.title = 'Drag to connect this to another instance';
+    dot.addEventListener('pointerdown', function(e) { startLinking(e, id, linkLayer, dot); });
+    linkLayer.overlay.appendChild(dot);
+    linkLayer.dotOwners[id] = { el: el, dot: dot };
+    ensureLinkLoop();
+    return dot;
+  }
+
+  function detachConnectDot(linkLayer, linkId) {
+    var owner = linkLayer.dotOwners[linkId];
+    if (owner) {
+      owner.dot.remove();
+      delete linkLayer.dotOwners[linkId];
+    }
+  }
+
+  function purgeConnectionsFor(linkId) {
+    if (!linkId) return;
+    canvasConnections = canvasConnections.filter(function(c) { return c.a !== linkId && c.b !== linkId; });
+    canvasLinkLayer.list = canvasConnections;
+    detachConnectDot(canvasLinkLayer, linkId);
+    rebuildLinkPaths(canvasLinkLayer);
+  }
+
+  function startLinking(e, fromId, linkLayer, dotEl) {
+    e.preventDefault();
+    e.stopPropagation();
+    dotEl.classList.add('linking');
+    document.body.classList.add('linking-active');
+
+    var rootRect = linkLayer.root.getBoundingClientRect();
+    activeLink = {
+      fromId: fromId,
+      linkLayer: linkLayer,
+      dotEl: dotEl,
+      x: e.clientX - rootRect.left + linkLayer.root.scrollLeft,
+      y: e.clientY - rootRect.top + linkLayer.root.scrollTop
+    };
+
+    window.addEventListener('pointermove', onLinkPointerMove);
+    window.addEventListener('pointerup', onLinkPointerUp);
+    ensureLinkLoop();
+  }
+
+  function onLinkPointerMove(e) {
+    if (!activeLink) return;
+    var rootRect = activeLink.linkLayer.root.getBoundingClientRect();
+    activeLink.x = e.clientX - rootRect.left + activeLink.linkLayer.root.scrollLeft;
+    activeLink.y = e.clientY - rootRect.top + activeLink.linkLayer.root.scrollTop;
+  }
+
+  function onLinkPointerUp(e) {
+    if (!activeLink) return;
+    var link = activeLink;
+    window.removeEventListener('pointermove', onLinkPointerMove);
+    window.removeEventListener('pointerup', onLinkPointerUp);
+    link.dotEl.classList.remove('linking');
+    document.body.classList.remove('linking-active');
+    activeLink = null;
+
+    var targetDot = document.elementFromPoint(e.clientX, e.clientY);
+    targetDot = targetDot && targetDot.closest('.connect-dot');
+    if (!targetDot) return;
+
+    var toId = null;
+    Object.keys(link.linkLayer.dotOwners).forEach(function(id) {
+      if (link.linkLayer.dotOwners[id].dot === targetDot) toId = id;
+    });
+    if (!toId || toId === link.fromId) return;
+
+    var key = connKey(link.fromId, toId);
+    var exists = link.linkLayer.list.some(function(c) { return connKey(c.a, c.b) === key; });
+    if (exists) return;
+
+    link.linkLayer.list.push({ a: link.fromId, b: toId });
+    canvasConnections = link.linkLayer.list;
+    rebuildLinkPaths(link.linkLayer);
+    saveWorkspace();
+  }
+
+  /* ---------- Timetable ----------
+     A weekly grid (days x periods) with subject/room/teacher per cell,
+     a "mark free" toggle, and a live "now / next lesson" banner computed
+     from the real clock. Pushed to the Android wrapper app (if present)
+     via window.NotesinoNative so its home-screen widget can show today's
+     schedule without re-implementing any of this natively. */
+  var ttGrid = document.getElementById('ttGrid');
+  var ttAddPeriodBtn = document.getElementById('ttAddPeriod');
+  var ttRemovePeriodBtn = document.getElementById('ttRemovePeriod');
+  var ttAddDayBtn = document.getElementById('ttAddDay');
+  var ttRemoveDayBtn = document.getElementById('ttRemoveDay');
+  var ttBoldBtn = document.getElementById('ttBoldBtn');
+  var ttItalicBtn = document.getElementById('ttItalicBtn');
+  var ttUnderlineBtn = document.getElementById('ttUnderlineBtn');
+  var ttNextBanner = document.getElementById('ttNextBanner');
+  var ttNextLabel = document.getElementById('ttNextLabel');
+  var ttNextDetail = document.getElementById('ttNextDetail');
+
+  var DAY_ORDER = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+  var DAY_FULL_NAMES = { Mon: 'Monday', Tue: 'Tuesday', Wed: 'Wednesday', Thu: 'Thursday', Fri: 'Friday', Sat: 'Saturday', Sun: 'Sunday' };
+  var JS_DAY_TO_CODE = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  var TIMETABLE_COLORS = ['#ffd6a5', '#a0e7e5', '#ffadad', '#caffbf', '#bdb2ff', '#fdffb6'];
+
+  function defaultTimetable() {
+    return {
+      days: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'],
+      periods: [
+        { start: '08:00', end: '08:45' },
+        { start: '08:55', end: '09:40' },
+        { start: '09:50', end: '10:35' },
+        { start: '10:55', end: '11:40' },
+        { start: '11:50', end: '12:35' },
+        { start: '12:45', end: '13:30' }
+      ],
+      cells: {}
+    };
+  }
+
+  var timetable = defaultTimetable();
+  var ttCellEls = {};
+  var ttActiveField = null;
+  var ttSavedRange = null;
+
+  function normalizeTimetable(t) {
+    var base = defaultTimetable();
+    if (!t) return base;
+    return {
+      days: Array.isArray(t.days) && t.days.length ? t.days : base.days,
+      periods: Array.isArray(t.periods) && t.periods.length ? t.periods : base.periods,
+      cells: t.cells && typeof t.cells === 'object' ? t.cells : {}
+    };
+  }
+
+  function ttKey(dayIdx, periodIdx) { return dayIdx + '-' + periodIdx; }
+
+  function pushTimetableToNative() {
+    if (window.NotesinoNative && window.NotesinoNative.saveTimetable) {
+      try { window.NotesinoNative.saveTimetable(JSON.stringify(timetable)); } catch (err) {}
+    }
+  }
+
+  function ttSaveSelectionFor(field) {
+    var sel = window.getSelection();
+    if (sel && sel.rangeCount > 0 && !sel.isCollapsed) {
+      ttActiveField = field;
+      ttSavedRange = sel.getRangeAt(0).cloneRange();
+    }
+  }
+
+  function ttApplyFormat(cmd) {
+    if (!ttActiveField) return;
+    ttActiveField.focus();
+    if (ttSavedRange) {
+      var sel = window.getSelection();
+      sel.removeAllRanges();
+      sel.addRange(ttSavedRange);
+    }
+    document.execCommand(cmd, false, null);
+    var key = ttActiveField.getAttribute('data-tt-key');
+    if (key) {
+      var entry = timetable.cells[key] || {};
+      entry.subject = ttActiveField.innerHTML;
+      timetable.cells[key] = entry;
+    }
+    saveWorkspace();
+  }
+
+  ttBoldBtn.addEventListener('pointerdown', function(e) { e.preventDefault(); e.stopPropagation(); ttApplyFormat('bold'); });
+  ttItalicBtn.addEventListener('pointerdown', function(e) { e.preventDefault(); e.stopPropagation(); ttApplyFormat('italic'); });
+  ttUnderlineBtn.addEventListener('pointerdown', function(e) { e.preventDefault(); e.stopPropagation(); ttApplyFormat('underline'); });
+
+  function ttPlainText(html) {
+    var tmp = document.createElement('div');
+    tmp.innerHTML = html || '';
+    return (tmp.textContent || '').trim();
+  }
+
+  function parseHHMM(s) {
+    if (!s) return null;
+    var m = /^(\d{1,2}):(\d{2})$/.exec(s.trim());
+    if (!m) return null;
+    var h = parseInt(m[1], 10), mm = parseInt(m[2], 10);
+    if (isNaN(h) || isNaN(mm)) return null;
+    return h * 60 + mm;
+  }
+
+  function computeNextLesson() {
+    var hasAnyContent = Object.keys(timetable.cells).some(function(k) {
+      var c = timetable.cells[k];
+      return c && (ttPlainText(c.subject) || c.free);
+    });
+    if (!hasAnyContent) return { state: 'empty' };
+
+    var now = new Date();
+    var nowMinutes = now.getHours() * 60 + now.getMinutes();
+    var todayCode = JS_DAY_TO_CODE[now.getDay()];
+    var dayIdx = timetable.days.indexOf(todayCode);
+    if (dayIdx === -1) return { state: 'none-today' };
+
+    for (var i = 0; i < timetable.periods.length; i++) {
+      var p = timetable.periods[i];
+      var s = parseHHMM(p.start), e = parseHHMM(p.end);
+      if (s === null || e === null) continue;
+      if (nowMinutes >= s && nowMinutes < e) {
+        return { state: 'now', period: p, idx: i, entry: timetable.cells[ttKey(dayIdx, i)] || {} };
+      }
+    }
+
+    var best = null;
+    for (var j = 0; j < timetable.periods.length; j++) {
+      var sj = parseHHMM(timetable.periods[j].start);
+      if (sj === null || sj <= nowMinutes) continue;
+      if (!best || sj < parseHHMM(timetable.periods[best].start)) best = j;
+    }
+    if (best !== null) {
+      return { state: 'next', period: timetable.periods[best], idx: best, entry: timetable.cells[ttKey(dayIdx, best)] || {} };
+    }
+
+    return { state: 'done-today' };
+  }
+
+  function updateNextLessonBanner() {
+    var result = computeNextLesson();
+    ttNextBanner.classList.remove('now', 'free');
+
+    if (result.state === 'empty') {
+      ttNextLabel.textContent = 'No timetable yet';
+      ttNextDetail.textContent = 'Fill in the grid below to see your next lesson here.';
+      return;
+    }
+    if (result.state === 'none-today' || result.state === 'done-today') {
+      ttNextLabel.textContent = result.state === 'done-today' ? 'No more lessons today' : 'No lessons today';
+      ttNextDetail.textContent = '';
+      return;
+    }
+
+    var entry = result.entry || {};
+    var subject = ttPlainText(entry.subject);
+    var isFree = entry.free || !subject;
+
+    if (isFree) {
+      ttNextBanner.classList.add('free');
+      ttNextLabel.textContent = result.state === 'now' ? 'Free period now' : 'Next up: free period';
+      ttNextDetail.textContent = result.state === 'now'
+        ? ('Until ' + result.period.end)
+        : ('From ' + result.period.start + ' to ' + result.period.end);
+      return;
+    }
+
+    var bits = [];
+    if (entry.room) bits.push('Room ' + entry.room);
+    if (entry.teacher) bits.push(entry.teacher);
+    var bitsStr = bits.length ? (bits.join(' · ') + ' · ') : '';
+
+    if (result.state === 'now') {
+      ttNextBanner.classList.add('now');
+      ttNextLabel.textContent = 'Now: ' + subject;
+      ttNextDetail.textContent = bitsStr + 'ends ' + result.period.end;
+    } else {
+      ttNextLabel.textContent = 'Next: ' + subject;
+      ttNextDetail.textContent = bitsStr + 'starts ' + result.period.start;
+    }
+  }
+
+  function highlightCurrentPeriodCells() {
+    Object.keys(ttCellEls).forEach(function(k) {
+      ttCellEls[k].classList.remove('tt-slot-now', 'tt-slot-next');
+    });
+    var result = computeNextLesson();
+    if (result.state !== 'now' && result.state !== 'next') return;
+    var todayCode = JS_DAY_TO_CODE[new Date().getDay()];
+    var dayIdx = timetable.days.indexOf(todayCode);
+    if (dayIdx === -1) return;
+    var cellEl = ttCellEls[ttKey(dayIdx, result.idx)];
+    if (cellEl) cellEl.classList.add(result.state === 'now' ? 'tt-slot-now' : 'tt-slot-next');
+  }
+
+  function renderTimetable() {
+    ttGrid.innerHTML = '';
+    ttCellEls = {};
+    ttGrid.style.setProperty('--tt-cols', timetable.days.length);
+
+    var todayCode = JS_DAY_TO_CODE[new Date().getDay()];
+
+    var corner = document.createElement('div');
+    corner.className = 'tt-cell tt-corner';
+    ttGrid.appendChild(corner);
+
+    timetable.days.forEach(function(day) {
+      var head = document.createElement('div');
+      head.className = 'tt-cell tt-daycell' + (day === todayCode ? ' tt-today' : '');
+      head.textContent = DAY_FULL_NAMES[day] || day;
+      ttGrid.appendChild(head);
+    });
+
+    timetable.periods.forEach(function(period, pIdx) {
+      var timeCell = document.createElement('div');
+      timeCell.className = 'tt-cell tt-timecell';
+
+      var startEl = document.createElement('span');
+      startEl.className = 'tt-time-part';
+      startEl.contentEditable = 'true';
+      startEl.textContent = period.start;
+      startEl.addEventListener('pointerdown', function(e) { e.stopPropagation(); });
+      startEl.addEventListener('blur', function() {
+        period.start = startEl.textContent.trim();
+        saveWorkspace();
+        updateNextLessonBanner();
+        highlightCurrentPeriodCells();
+      });
+
+      var sep = document.createElement('span');
+      sep.className = 'tt-time-sep';
+      sep.textContent = '–';
+
+      var endEl = document.createElement('span');
+      endEl.className = 'tt-time-part';
+      endEl.contentEditable = 'true';
+      endEl.textContent = period.end;
+      endEl.addEventListener('pointerdown', function(e) { e.stopPropagation(); });
+      endEl.addEventListener('blur', function() {
+        period.end = endEl.textContent.trim();
+        saveWorkspace();
+        updateNextLessonBanner();
+        highlightCurrentPeriodCells();
+      });
+
+      timeCell.appendChild(startEl);
+      timeCell.appendChild(sep);
+      timeCell.appendChild(endEl);
+      ttGrid.appendChild(timeCell);
+
+      timetable.days.forEach(function(day, dIdx) {
+        var key = ttKey(dIdx, pIdx);
+        var entry = timetable.cells[key] || {};
+
+        var cell = document.createElement('div');
+        cell.className = 'tt-cell tt-slot';
+        if (entry.color) { cell.style.background = entry.color; cell.classList.add('tt-slot-colored'); }
+        if (entry.free) cell.classList.add('tt-is-free');
+        ttCellEls[key] = cell;
+
+        var panel = document.createElement('div');
+        panel.className = 'tt-swatches';
+
+        function pickColor(c) {
+          entry.color = c;
+          timetable.cells[key] = entry;
+          if (c) { cell.style.background = c; cell.classList.add('tt-slot-colored'); }
+          else { cell.style.background = ''; cell.classList.remove('tt-slot-colored'); }
+          dot.style.background = c || 'rgba(255,255,255,0.25)';
+          panel.classList.remove('open');
+          saveWorkspace();
+        }
+
+        TIMETABLE_COLORS.forEach(function(c) {
+          var sw = document.createElement('button');
+          sw.className = 'tt-swatch';
+          sw.style.background = c;
+          sw.addEventListener('click', function(e) { e.stopPropagation(); pickColor(c); });
+          panel.appendChild(sw);
+        });
+        var noneSw = document.createElement('button');
+        noneSw.className = 'tt-swatch none';
+        noneSw.title = 'No color';
+        noneSw.addEventListener('click', function(e) { e.stopPropagation(); pickColor(null); });
+        panel.appendChild(noneSw);
+
+        var dot = document.createElement('button');
+        dot.className = 'tt-dot';
+        dot.style.background = entry.color || 'rgba(255,255,255,0.25)';
+        dot.title = 'Color';
+        dot.addEventListener('click', function(e) {
+          e.stopPropagation();
+          var isOpen = panel.classList.contains('open');
+          document.querySelectorAll('.tt-swatches.open').forEach(function(p) { p.classList.remove('open'); });
+          panel.classList.toggle('open', !isOpen);
+        });
+
+        var freeBtn = document.createElement('button');
+        freeBtn.className = 'tt-free-btn' + (entry.free ? ' active' : '');
+        freeBtn.textContent = entry.free ? 'Free ✓' : 'Mark free';
+        freeBtn.addEventListener('pointerdown', function(e) { e.stopPropagation(); });
+        freeBtn.addEventListener('click', function(e) {
+          e.stopPropagation();
+          entry.free = !entry.free;
+          timetable.cells[key] = entry;
+          cell.classList.toggle('tt-is-free', entry.free);
+          freeBtn.classList.toggle('active', entry.free);
+          freeBtn.textContent = entry.free ? 'Free ✓' : 'Mark free';
+          saveWorkspace();
+          updateNextLessonBanner();
+          highlightCurrentPeriodCells();
+        });
+
+        var fieldsWrap = document.createElement('div');
+        fieldsWrap.className = 'tt-fields';
+
+        var subjectEl = document.createElement('div');
+        subjectEl.className = 'tt-subject';
+        subjectEl.contentEditable = 'true';
+        subjectEl.setAttribute('data-placeholder', 'Subject');
+        subjectEl.setAttribute('data-tt-key', key);
+        subjectEl.innerHTML = entry.subject || '';
+        subjectEl.addEventListener('pointerdown', function(e) { e.stopPropagation(); });
+        subjectEl.addEventListener('pointerup', function() { ttSaveSelectionFor(subjectEl); });
+        subjectEl.addEventListener('keyup', function() { ttSaveSelectionFor(subjectEl); });
+        subjectEl.addEventListener('input', function() {
+          entry.subject = subjectEl.innerHTML;
+          timetable.cells[key] = entry;
+          saveWorkspace();
+          updateNextLessonBanner();
+        });
+
+        var roomEl = document.createElement('div');
+        roomEl.className = 'tt-room';
+        roomEl.contentEditable = 'true';
+        roomEl.setAttribute('data-placeholder', 'Room');
+        roomEl.textContent = entry.room || '';
+        roomEl.addEventListener('pointerdown', function(e) { e.stopPropagation(); });
+        roomEl.addEventListener('blur', function() {
+          entry.room = roomEl.textContent.trim();
+          timetable.cells[key] = entry;
+          saveWorkspace();
+          updateNextLessonBanner();
+        });
+
+        var teacherEl = document.createElement('div');
+        teacherEl.className = 'tt-teacher';
+        teacherEl.contentEditable = 'true';
+        teacherEl.setAttribute('data-placeholder', 'Teacher');
+        teacherEl.textContent = entry.teacher || '';
+        teacherEl.addEventListener('pointerdown', function(e) { e.stopPropagation(); });
+        teacherEl.addEventListener('blur', function() {
+          entry.teacher = teacherEl.textContent.trim();
+          timetable.cells[key] = entry;
+          saveWorkspace();
+          updateNextLessonBanner();
+        });
+
+        fieldsWrap.appendChild(subjectEl);
+        fieldsWrap.appendChild(roomEl);
+        fieldsWrap.appendChild(teacherEl);
+
+        var freeLabel = document.createElement('div');
+        freeLabel.className = 'tt-free-label';
+        freeLabel.textContent = 'Free';
+
+        cell.appendChild(dot);
+        cell.appendChild(panel);
+        cell.appendChild(freeBtn);
+        cell.appendChild(fieldsWrap);
+        cell.appendChild(freeLabel);
+        ttGrid.appendChild(cell);
+      });
+    });
+
+    updateNextLessonBanner();
+    highlightCurrentPeriodCells();
+  }
+
+  document.addEventListener('pointerdown', function(e) {
+    if (!e.target.closest('.tt-slot')) {
+      document.querySelectorAll('.tt-swatches.open').forEach(function(p) { p.classList.remove('open'); });
+    }
+  });
+
+  ttAddPeriodBtn.addEventListener('click', function() {
+    if (timetable.periods.length >= 14) return;
+    timetable.periods.push({ start: '', end: '' });
+    renderTimetable();
+    saveWorkspace();
+    pushTimetableToNative();
+  });
+
+  ttRemovePeriodBtn.addEventListener('click', function() {
+    if (timetable.periods.length <= 1) return;
+    var removedIdx = timetable.periods.length - 1;
+    timetable.periods.pop();
+    timetable.days.forEach(function(d, dIdx) { delete timetable.cells[ttKey(dIdx, removedIdx)]; });
+    renderTimetable();
+    saveWorkspace();
+    pushTimetableToNative();
+  });
+
+  ttAddDayBtn.addEventListener('click', function() {
+    var next = DAY_ORDER.filter(function(d) { return timetable.days.indexOf(d) === -1; })[0];
+    if (!next) return;
+    timetable.days.push(next);
+    renderTimetable();
+    saveWorkspace();
+    pushTimetableToNative();
+  });
+
+  ttRemoveDayBtn.addEventListener('click', function() {
+    if (timetable.days.length <= 1) return;
+    var removedIdx = timetable.days.length - 1;
+    timetable.periods.forEach(function(p, pIdx) { delete timetable.cells[ttKey(removedIdx, pIdx)]; });
+    timetable.days.pop();
+    renderTimetable();
+    saveWorkspace();
+    pushTimetableToNative();
+  });
+
+  setInterval(function() {
+    updateNextLessonBanner();
+    highlightCurrentPeriodCells();
+  }, 30000);
+
   /* ---------- Persistence (localStorage) ---------- */
-  var STORAGE_KEY = 'claude_workspace_v1';
+  var STORAGE_KEY = 'claude_workspace_v2';
   var saveTimer = null;
 
   function collectNotesFrom(targetLayer) {
-    return Array.prototype.map.call(targetLayer.querySelectorAll('.note'), function(n) {
+    return Array.prototype.map.call(targetLayer.querySelectorAll('.note:not(.sticky-canvas-card):not(.table-card)'), function(n) {
       var b = n.querySelector('.note-text');
       var bgImg = n.style.backgroundImage;
       var bgMatch = bgImg && bgImg.match(/url\((['"]?)(.*?)\1\)/);
@@ -3797,13 +5713,67 @@
         h: n.offsetHeight,
         html: b ? b.innerHTML : '',
         color: n.querySelector('.note-dot').style.background,
-        bg: bgMatch ? bgMatch[2] : null
+        bg: bgMatch ? bgMatch[2] : null,
+        linkId: n.dataset.linkId
       };
     });
   }
 
+  function collectStickyCanvasesFrom(targetLayer) {
+    return Array.prototype.map.call(targetLayer.querySelectorAll('.sticky-canvas-card'), function(n) {
+      return {
+        x: parseFloat(n.style.left) || 0,
+        y: parseFloat(n.style.top) || 0,
+        w: n.offsetWidth,
+        h: n.offsetHeight,
+        color: n.querySelector('.note-dot').style.background,
+        drawing: n.__getDrawing ? n.__getDrawing() : null,
+        linkId: n.dataset.linkId
+      };
+    });
+  }
+
+  function collectTablesFrom(targetLayer) {
+    return Array.prototype.map.call(targetLayer.querySelectorAll('.table-card'), function(n) {
+      var tData = n.__getTableData ? n.__getTableData() : { rows: 3, cols: 3, grid: [] };
+      return {
+        x: parseFloat(n.style.left) || 0,
+        y: parseFloat(n.style.top) || 0,
+        w: n.offsetWidth,
+        h: n.offsetHeight,
+        color: n.querySelector('.note-dot').style.background,
+        rows: tData.rows,
+        cols: tData.cols,
+        grid: tData.grid,
+        linkId: n.dataset.linkId
+      };
+    });
+  }
+
+  function collectTextLinesFrom(targetLayer) {
+    var out = [];
+    Array.prototype.forEach.call(targetLayer.children, function(wrap) {
+      if (!wrap.__isTextLine) return;
+      var el = wrap.querySelector('.text-line');
+      var scale = parseFloat(getComputedStyle(wrap).getPropertyValue('--tl-scale')) || 1;
+      out.push({
+        x: parseFloat(wrap.style.left) || 0,
+        y: parseFloat(wrap.style.top) || 0,
+        w: wrap.offsetWidth || undefined,
+        h: wrap.offsetHeight || undefined,
+        scale: scale,
+        html: el ? el.innerHTML : '',
+        linkId: wrap.dataset.linkId
+      });
+    });
+    return out;
+  }
+
   function collectState() {
     var notes = collectNotesFrom(layer);
+    var stickyCanvases = collectStickyCanvasesFrom(layer);
+    var textLines = collectTextLinesFrom(layer);
+    var tables = collectTablesFrom(layer);
 
     var images = Array.prototype.map.call(layer.querySelectorAll('.free-image'), function(fi) {
       return {
@@ -3811,29 +5781,25 @@
         y: parseFloat(fi.style.top) || 0,
         w: fi.offsetWidth,
         h: fi.offsetHeight,
-        src: fi.querySelector('img').src
+        src: fi.querySelector('img').src,
+        linkId: fi.dataset.linkId
       };
     });
 
-    /* persist current active subject's on-screen notes before serializing */
-    if (activeSubjectId) {
-      subjectNotesData[activeSubjectId] = collectNotesFrom(subjectNotesLayer);
-    }
-
     var subjectsOut = subjects.map(function(s) {
-      return { id: s.id, name: s.name, color: s.color, notes: subjectNotesData[s.id] || [] };
+      return { id: s.id, name: s.name, color: s.color, quickNote: subjectQuickNotes[s.id] || '' };
     });
 
     return {
       notes: notes,
+      stickyCanvases: stickyCanvases,
+      textLines: textLines,
+      tables: tables,
       images: images,
       workspaceBg: workspaceBgSrc,
-      calendar: dayData,
-      activeApp: activeApp,
-      viewYear: viewYear,
-      viewMonth: viewMonth,
       subjects: subjectsOut,
       activeSubjectId: activeSubjectId,
+      connections: canvasConnections,
       timetable: timetable
     };
   }
@@ -3852,26 +5818,23 @@
 
   function clearWorkspaceUI() {
     layer.querySelectorAll('.note, .free-image').forEach(function(el) { el.remove(); });
+    Array.prototype.forEach.call(layer.children, function(el) {
+      if (el.__isTextLine) el.remove();
+    });
+    deselectAllTextLines();
+    resetLinkLayer(canvasLinkLayer);
+    canvasConnections = [];
     layer.style.backgroundImage = '';
-    subjectNotesLayer.innerHTML = '';
     subjects = [];
-    subjectNotesData = {};
+    subjectQuickNotes = {};
     activeSubjectId = null;
     workspaceBgSrc = null;
+    timetable = defaultTimetable();
     updateRemoveWorkspaceBgVisibility();
   }
 
   function applyState(state) {
     if (!state) return false;
-
-    if (state.calendar) {
-      dayData = state.calendar;
-      apps.forEach(function(a) { if (!dayData[a.id]) dayData[a.id] = {}; });
-      if (!dayData.all) dayData.all = {};
-    }
-    if (state.activeApp !== undefined) activeApp = state.activeApp;
-    if (state.viewYear !== undefined) viewYear = state.viewYear;
-    if (state.viewMonth !== undefined) viewMonth = state.viewMonth;
 
     if (state.workspaceBg) {
       workspaceBgSrc = state.workspaceBg;
@@ -3884,21 +5847,42 @@
     if (state.notes && state.notes.length) {
       state.notes.forEach(function(n) { createNote(n, layer); });
     }
+    if (state.stickyCanvases && state.stickyCanvases.length) {
+      state.stickyCanvases.forEach(function(sc) { createStickyCanvas(sc, layer); });
+    }
+    if (state.textLines && state.textLines.length) {
+      state.textLines.forEach(function(tl) { createTextLine(tl, layer); });
+    }
+    if (state.tables && state.tables.length) {
+      state.tables.forEach(function(t) { createTable(t, layer); });
+    }
     if (state.images && state.images.length) {
       state.images.forEach(function(img) { createFreeImage(img); });
     }
 
     if (state.subjects && state.subjects.length) {
       subjects = state.subjects.map(function(s) { return { id: s.id, name: s.name, color: s.color }; });
-      state.subjects.forEach(function(s) { subjectNotesData[s.id] = s.notes || []; });
+      state.subjects.forEach(function(s) {
+        if (s.quickNote) subjectQuickNotes[s.id] = s.quickNote;
+      });
     }
     if (state.activeSubjectId) {
       activeSubjectId = state.activeSubjectId;
     }
 
-    timetable = normalizeTimetable(state.timetable);
+    canvasConnections = Array.isArray(state.connections) ? state.connections : [];
+    canvasLinkLayer.list = canvasConnections;
+    rebuildLinkPaths(canvasLinkLayer);
 
-    return !!(state.notes && state.notes.length);
+    timetable = normalizeTimetable(state.timetable);
+    renderTimetable();
+
+    return !!((state.notes && state.notes.length) ||
+              (state.stickyCanvases && state.stickyCanvases.length) ||
+              (state.textLines && state.textLines.length) ||
+              (state.tables && state.tables.length) ||
+              (state.images && state.images.length) ||
+              (state.subjects && state.subjects.length));
   }
 
   function loadWorkspace() {
@@ -3932,10 +5916,10 @@
        instead of silently failing.
   */
   var FIREBASE_CONFIG = {
-    apiKey: "AIzaSyB_caidDm1HRmYXgvDRigHwDXlfF-ztzxk",
-    authDomain: "notes-f111c.firebaseapp.com",
-    databaseURL: "https://notes-f111c-default-rtdb.firebaseio.com",
-    projectId: "notes-f111c",
+    apiKey: 'YOUR_FIREBASE_API_KEY',
+    authDomain: 'YOUR_PROJECT.firebaseapp.com',
+    databaseURL: 'https://YOUR_PROJECT-default-rtdb.firebaseio.com',
+    projectId: 'YOUR_PROJECT'
   };
 
   function firebaseConfigured() {
@@ -4024,11 +6008,8 @@
       applyingRemote = true;
       clearWorkspaceUI();
       applyState(state);
-      renderCalendar();
       renderSubjectsList();
       renderSubjectCanvas();
-      renderTimetable();
-      pushTimetableToNative();
       document.getElementById('hint').style.display = 'none';
       applyingRemote = false;
     }, function(err) {
@@ -4089,8 +6070,7 @@
 
   createRoomBtn.addEventListener('click', function() {
     if (!firebaseConfigured()) {
-      setStatus(shareStatusMine, 'Live collaboration isn\'t set up yet \u2014 this needs a Firebase project config added to the file by whoever built it.', 'error');
-      showRoomView(false);
+      setStatus(shareStatusTheirs, 'Live collaboration isn\'t set up yet \u2014 this needs a Firebase project config added to the file by whoever built it.', 'error');
       return;
     }
     var code = generateShareCode();
@@ -4161,11 +6141,9 @@
   });
 
   var restored = loadWorkspace();
-  renderCalendar();
   renderSubjectsList();
   renderSubjectCanvas();
   renderTimetable();
-  pushTimetableToNative();
 
   /* Everyone who opens this link joins the same shared room automatically,
      so changes sync across devices with zero setup. A saved room from an
@@ -4185,7 +6163,6 @@
   });
 
   if (!restored) {
-    createNote({ x: 60, y: 220, html: 'Welcome to your workspace.<br><br>Drag the handle at the bottom of a note to move it, or click + to add a new note.<br><br>Click the colored dot to change color, or use <b>B</b> <i>I</i> <u>U</u> to format text.<br><br>Try <b>Subject Notes</b> above to organize notes by subject \u2014 it now includes a small calendar too.<br><br>Everyone who opens this link is automatically synced together live. Use the &#128279; button (top-left) to leave and create a private room instead.', color: colors[4] }, layer);
     createNote({ x: 320, y: 300, html: '', color: colors[1] }, layer);
     document.getElementById('hint').style.display = 'none';
     saveWorkspace();

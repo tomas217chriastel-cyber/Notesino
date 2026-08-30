@@ -303,13 +303,59 @@
     display: block;
   }
 
-  #sub-subjects.active {
-    display: flex;
-    flex-direction: column;
-    padding-top: 138px;
+  /* Subject Notes (nested inside the Timetable tab as a collapsible section) */
+  .subjects-collapse-wrap {
+    flex-shrink: 0;
+    margin-top: 12px;
+    border-radius: 16px;
+    border: 0.5px solid rgba(255, 255, 255, 0.14);
+    background: rgba(255, 255, 255, 0.04);
+    overflow: hidden;
   }
 
-  /* Subject Notes */
+  .subjects-collapse-toggle {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 12px 16px;
+    background: transparent;
+    border: none;
+    color: rgba(255, 255, 255, 0.8);
+    font-family: "Poppins", -apple-system, sans-serif;
+    font-weight: 600;
+    font-size: 12.5px;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    cursor: pointer;
+    touch-action: manipulation;
+  }
+
+  .subjects-collapse-toggle:hover {
+    color: #fff;
+  }
+
+  .subjects-collapse-chevron {
+    flex-shrink: 0;
+    transition: transform 0.2s ease;
+  }
+
+  .subjects-collapse-toggle[aria-expanded="true"] .subjects-collapse-chevron {
+    transform: rotate(180deg);
+  }
+
+  .subjects-collapse-body {
+    display: none;
+    height: 340px;
+    flex-direction: column;
+    border-top: 0.5px solid rgba(255, 255, 255, 0.14);
+  }
+
+  .subjects-collapse-body.open {
+    display: flex;
+  }
+
   .subjects-wrap {
     flex: 1;
     min-height: 0;
@@ -2041,8 +2087,10 @@
       opacity: 1 !important;
     }
 
-    /* Subject Notes: stack sidebar above canvas instead of side-by-side */
-    #sub-subjects.active {
+    /* Timetable (incl. nested Subject Notes): tighter header clearance,
+       and stack the subjects sidebar above the notebook instead of
+       side-by-side */
+    #sub-timetable.active {
       padding-top: 100px;
     }
 
@@ -2179,15 +2227,6 @@
     stroke: #ff9bc7;
     stroke-width: 2.8;
     filter: drop-shadow(0 0 8px rgba(255, 123, 176, 0.65));
-  }
-
-  .link-path-temp {
-    fill: none;
-    stroke: rgba(255, 255, 255, 0.85);
-    stroke-width: 2.2;
-    stroke-dasharray: 7 7;
-    stroke-linecap: round;
-    filter: drop-shadow(0 0 6px rgba(255, 255, 255, 0.5));
   }
 
   .connect-dot {
@@ -2609,7 +2648,6 @@
 
   <div class="notes-subswitcher" id="notesSubswitcher">
     <button class="subswitch-btn active" data-sub="board">Notes</button>
-    <button class="subswitch-btn" data-sub="subjects">Subject Notes</button>
     <button class="subswitch-btn" data-sub="timetable">Timetable</button>
   </div>
 
@@ -2636,44 +2674,6 @@
     </div>
   </div>
 
-  <div class="notes-sub" id="sub-subjects">
-    <div class="subjects-wrap">
-      <div class="subjects-sidebar" id="subjectsSidebar">
-        <div class="subjects-sidebar-head">
-          <span>Subjects</span>
-          <button class="subject-add-btn" id="addSubject" aria-label="Add subject">+</button>
-        </div>
-        <div class="subjects-list" id="subjectsList"></div>
-      </div>
-      <div class="subject-canvas-wrap">
-        <div class="notebook-toolbar" id="notebookToolbar" style="display:none;">
-          <select id="nbFontSelect" title="Font family for selected text">
-            <option value="" disabled selected>Font</option>
-          </select>
-          <select id="nbSizeSelect" title="Font size for selected text">
-            <option value="" disabled selected>Size</option>
-          </select>
-          <div class="nb-color-wrap" id="nbColorWrap" title="Text color for selected text">
-            A
-            <input type="color" id="nbColorInput" value="#ffffff">
-          </div>
-          <button class="nb-fmt-btn" id="nbBoldBtn" title="Bold"><b>B</b></button>
-          <button class="nb-fmt-btn" id="nbItalicBtn" title="Italic"><i>I</i></button>
-          <button class="nb-fmt-btn" id="nbUnderlineBtn" title="Underline"><u>U</u></button>
-          <span class="nb-toolbar-divider"></span>
-          <button class="nb-fmt-btn" id="nbAlignLeftBtn" title="Align left">&#8676;</button>
-          <button class="nb-fmt-btn" id="nbAlignCenterBtn" title="Align center">&#8596;</button>
-          <button class="nb-fmt-btn" id="nbAlignRightBtn" title="Align right">&#8677;</button>
-        </div>
-        <div class="notebook-wrap" id="notebookWrap">
-          <div class="notebook-placeholder" id="notebookPlaceholder">START NOTES</div>
-          <div class="notebook-input" id="quickNoteInput" contenteditable="true"></div>
-        </div>
-        <div class="subjects-empty" id="subjectsEmpty">Create a subject to start adding notes for it.</div>
-      </div>
-    </div>
-  </div>
-
   <div class="notes-sub" id="sub-timetable">
     <div class="tt-wrap">
       <div class="tt-next-banner" id="ttNextBanner">
@@ -2696,6 +2696,52 @@
       </div>
       <div class="tt-grid-scroll">
         <div class="tt-grid" id="ttGrid"></div>
+      </div>
+
+      <div class="subjects-collapse-wrap">
+        <button class="subjects-collapse-toggle" id="subjectsCollapseToggle" aria-expanded="false">
+          <span>Subject Notes</span>
+          <svg class="subjects-collapse-chevron" width="10" height="6" viewBox="0 0 10 6" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M1 1L5 5L9 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </button>
+        <div class="subjects-collapse-body" id="subjectsCollapseBody">
+          <div class="subjects-wrap">
+            <div class="subjects-sidebar" id="subjectsSidebar">
+              <div class="subjects-sidebar-head">
+                <span>Subjects</span>
+                <button class="subject-add-btn" id="addSubject" aria-label="Add subject">+</button>
+              </div>
+              <div class="subjects-list" id="subjectsList"></div>
+            </div>
+            <div class="subject-canvas-wrap">
+              <div class="notebook-toolbar" id="notebookToolbar" style="display:none;">
+                <select id="nbFontSelect" title="Font family for selected text">
+                  <option value="" disabled selected>Font</option>
+                </select>
+                <select id="nbSizeSelect" title="Font size for selected text">
+                  <option value="" disabled selected>Size</option>
+                </select>
+                <div class="nb-color-wrap" id="nbColorWrap" title="Text color for selected text">
+                  A
+                  <input type="color" id="nbColorInput" value="#ffffff">
+                </div>
+                <button class="nb-fmt-btn" id="nbBoldBtn" title="Bold"><b>B</b></button>
+                <button class="nb-fmt-btn" id="nbItalicBtn" title="Italic"><i>I</i></button>
+                <button class="nb-fmt-btn" id="nbUnderlineBtn" title="Underline"><u>U</u></button>
+                <span class="nb-toolbar-divider"></span>
+                <button class="nb-fmt-btn" id="nbAlignLeftBtn" title="Align left">&#8676;</button>
+                <button class="nb-fmt-btn" id="nbAlignCenterBtn" title="Align center">&#8596;</button>
+                <button class="nb-fmt-btn" id="nbAlignRightBtn" title="Align right">&#8677;</button>
+              </div>
+              <div class="notebook-wrap" id="notebookWrap">
+                <div class="notebook-placeholder" id="notebookPlaceholder">START NOTES</div>
+                <div class="notebook-input" id="quickNoteInput" contenteditable="true"></div>
+              </div>
+              <div class="subjects-empty" id="subjectsEmpty">Create a subject to start adding notes for it.</div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -2789,7 +2835,6 @@
   var subSwitchBtns = document.querySelectorAll('.subswitch-btn');
   var notesSubs = {
     board: document.getElementById('sub-board'),
-    subjects: document.getElementById('sub-subjects'),
     timetable: document.getElementById('sub-timetable')
   };
   var notesToolbar = document.getElementById('notesToolbar');
@@ -4429,6 +4474,28 @@
   var subjectQuickNotes = {};
   var SUBJECT_COLORS = ['#ff8a8a', '#8ad0ff', '#8affb0', '#ffd28a', '#c68aff', '#ff8ae0'];
 
+  /* Subject Notes now lives inside the Timetable tab as a collapsible
+     section, so both live together in one place instead of two tabs. */
+  var subjectsCollapseToggle = document.getElementById('subjectsCollapseToggle');
+  var subjectsCollapseBody = document.getElementById('subjectsCollapseBody');
+  var SUBJECTS_COLLAPSE_KEY = 'claude_workspace_subjects_open_v1';
+
+  function setSubjectsCollapseOpen(open) {
+    subjectsCollapseBody.classList.toggle('open', open);
+    subjectsCollapseToggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+    try { localStorage.setItem(SUBJECTS_COLLAPSE_KEY, open ? '1' : '0'); } catch (err) {}
+  }
+
+  subjectsCollapseToggle.addEventListener('click', function() {
+    setSubjectsCollapseOpen(!subjectsCollapseBody.classList.contains('open'));
+  });
+
+  (function initSubjectsCollapseState() {
+    var saved;
+    try { saved = localStorage.getItem(SUBJECTS_COLLAPSE_KEY); } catch (err) {}
+    setSubjectsCollapseOpen(saved === '1');
+  })();
+
   function renderSubjectsList() {
     subjectsList.innerHTML = '';
     subjects.forEach(function(s) {
@@ -4967,7 +5034,7 @@
   ['dragenter'].forEach(function(evt) {
     document.addEventListener(evt, function(e) {
       if (isTouchDevice) return;
-      if (!notesSubs.canvas.classList.contains('active')) return;
+      if (!notesSubs.board.classList.contains('active')) return;
       if (e.dataTransfer && Array.prototype.indexOf.call(e.dataTransfer.types || [], 'Files') > -1) {
         dragCounter++;
         showOverlay();
@@ -5066,7 +5133,6 @@
   function tickLinks(ts) {
     linkAnimT = ts || 0;
     updateLinkLayer(canvasLinkLayer);
-    if (activeLink) updateActiveLinkTemp();
     if (anyLinkActivity()) {
       requestAnimationFrame(tickLinks);
     } else {
@@ -5149,9 +5215,6 @@
   function startLinking(e, fromId, linkLayer, dotEl) {
     e.preventDefault();
     e.stopPropagation();
-    var tempPath = document.createElementNS(SVG_NS, 'path');
-    tempPath.setAttribute('class', 'link-path-temp');
-    linkLayer.svg.appendChild(tempPath);
     dotEl.classList.add('linking');
     document.body.classList.add('linking-active');
 
@@ -5160,7 +5223,6 @@
       fromId: fromId,
       linkLayer: linkLayer,
       dotEl: dotEl,
-      tempPath: tempPath,
       x: e.clientX - rootRect.left + linkLayer.root.scrollLeft,
       y: e.clientY - rootRect.top + linkLayer.root.scrollTop
     };
@@ -5177,12 +5239,6 @@
     activeLink.y = e.clientY - rootRect.top + activeLink.linkLayer.root.scrollTop;
   }
 
-  function updateActiveLinkTemp() {
-    var owner = activeLink.linkLayer.dotOwners[activeLink.fromId];
-    if (!owner) return;
-    activeLink.tempPath.setAttribute('d', sagPath(cornerPoint(owner.el), { x: activeLink.x, y: activeLink.y }, 0));
-  }
-
   function onLinkPointerUp(e) {
     if (!activeLink) return;
     var link = activeLink;
@@ -5190,7 +5246,6 @@
     window.removeEventListener('pointerup', onLinkPointerUp);
     link.dotEl.classList.remove('linking');
     document.body.classList.remove('linking-active');
-    link.tempPath.remove();
     activeLink = null;
 
     var targetDot = document.elementFromPoint(e.clientX, e.clientY);

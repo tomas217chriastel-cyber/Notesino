@@ -1,5 +1,20 @@
 # Notesino
 
+`index.html` at the repo root now serves **SchoolBoard**, a newer
+cross-platform (web/Android/iOS) rebuild that carries over Notesino's
+canvas, sticky-note, and formatting code — see
+[school-app-widget](https://github.com/tomas217chriastel-cyber/school-app-widget)
+for that project's full source and docs.
+
+The original Notesino web app described below still exists, unchanged,
+at [`legacy/notesino-classic.html`](legacy/notesino-classic.html) — open
+that file directly for the classic sticky-notes/calendar/timetable
+experience. (Note: the Android build in `android/` still bundles
+whatever is at the repo-root `index.html`, i.e. SchoolBoard now, not the
+classic app — see `android/build.sh`.)
+
+---
+
 A sticky-notes, calendar, subjects, and weekly-timetable workspace that runs
 as a single web page — and as an installable Android app with a home-screen
 timetable widget.

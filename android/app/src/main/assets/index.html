@@ -347,13 +347,36 @@
 
   .subjects-collapse-body {
     display: none;
-    height: 340px;
     flex-direction: column;
     border-top: 0.5px solid rgba(255, 255, 255, 0.14);
   }
 
   .subjects-collapse-body.open {
     display: flex;
+  }
+
+  .subjects-collapse-resize {
+    flex-shrink: 0;
+    height: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: ns-resize;
+    touch-action: none;
+  }
+
+  .subjects-collapse-resize::after {
+    content: '';
+    width: 40px;
+    height: 4px;
+    border-radius: 2px;
+    background: rgba(255, 255, 255, 0.25);
+    transition: background 0.15s ease;
+  }
+
+  .subjects-collapse-resize:hover::after,
+  .subjects-collapse-resize.resizing::after {
+    background: rgba(255, 255, 255, 0.55);
   }
 
   .subjects-wrap {
@@ -2598,14 +2621,107 @@
   }
 
   @media (max-width: 720px) {
+    /* Tighter chrome (padding/buttons/badges) so the grid doesn't feel
+       cramped, while keeping every piece of actual schedule text at a
+       readable 14px minimum - only the small decorative color dot and
+       the "Mark free" chip stay compact, since they're controls/tags
+       rather than content to read. */
     .tt-wrap {
-      padding: 0 10px 14px;
+      padding: 0 8px 12px;
+      gap: 8px;
     }
-    .tt-grid {
-      grid-template-columns: 76px repeat(var(--tt-cols, 5), minmax(104px, 1fr));
+
+    .tt-toolbar {
+      gap: 6px;
     }
+
+    .tt-title {
+      font-size: 14px;
+    }
+
+    .tt-fmt-group {
+      gap: 3px;
+    }
+
+    .tt-fmt-btn {
+      width: 28px;
+      height: 28px;
+      font-size: 13px;
+    }
+
+    .tt-actions {
+      gap: 5px;
+    }
+
+    .tt-btn {
+      padding: 6px 10px;
+      font-size: 12.5px;
+    }
+
     .tt-next-banner {
-      padding: 10px 12px;
+      padding: 8px 10px;
+      gap: 4px 8px;
+    }
+
+    .tt-next-label {
+      font-size: 14px;
+    }
+
+    .tt-next-detail {
+      font-size: 12.5px;
+    }
+
+    .tt-grid {
+      grid-template-columns: 64px repeat(var(--tt-cols, 5), minmax(126px, 1fr));
+    }
+
+    .tt-cell {
+      padding: 6px;
+    }
+
+    .tt-daycell {
+      font-size: 14px;
+      padding: 6px 3px;
+    }
+
+    .tt-timecell {
+      font-size: 14px;
+      gap: 1px;
+    }
+
+    .tt-time-part {
+      min-width: 28px;
+    }
+
+    .tt-slot {
+      min-height: 96px;
+    }
+
+    .tt-dot {
+      width: 10px;
+      height: 10px;
+      top: 4px;
+      right: 4px;
+    }
+
+    .tt-swatch {
+      width: 20px;
+      height: 20px;
+    }
+
+    .tt-free-btn {
+      font-size: 9.5px;
+      padding: 2px 7px;
+    }
+
+    .tt-subject {
+      font-size: 14px;
+      margin-right: 14px;
+    }
+
+    .tt-room,
+    .tt-teacher {
+      font-size: 14px;
     }
   }
 </style>
@@ -2741,6 +2857,7 @@
               <div class="subjects-empty" id="subjectsEmpty">Create a subject to start adding notes for it.</div>
             </div>
           </div>
+          <div class="subjects-collapse-resize" id="subjectsCollapseResize" title="Drag to resize" aria-hidden="true"></div>
         </div>
       </div>
     </div>
@@ -4496,6 +4613,48 @@
     setSubjectsCollapseOpen(saved === '1');
   })();
 
+  /* Drag the grip at the bottom of the panel to expand/shrink it — the
+     window "expands" instead of being stuck at one fixed size. */
+  var subjectsCollapseResize = document.getElementById('subjectsCollapseResize');
+  var SUBJECTS_HEIGHT_KEY = 'claude_workspace_subjects_height_v1';
+  var SUBJECTS_MIN_HEIGHT = 180;
+  var SUBJECTS_MAX_HEIGHT = 720;
+
+  function setSubjectsHeight(h) {
+    h = Math.max(SUBJECTS_MIN_HEIGHT, Math.min(SUBJECTS_MAX_HEIGHT, h));
+    subjectsCollapseBody.style.height = h + 'px';
+    try { localStorage.setItem(SUBJECTS_HEIGHT_KEY, String(h)); } catch (err) {}
+  }
+
+  (function initSubjectsHeight() {
+    var saved = null;
+    try { saved = parseFloat(localStorage.getItem(SUBJECTS_HEIGHT_KEY)); } catch (err) {}
+    setSubjectsHeight(saved && !isNaN(saved) ? saved : 340);
+  })();
+
+  (function() {
+    var resizing = false, startY = 0, startH = 0;
+    subjectsCollapseResize.addEventListener('pointerdown', function(e) {
+      resizing = true;
+      startY = e.clientY;
+      startH = subjectsCollapseBody.getBoundingClientRect().height;
+      subjectsCollapseResize.classList.add('resizing');
+      subjectsCollapseResize.setPointerCapture(e.pointerId);
+      e.preventDefault();
+    });
+    subjectsCollapseResize.addEventListener('pointermove', function(e) {
+      if (!resizing) return;
+      setSubjectsHeight(startH + (e.clientY - startY));
+      e.preventDefault();
+    });
+    function endResize() {
+      resizing = false;
+      subjectsCollapseResize.classList.remove('resizing');
+    }
+    subjectsCollapseResize.addEventListener('pointerup', endResize);
+    subjectsCollapseResize.addEventListener('pointercancel', endResize);
+  })();
+
   function renderSubjectsList() {
     subjectsList.innerHTML = '';
     subjects.forEach(function(s) {
@@ -6163,7 +6322,18 @@
   });
 
   if (!restored) {
-    createNote({ x: 320, y: 300, html: '', color: colors[1] }, layer);
+    /* Mobile already defaults new notes to a smaller 132px card (see the
+       @media rule on .note), but the very first starter note can be
+       smaller still since it's just a placeholder to get going with. Its
+       position also needs to move in for mobile - x:320 assumes a wide
+       desktop canvas and would push a narrow phone's note half off the
+       visible screen (clipped by the canvas viewport, not scrollable
+       back into view). */
+    var starterIsMobile = window.matchMedia('(max-width: 720px)').matches;
+    var starterNote = starterIsMobile
+      ? { x: 20, y: 220, w: 120, h: 100, html: '', color: colors[1] }
+      : { x: 320, y: 300, html: '', color: colors[1] };
+    createNote(starterNote, layer);
     document.getElementById('hint').style.display = 'none';
     saveWorkspace();
   } else {

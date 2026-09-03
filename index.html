@@ -1113,6 +1113,93 @@
     opacity: 1;
   }
 
+  /* Draggable free videos on the Notes canvas */
+  .free-video {
+    position: absolute;
+    border-radius: 12px;
+    box-shadow: 0 8px 28px rgba(0,0,0,0.35);
+    overflow: visible;
+    min-width: 160px;
+    min-height: 120px;
+    background: #0a0a12;
+  }
+
+  .free-video .fv-head {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 22px;
+    border-radius: 12px 12px 0 0;
+    background: rgba(0,0,0,0.45);
+    cursor: grab;
+    z-index: 3;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    touch-action: none;
+  }
+
+  .free-video .fv-head:active {
+    cursor: grabbing;
+  }
+
+  .free-video .fv-grip {
+    width: 34px;
+    height: 4px;
+    border-radius: 2px;
+    background: rgba(255,255,255,0.35);
+  }
+
+  .free-video .fv-close {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: rgba(0,0,0,0.5);
+    border: none;
+    color: #fff;
+    font-size: 12px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity 0.15s ease;
+    z-index: 4;
+  }
+
+  .free-video:hover .fv-close,
+  body.touch-device .fv-close {
+    opacity: 1;
+  }
+
+  .free-video .fv-clip {
+    position: absolute;
+    top: 22px;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    border-radius: 0 0 12px 12px;
+    overflow: hidden;
+    background: #000;
+  }
+
+  .free-video video {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    display: block;
+    background: #000;
+  }
+
+  .free-video:hover .resize-handle,
+  body.touch-device.free-video .resize-handle {
+    opacity: 1;
+  }
+
   /* Notes layer */
   .canvas-viewport {
     position: absolute;
@@ -2756,7 +2843,7 @@
         <button class="add-menu-item" id="addStickyCanvas">Sticky Canvas</button>
         <button class="add-menu-item" id="addTextLine">Text Line</button>
         <button class="add-menu-item" id="addTable">Table</button>
-        <button class="add-menu-item" id="addImage">Import Image</button>
+        <button class="add-menu-item" id="addMedia">Insert Media</button>
       </div>
     </div>
     <button class="tb-btn" id="removeWorkspaceBg" title="Remove workspace background" aria-label="Remove workspace background" style="display:none;">&#8635;</button>
@@ -2867,11 +2954,11 @@
     <button class="drop-overlay-close" id="dropOverlayClose" aria-label="Close">&times;</button>
     <div class="drop-overlay-box">
       <div class="drop-overlay-icon">&#128247;</div>
-      <div class="drop-overlay-text">Drag &amp; drop your image here</div>
+      <div class="drop-overlay-text">Drag &amp; drop an image or video here</div>
       <div class="drop-overlay-sub">or click to choose a file</div>
     </div>
   </div>
-  <input type="file" id="imageFileInput" accept="image/*" style="display:none;">
+  <input type="file" id="mediaFileInput" accept="image/*,video/*" style="display:none;">
 
   <div class="subject-modal-overlay" id="subjectModalOverlay">
     <div class="subject-modal">
@@ -3021,7 +3108,7 @@
      rather than tracked as one global flag, since selection state lives
      in a few different places (notes, tables, text lines). */
   function isCanvasInteractionBlocked(target) {
-    if (target && target.closest && target.closest('.note, .text-line-wrap, .free-image, .tl-toolbar, .swatches, .table-row-btn, .table-col-btn, .table-card-wrap, .sc-canvas-wrap, .sc-toolbar')) return true;
+    if (target && target.closest && target.closest('.note, .text-line-wrap, .free-image, .free-video, .tl-toolbar, .swatches, .table-row-btn, .table-col-btn, .table-card-wrap, .sc-canvas-wrap, .sc-toolbar')) return true;
     if (typeof activeTextLineWrap !== 'undefined' && activeTextLineWrap) return true;
     if (document.querySelector('.table-card.selected')) return true;
     return false;
@@ -5127,12 +5214,78 @@
     fi.addEventListener('pointercancel', endDrag);
   }
 
-  /* ---------- Drag & drop overlay ---------- */
+  /* ---------- Free-floating video (Insert Media — video branch) ----------
+     A video needs its own native <video controls> UI to stay reachable
+     for play/pause/seek/volume, so unlike free-image (which is draggable
+     everywhere), this has a dedicated header strip to grab — same
+     drag/resize machinery as notes/tables (makeDraggable/makeResizable). */
+  function createFreeVideo(data) {
+    var fv = document.createElement('div');
+    fv.className = 'free-video';
+    var defaultPos = screenToCanvas(window.innerWidth / 2 - 110, window.innerHeight / 2 - 90);
+    var x = (data && data.x !== undefined) ? data.x : defaultPos.x;
+    var y = (data && data.y !== undefined) ? data.y : defaultPos.y;
+    fv.style.left = x + 'px';
+    fv.style.top = y + 'px';
+    fv.style.width = ((data && data.w) || 220) + 'px';
+    fv.style.height = ((data && data.h) || 160) + 'px';
+    fv.style.zIndex = ++topZ;
+
+    var head = document.createElement('div');
+    head.className = 'fv-head';
+    var grip = document.createElement('div');
+    grip.className = 'fv-grip';
+    head.appendChild(grip);
+
+    var closeBtn = document.createElement('button');
+    closeBtn.className = 'fv-close';
+    closeBtn.innerHTML = '&times;';
+    closeBtn.setAttribute('aria-label', 'Remove video');
+    closeBtn.addEventListener('pointerdown', function(e) { e.stopPropagation(); });
+    closeBtn.addEventListener('click', function(e) {
+      e.stopPropagation();
+      purgeConnectionsFor(fv.dataset.linkId);
+      fv.remove();
+      saveWorkspace();
+    });
+    head.appendChild(closeBtn);
+    fv.appendChild(head);
+
+    var vidClip = document.createElement('div');
+    vidClip.className = 'fv-clip';
+    var video = document.createElement('video');
+    video.src = data.src;
+    video.controls = true;
+    video.playsInline = true;
+    video.preload = 'metadata';
+    vidClip.appendChild(video);
+    fv.appendChild(vidClip);
+
+    var fvResizeHandle = document.createElement('div');
+    fvResizeHandle.className = 'resize-handle';
+    fv.appendChild(fvResizeHandle);
+
+    layer.appendChild(fv);
+    attachConnectDot(fv, canvasLinkLayer, data && data.linkId);
+    makeDraggable(fv, head);
+    makeResizable(fv, fvResizeHandle, 160, 120);
+    if (window.ResizeObserver) {
+      var ro = new ResizeObserver(function() { saveWorkspace(); });
+      ro.observe(fv);
+    }
+    return fv;
+  }
+
+  /* ---------- Drag & drop overlay (images and videos - "Insert Media") ---------- */
   var dropOverlay = document.getElementById('dropOverlay');
-  var imageFileInput = document.getElementById('imageFileInput');
+  var mediaFileInput = document.getElementById('mediaFileInput');
   var workspaceBgSrc = null;
   var dragCounter = 0;
   var removeWorkspaceBgBtn = document.getElementById('removeWorkspaceBg');
+  /* Everything is stored inline (data URLs, in localStorage/live-room
+     sync) rather than uploaded anywhere, so there's no hard cap - just a
+     friendly heads-up past a size where that storage tends to get iffy. */
+  var MEDIA_WARN_BYTES = 20 * 1024 * 1024;
 
   function updateRemoveWorkspaceBgVisibility() {
     removeWorkspaceBgBtn.style.display = workspaceBgSrc ? 'flex' : 'none';
@@ -5148,12 +5301,13 @@
   function showOverlay() { dropOverlay.classList.add('show'); }
   function hideOverlay() { dropOverlay.classList.remove('show'); dragCounter = 0; }
 
-  document.getElementById('addImage').addEventListener('click', function() {
+  document.getElementById('addMedia').addEventListener('click', function() {
     /* Touch devices have no real drag-and-drop \u2014 go straight to the native
-       photo/file picker (Photo Library, Take Photo, Choose File on iOS;
-       similar chooser on Android) instead of showing the drop overlay. */
+       photo/video picker (Photo Library, Take Photo/Video, Choose File on
+       iOS; similar chooser on Android) instead of showing the drop
+       overlay. */
     if (isTouchDevice) {
-      imageFileInput.click();
+      mediaFileInput.click();
     } else {
       showOverlay();
     }
@@ -5166,28 +5320,51 @@
   });
 
   dropOverlay.addEventListener('click', function(e) {
-    if (e.target === dropOverlay) imageFileInput.click();
+    if (e.target === dropOverlay) mediaFileInput.click();
   });
   dropOverlay.querySelector('.drop-overlay-box').addEventListener('click', function() {
-    imageFileInput.click();
+    mediaFileInput.click();
   });
 
-  function handleImageFile(file) {
-    if (!file || file.type.indexOf('image/') !== 0) return;
+  /* Images become a free-image card (unchanged); videos become a
+     free-video card with native <video controls>. Any other file type
+     (accept="image/*,video/*" already steers pickers away from these,
+     but a drag-and-drop drop can still bypass that) is ignored. */
+  function handleMediaFile(file) {
+    if (!file) return;
+    var isImage = file.type.indexOf('image/') === 0;
+    var isVideo = file.type.indexOf('video/') === 0;
+    if (!isImage && !isVideo) return;
+
+    if (file.size > MEDIA_WARN_BYTES) {
+      window.alert('That ' + (isVideo ? 'video' : 'image') + ' is ' +
+        Math.round(file.size / 1024 / 1024) + 'MB. Everything here is stored ' +
+        'directly in the browser (and synced the same way if you\'re in a ' +
+        'live room), so a file this large may fail to save or sync ' +
+        'reliably \u2014 a shorter clip or smaller file tends to work better.');
+    }
+
     var reader = new FileReader();
     reader.onload = function(ev) {
-      var pos = screenToCanvas(window.innerWidth / 2 - 90, window.innerHeight / 2 - 90);
-      createFreeImage({ src: ev.target.result, x: pos.x, y: pos.y });
+      var pos = screenToCanvas(
+        window.innerWidth / 2 - (isVideo ? 110 : 90),
+        window.innerHeight / 2 - 90
+      );
+      if (isVideo) {
+        createFreeVideo({ src: ev.target.result, x: pos.x, y: pos.y });
+      } else {
+        createFreeImage({ src: ev.target.result, x: pos.x, y: pos.y });
+      }
       saveWorkspace();
     };
     reader.readAsDataURL(file);
   }
 
-  imageFileInput.addEventListener('change', function(e) {
+  mediaFileInput.addEventListener('change', function(e) {
     var file = e.target.files && e.target.files[0];
-    handleImageFile(file);
+    handleMediaFile(file);
     hideOverlay();
-    imageFileInput.value = '';
+    mediaFileInput.value = '';
   });
 
   ['dragenter'].forEach(function(evt) {
@@ -5215,7 +5392,7 @@
     if (!dropOverlay.classList.contains('show')) return;
     e.preventDefault();
     var file = e.dataTransfer.files && e.dataTransfer.files[0];
-    handleImageFile(file);
+    handleMediaFile(file);
     hideOverlay();
   });
 
@@ -5945,6 +6122,17 @@
       };
     });
 
+    var videos = Array.prototype.map.call(layer.querySelectorAll('.free-video'), function(fv) {
+      return {
+        x: parseFloat(fv.style.left) || 0,
+        y: parseFloat(fv.style.top) || 0,
+        w: fv.offsetWidth,
+        h: fv.offsetHeight,
+        src: fv.querySelector('video').src,
+        linkId: fv.dataset.linkId
+      };
+    });
+
     var subjectsOut = subjects.map(function(s) {
       return { id: s.id, name: s.name, color: s.color, quickNote: subjectQuickNotes[s.id] || '' };
     });
@@ -5955,6 +6143,7 @@
       textLines: textLines,
       tables: tables,
       images: images,
+      videos: videos,
       workspaceBg: workspaceBgSrc,
       subjects: subjectsOut,
       activeSubjectId: activeSubjectId,
@@ -5976,7 +6165,7 @@
   }
 
   function clearWorkspaceUI() {
-    layer.querySelectorAll('.note, .free-image').forEach(function(el) { el.remove(); });
+    layer.querySelectorAll('.note, .free-image, .free-video').forEach(function(el) { el.remove(); });
     Array.prototype.forEach.call(layer.children, function(el) {
       if (el.__isTextLine) el.remove();
     });
@@ -6017,6 +6206,9 @@
     }
     if (state.images && state.images.length) {
       state.images.forEach(function(img) { createFreeImage(img); });
+    }
+    if (state.videos && state.videos.length) {
+      state.videos.forEach(function(v) { createFreeVideo(v); });
     }
 
     if (state.subjects && state.subjects.length) {

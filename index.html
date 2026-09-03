@@ -1056,6 +1056,7 @@
 
   .note:hover .resize-handle,
   .free-image:hover .resize-handle,
+  .free-video:hover .resize-handle,
   body.touch-device .resize-handle {
     opacity: 1;
   }
@@ -1195,10 +1196,6 @@
     background: #000;
   }
 
-  .free-video:hover .resize-handle,
-  body.touch-device.free-video .resize-handle {
-    opacity: 1;
-  }
 
   /* Notes layer */
   .canvas-viewport {
@@ -2368,6 +2365,27 @@
     box-shadow: 0 2px 14px rgba(255, 255, 255, 0.8), 0 0 0 2px rgba(255, 255, 255, 0.95);
   }
 
+  /* The dot itself stays small so it doesn't crowd tiny instances, but a
+     20px target is too fiddly to grab-and-drag precisely with a finger, so
+     touch devices get an invisible, much larger hit area around it (the
+     same "generous invisible hit zone" trick already used for the
+     connection lines themselves via .link-path-hit). The dot always sits
+     right on an instance's top-right corner, which is also where every
+     instance type's close button lives (6px in from that same corner) —
+     a symmetric hit area centered on the dot swallows that button
+     entirely. So this expands only up and to the right, away from the
+     card, and pulls in tight on the card-facing sides instead; the drag
+     gesture itself isn't limited to starting inside this box, it just
+     needs an easier first touch. */
+  body.touch-device .connect-dot::before {
+    content: '';
+    position: absolute;
+    top: -24px;
+    right: -24px;
+    bottom: 8px;
+    left: 8px;
+  }
+
   body.linking-active {
     cursor: crosshair;
   }
@@ -3136,22 +3154,81 @@
     canvasEndGestureSoon();
   }, { passive: false });
 
+  /* Single-finger/mouse pan, plus two-finger pinch-to-zoom for touch —
+     tracked as a small map of active pointers rather than the Touch Events
+     API, so it shares coordinate handling with the mouse-wheel zoom above.
+     touch-action:none on .canvas-viewport keeps the browser's own
+     pinch-zoom/scroll out of the way so this can own the gesture. */
   (function() {
     var panning = false, startX = 0, startY = 0, startPanX = 0, startPanY = 0;
+    var activePointers = {};
+    var pinching = false;
+    /* pinchWorldX/Y is the canvas-space point that sat under the fingers'
+       midpoint the moment the pinch began; every move re-solves pan so
+       that same world point stays glued under wherever the midpoint has
+       moved to since, giving combined pan+zoom in one natural gesture
+       instead of zoom anchored to a point that goes stale as fingers drift. */
+    var pinchStartDist = 1, pinchStartZoom = 1, pinchWorldX = 0, pinchWorldY = 0;
+
+    function activeIds() { return Object.keys(activePointers); }
+
+    function pinchGeometry() {
+      var ids = activeIds();
+      var a = activePointers[ids[0]], b = activePointers[ids[1]];
+      var dx = b.x - a.x, dy = b.y - a.y;
+      return { dist: Math.sqrt(dx * dx + dy * dy) || 1, midX: (a.x + b.x) / 2, midY: (a.y + b.y) / 2 };
+    }
+
+    function beginPinch() {
+      panning = false;
+      canvasViewport.classList.remove('panning');
+      pinching = true;
+      var rect = canvasViewport.getBoundingClientRect();
+      var g = pinchGeometry();
+      pinchStartDist = g.dist;
+      pinchStartZoom = canvasZoom;
+      pinchWorldX = (g.midX - rect.left - canvasPanX) / canvasZoom;
+      pinchWorldY = (g.midY - rect.top - canvasPanY) / canvasZoom;
+    }
+
+    function beginPanFrom(x, y) {
+      panning = true;
+      canvasViewport.classList.add('panning');
+      startX = x;
+      startY = y;
+      startPanX = canvasPanX;
+      startPanY = canvasPanY;
+    }
 
     canvasViewport.addEventListener('pointerdown', function(e) {
       if (isCanvasInteractionBlocked(e.target)) return;
-      panning = true;
-      canvasViewport.classList.add('panning');
-      canvasBeginGesture();
-      startX = e.clientX;
-      startY = e.clientY;
-      startPanX = canvasPanX;
-      startPanY = canvasPanY;
+      activePointers[e.pointerId] = { x: e.clientX, y: e.clientY };
       canvasViewport.setPointerCapture(e.pointerId);
+      canvasBeginGesture();
+
+      if (activeIds().length === 2) {
+        beginPinch();
+      } else if (activeIds().length === 1) {
+        beginPanFrom(e.clientX, e.clientY);
+      }
     });
 
     canvasViewport.addEventListener('pointermove', function(e) {
+      if (!activePointers[e.pointerId]) return;
+      activePointers[e.pointerId] = { x: e.clientX, y: e.clientY };
+
+      if (pinching) {
+        if (activeIds().length < 2) return;
+        var g = pinchGeometry();
+        var rect = canvasViewport.getBoundingClientRect();
+        var newZoom = Math.max(CANVAS_ZOOM_MIN, Math.min(CANVAS_ZOOM_MAX, pinchStartZoom * (g.dist / pinchStartDist)));
+        canvasZoom = newZoom;
+        canvasPanX = (g.midX - rect.left) - pinchWorldX * canvasZoom;
+        canvasPanY = (g.midY - rect.top) - pinchWorldY * canvasZoom;
+        applyCanvasTransform();
+        return;
+      }
+
       if (!panning) return;
       canvasPanX = startPanX + (e.clientX - startX);
       canvasPanY = startPanY + (e.clientY - startY);
@@ -3166,8 +3243,28 @@
         canvasEndGestureSoon();
       }
     }
-    canvasViewport.addEventListener('pointerup', endPan);
-    canvasViewport.addEventListener('pointercancel', endPan);
+
+    function releasePointer(e) {
+      delete activePointers[e.pointerId];
+      var remaining = activeIds();
+
+      if (pinching) {
+        canvasSaveViewDebounced();
+        if (remaining.length >= 2) return;
+        pinching = false;
+        if (remaining.length === 1) {
+          var last = activePointers[remaining[0]];
+          beginPanFrom(last.x, last.y);
+        } else {
+          canvasEndGestureSoon();
+        }
+        return;
+      }
+
+      endPan();
+    }
+    canvasViewport.addEventListener('pointerup', releasePointer);
+    canvasViewport.addEventListener('pointercancel', releasePointer);
   })();
 
   var CANVAS_VIEW_KEY = 'claude_workspace_canvasview_v1';
@@ -3582,6 +3679,7 @@
         noteScaleRaf = requestAnimationFrame(function() {
           noteScaleRaf = null;
           updateNoteScale();
+          syncDotFor(note);
           saveWorkspace();
         });
       });
@@ -3915,6 +4013,7 @@
         scRaf = requestAnimationFrame(function() {
           scRaf = null;
           scResize(true);
+          syncDotFor(card);
           saveWorkspace();
         });
       });
@@ -4252,6 +4351,7 @@
         if (tblRaf) cancelAnimationFrame(tblRaf);
         tblRaf = requestAnimationFrame(function() {
           tblRaf = null;
+          syncDotFor(card);
           saveWorkspace();
         });
       });
@@ -4549,6 +4649,7 @@
       }
       el.style.width = newW + 'px';
       el.style.height = newH + 'px';
+      syncDotFor(el);
       e.preventDefault();
     });
 
@@ -4602,6 +4703,7 @@
         note.style.left = x + 'px';
         note.style.top = y + 'px';
       }
+      syncDotFor(note);
       if (onMove) onMove();
       e.preventDefault();
     });
@@ -5178,7 +5280,7 @@
     makeImageDraggable(fi);
     makeResizable(fi, fiResizeHandle);
     if (window.ResizeObserver) {
-      var ro = new ResizeObserver(function() { saveWorkspace(); });
+      var ro = new ResizeObserver(function() { syncDotFor(fi); saveWorkspace(); });
       ro.observe(fi);
     }
     return fi;
@@ -5204,6 +5306,7 @@
       var p = screenToCanvas(e.clientX - offsetX, e.clientY - offsetY);
       fi.style.left = p.x + 'px';
       fi.style.top = p.y + 'px';
+      syncDotFor(fi);
       e.preventDefault();
     });
 
@@ -5270,7 +5373,7 @@
     makeDraggable(fv, head);
     makeResizable(fv, fvResizeHandle, 160, 120);
     if (window.ResizeObserver) {
-      var ro = new ResizeObserver(function() { saveWorkspace(); });
+      var ro = new ResizeObserver(function() { syncDotFor(fv); saveWorkspace(); });
       ro.observe(fv);
     }
     return fv;
@@ -5432,6 +5535,22 @@
     return { x: el.offsetLeft + el.offsetWidth, y: el.offsetTop };
   }
 
+  /* Keeps one instance's own connect-dot glued to it immediately, without
+     the animation loop having to be running — called from drag/resize
+     moves and from each instance type's own ResizeObserver (content-driven
+     growth, e.g. typing into a note). If this instance is actually
+     connected to something, the loop is already running anyway and will
+     redraw the sagging line on the very next frame regardless. */
+  function syncDotFor(el) {
+    var id = el && el.dataset && el.dataset.linkId;
+    if (!id) return;
+    var owner = canvasLinkLayer.dotOwners[id];
+    if (!owner) return;
+    var p = cornerPoint(owner.el);
+    owner.dot.style.left = p.x + 'px';
+    owner.dot.style.top = p.y + 'px';
+  }
+
   function sagPath(p1, p2, phaseSeed) {
     var dx = p2.x - p1.x, dy = p2.y - p1.y;
     var dist = Math.sqrt(dx * dx + dy * dy);
@@ -5463,7 +5582,16 @@
   }
 
   function anyLinkActivity() {
-    return !!activeLink || Object.keys(canvasLinkLayer.dotOwners).length > 0;
+    /* NOT dotOwners.length — every instance on the canvas registers a dot
+       owner whether or not it's ever connected to anything, so gating on
+       that kept this rAF loop (and its per-frame layout reads of every
+       instance's box) running forever from the moment the first note
+       existed, on every device, even with zero connections. The sway
+       animation and live tracking only matter while a connection exists
+       or a new one is actively being dragged into place; drags/resizes of
+       unconnected instances keep their own dot in sync directly via
+       syncDotFor() instead of needing this loop at all. */
+    return !!activeLink || canvasLinkLayer.list.length > 0;
   }
 
   function tickLinks(ts) {

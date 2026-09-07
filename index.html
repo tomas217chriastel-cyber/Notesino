@@ -483,6 +483,93 @@
     height: 20px;
   }
 
+  /* ---------- Multi-select ---------- */
+  .marquee-select {
+    position: fixed;
+    border: 1.5px solid rgba(106, 124, 255, 0.9);
+    background: rgba(106, 124, 255, 0.15);
+    border-radius: 3px;
+    z-index: 400;
+    pointer-events: none;
+  }
+
+  .multi-selected {
+    outline: 2.5px solid rgba(106, 124, 255, 0.95);
+    outline-offset: 3px;
+    border-radius: 14px;
+  }
+
+  .multi-select-bar {
+    display: none;
+    position: absolute;
+    left: 50%;
+    bottom: calc(24px + env(safe-area-inset-bottom, 0px));
+    transform: translateX(-50%);
+    align-items: center;
+    gap: 10px;
+    padding: 8px 10px 8px 14px;
+    border-radius: 999px;
+    background: rgba(var(--panel-rgb), 0.92);
+    backdrop-filter: blur(20px);
+    border: 0.5px solid rgba(var(--ink-rgb), 0.18);
+    box-shadow: 0 12px 32px rgba(0,0,0,0.35);
+    z-index: 60;
+  }
+
+  .multi-select-bar.open {
+    display: flex;
+  }
+
+  .multi-select-count {
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--ink-solid);
+    white-space: nowrap;
+  }
+
+  .multi-select-colors {
+    display: flex;
+    gap: 6px;
+  }
+
+  .multi-select-colors button {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    border: 1.5px solid rgba(var(--ink-rgb), 0.3);
+    cursor: pointer;
+    padding: 0;
+  }
+
+  .multi-select-delete-btn {
+    padding: 6px 14px;
+    border-radius: 999px;
+    border: none;
+    background: rgba(255, 99, 99, 0.25);
+    color: var(--ink-solid);
+    font-size: 12.5px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+
+  .multi-select-delete-btn:hover {
+    background: rgba(255, 99, 99, 0.4);
+  }
+
+  .multi-select-close-btn {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    border: none;
+    background: rgba(var(--ink-rgb), 0.12);
+    color: var(--ink-solid);
+    font-size: 14px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
   /* A brief pulse so a jumped-to search result is easy to spot the
      instant the canvas finishes animating there. */
   @keyframes searchHighlightPulse {
@@ -3214,7 +3301,13 @@
     <div class="canvas-viewport" id="canvasViewport">
       <div class="notes-layer" id="notesLayer"></div>
     </div>
-    <div class="hint" id="hint">Drag the handle to move &middot; click the dot for color &middot; hover for B / I / U</div>
+    <div class="hint" id="hint">Drag the handle to move &middot; click the dot for color &middot; hover for B / I / U &middot; Shift+drag to select several</div>
+    <div class="multi-select-bar" id="multiSelectBar">
+      <span class="multi-select-count" id="multiSelectCount"></span>
+      <div class="multi-select-colors" id="multiSelectColors"></div>
+      <button class="multi-select-delete-btn" id="multiSelectDeleteBtn" title="Delete selected" aria-label="Delete selected">Delete</button>
+      <button class="multi-select-close-btn" id="multiSelectCloseBtn" title="Clear selection" aria-label="Clear selection">&times;</button>
+    </div>
     <div class="tl-toolbar" id="tlToolbar">
       <select id="tlFontSelect" title="Font family">
         <option value="" disabled selected>Font</option>
@@ -3539,6 +3632,110 @@
     canvasEndGestureSoon();
   }, { passive: false });
 
+  /* ---------- Multi-select ----------
+     Shift+drag on empty canvas draws a marquee; anything it touches
+     becomes multi-selected (a highlighted outline) and can then be
+     moved together (drag any one of them), colored together, or
+     deleted together via the floating bar this raises. */
+  var multiSelected = [];
+
+  function clearMultiSelection() {
+    multiSelected.forEach(function(el) { el.classList.remove('multi-selected'); });
+    multiSelected = [];
+    document.getElementById('multiSelectBar').classList.remove('open');
+  }
+
+  function setMultiSelection(els) {
+    multiSelected.forEach(function(el) { el.classList.remove('multi-selected'); });
+    multiSelected = els;
+    multiSelected.forEach(function(el) { el.classList.add('multi-selected'); });
+    var bar = document.getElementById('multiSelectBar');
+    if (multiSelected.length > 1) {
+      document.getElementById('multiSelectCount').textContent = multiSelected.length + ' selected';
+      bar.classList.add('open');
+    } else {
+      bar.classList.remove('open');
+    }
+  }
+
+  function deleteInstanceQuietly(el) {
+    if (el.__isTextLine && typeof activeTextLineWrap !== 'undefined' && activeTextLineWrap === el) {
+      deselectAllTextLines();
+    }
+    purgeConnectionsFor(el.dataset.linkId);
+    if (el.__cleanupListeners) el.__cleanupListeners();
+    el.remove();
+  }
+
+  function deleteMultiSelection() {
+    if (!multiSelected.length) return;
+    var toDelete = multiSelected.slice();
+    clearMultiSelection();
+    toDelete.forEach(deleteInstanceQuietly);
+    saveWorkspace();
+  }
+
+  function applyColorToMultiSelection(color) {
+    multiSelected.forEach(function(el) {
+      var dot = el.querySelector('.note-dot');
+      if (dot) setNoteColor(el, dot, color);
+    });
+    saveWorkspace();
+  }
+
+  var multiSelectColorsEl = document.getElementById('multiSelectColors');
+  colors.forEach(function(c) {
+    var sw = document.createElement('button');
+    sw.style.background = c;
+    sw.title = 'Color selected';
+    sw.addEventListener('click', function() { applyColorToMultiSelection(c); });
+    multiSelectColorsEl.appendChild(sw);
+  });
+  document.getElementById('multiSelectDeleteBtn').addEventListener('click', deleteMultiSelection);
+  document.getElementById('multiSelectCloseBtn').addEventListener('click', clearMultiSelection);
+
+  var marqueeActive = false;
+  var marqueeStartX = 0, marqueeStartY = 0;
+  var marqueeEl = null;
+  var marqueePointerId = null;
+
+  function beginMarquee(clientX, clientY) {
+    marqueeActive = true;
+    marqueeStartX = clientX;
+    marqueeStartY = clientY;
+    marqueeEl = document.createElement('div');
+    marqueeEl.className = 'marquee-select';
+    document.body.appendChild(marqueeEl);
+    updateMarqueeRect(clientX, clientY);
+  }
+
+  function updateMarqueeRect(curX, curY) {
+    var x = Math.min(marqueeStartX, curX);
+    var y = Math.min(marqueeStartY, curY);
+    marqueeEl.style.left = x + 'px';
+    marqueeEl.style.top = y + 'px';
+    marqueeEl.style.width = Math.abs(curX - marqueeStartX) + 'px';
+    marqueeEl.style.height = Math.abs(curY - marqueeStartY) + 'px';
+  }
+
+  function endMarquee() {
+    if (!marqueeEl) { marqueeActive = false; return; }
+    var rectSel = marqueeEl.getBoundingClientRect();
+    var wasDrag = rectSel.width > 4 || rectSel.height > 4;
+    marqueeEl.remove();
+    marqueeEl = null;
+    marqueeActive = false;
+    if (!wasDrag) return;
+
+    var hits = [];
+    layer.querySelectorAll('.note, .free-image, .free-video, .text-line-wrap').forEach(function(el) {
+      var r = el.getBoundingClientRect();
+      var intersects = !(r.right < rectSel.left || r.left > rectSel.right || r.bottom < rectSel.top || r.top > rectSel.bottom);
+      if (intersects) hits.push(el);
+    });
+    setMultiSelection(hits);
+  }
+
   /* Single-finger/mouse pan, plus two-finger pinch-to-zoom for touch —
      tracked as a small map of active pointers rather than the Touch Events
      API, so it shares coordinate handling with the mouse-wheel zoom above.
@@ -3554,6 +3751,7 @@
        moved to since, giving combined pan+zoom in one natural gesture
        instead of zoom anchored to a point that goes stale as fingers drift. */
     var pinchStartDist = 1, pinchStartZoom = 1, pinchWorldX = 0, pinchWorldY = 0;
+    var panMoveDist = 0;
 
     function activeIds() { return Object.keys(activePointers); }
 
@@ -3583,10 +3781,18 @@
       startY = y;
       startPanX = canvasPanX;
       startPanY = canvasPanY;
+      panMoveDist = 0;
     }
 
     canvasViewport.addEventListener('pointerdown', function(e) {
       if (isCanvasInteractionBlocked(e.target)) return;
+      if (e.shiftKey && e.pointerType !== 'touch' && activeIds().length === 0) {
+        clearMultiSelection();
+        canvasViewport.setPointerCapture(e.pointerId);
+        marqueePointerId = e.pointerId;
+        beginMarquee(e.clientX, e.clientY);
+        return;
+      }
       activePointers[e.pointerId] = { x: e.clientX, y: e.clientY };
       canvasViewport.setPointerCapture(e.pointerId);
       canvasBeginGesture();
@@ -3599,6 +3805,11 @@
     });
 
     canvasViewport.addEventListener('pointermove', function(e) {
+      if (marqueeActive) {
+        if (e.pointerId !== marqueePointerId) return;
+        updateMarqueeRect(e.clientX, e.clientY);
+        return;
+      }
       if (!activePointers[e.pointerId]) return;
       activePointers[e.pointerId] = { x: e.clientX, y: e.clientY };
 
@@ -3615,6 +3826,7 @@
       }
 
       if (!panning) return;
+      panMoveDist = Math.max(panMoveDist, Math.hypot(e.clientX - startX, e.clientY - startY));
       canvasPanX = startPanX + (e.clientX - startX);
       canvasPanY = startPanY + (e.clientY - startY);
       applyCanvasTransform();
@@ -3626,10 +3838,18 @@
         canvasViewport.classList.remove('panning');
         canvasSaveViewDebounced();
         canvasEndGestureSoon();
+        if (panMoveDist < 4 && multiSelected.length) {
+          clearMultiSelection();
+        }
       }
     }
 
     function releasePointer(e) {
+      if (marqueeActive && e.pointerId === marqueePointerId) {
+        marqueePointerId = null;
+        endMarquee();
+        return;
+      }
       delete activePointers[e.pointerId];
       var remaining = activeIds();
 
@@ -5115,6 +5335,7 @@
 
   function makeDraggable(note, handle, onMove) {
     var offsetX = 0, offsetY = 0, dragging = false, inZoomCanvas = false;
+    var groupMembers = null, noteStartLeft = 0, noteStartTop = 0;
 
     handle.addEventListener('pointerdown', function(e) {
       if (isInteractiveTarget(e.target)) return;
@@ -5126,6 +5347,15 @@
       offsetX = e.clientX - rect.left;
       offsetY = e.clientY - rect.top;
       handle.setPointerCapture(e.pointerId);
+
+      groupMembers = null;
+      noteStartLeft = parseFloat(note.style.left) || 0;
+      noteStartTop = parseFloat(note.style.top) || 0;
+      if (inZoomCanvas && multiSelected.length > 1 && multiSelected.indexOf(note) !== -1) {
+        groupMembers = multiSelected.filter(function(el) { return el !== note; }).map(function(el) {
+          return { el: el, startLeft: parseFloat(el.style.left) || 0, startTop: parseFloat(el.style.top) || 0 };
+        });
+      }
       e.preventDefault();
     });
 
@@ -5139,6 +5369,14 @@
         var p = screenToCanvas(e.clientX - offsetX, e.clientY - offsetY);
         note.style.left = p.x + 'px';
         note.style.top = p.y + 'px';
+        if (groupMembers) {
+          var dx = p.x - noteStartLeft, dy = p.y - noteStartTop;
+          groupMembers.forEach(function(m) {
+            m.el.style.left = (m.startLeft + dx) + 'px';
+            m.el.style.top = (m.startTop + dy) + 'px';
+            syncDotFor(m.el);
+          });
+        }
       } else {
         var x = e.clientX - offsetX;
         var y = e.clientY - offsetY;
@@ -5155,6 +5393,7 @@
     function endDrag() {
       if (dragging) {
         dragging = false;
+        groupMembers = null;
         note.classList.remove('dragging');
         saveWorkspace();
       }
@@ -5421,6 +5660,7 @@
       moreMenu.classList.remove('open');
       if (activeTextLineWrap) deselectAllTextLines();
       document.querySelectorAll('.table-card.selected').forEach(function(t) { t.classList.remove('selected'); });
+      if (multiSelected.length) clearMultiSelection();
       return;
     }
 
@@ -5434,6 +5674,12 @@
       active.tagName === 'SELECT'
     ));
     if (isEditingText) return;
+
+    if (multiSelected.length) {
+      e.preventDefault();
+      deleteMultiSelection();
+      return;
+    }
 
     if (activeTextLineWrap) {
       e.preventDefault();

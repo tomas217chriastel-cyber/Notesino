@@ -4,6 +4,15 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Notesino</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0a0a12">
+<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="icons/favicon-16.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Notesino">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Open+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -13,6 +22,18 @@
   import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js';
   import { getDatabase, ref, set, update, onValue, off, get } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-database.js';
   window.__firebase = { initializeApp, getDatabase, ref, set, update, onValue, off, get };
+</script>
+<script>
+  /* Registered as early as possible (but after load, so it never competes
+     with the page's own first paint) so the app shell is cached on the
+     very first visit — every visit after that works offline, including
+     when installed to the home screen on iOS/Android/desktop via the
+     manifest below. */
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', function() {
+      navigator.serviceWorker.register('service-worker.js').catch(function() {});
+    });
+  }
 </script>
 <style>
   * {
@@ -383,6 +404,202 @@
     height: 0.5px;
     margin: 4px 6px;
     background: rgba(var(--ink-rgb), 0.14);
+  }
+
+  .search-panel {
+    width: 280px;
+    max-width: min(320px, calc(100vw - 32px));
+  }
+
+  .search-input {
+    width: 100%;
+    padding: 9px 12px;
+    border-radius: 9px;
+    border: 0.5px solid rgba(var(--ink-rgb), 0.18);
+    background: rgba(var(--ink-rgb), 0.08);
+    color: var(--ink-solid);
+    font-family: -apple-system, "SF Pro Text", sans-serif;
+    font-size: 13.5px;
+    outline: none;
+    margin-bottom: 4px;
+  }
+
+  .search-input::placeholder {
+    color: rgba(var(--ink-rgb), 0.4);
+  }
+
+  .search-result-item {
+    display: block;
+    width: 100%;
+    white-space: normal;
+    line-height: 1.4;
+    font-size: 12.5px;
+    font-weight: 500;
+  }
+
+  .search-result-kind {
+    display: inline-block;
+    font-size: 9.5px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: rgba(var(--ink-rgb), 0.5);
+    margin-right: 6px;
+  }
+
+  .search-result-item b {
+    color: var(--ink-solid);
+    background: rgba(255, 199, 89, 0.35);
+    border-radius: 3px;
+    padding: 0 1px;
+  }
+
+  .search-empty {
+    padding: 10px 12px;
+    font-size: 12.5px;
+    color: rgba(var(--ink-rgb), 0.45);
+  }
+
+  .theme-customize-panel {
+    display: none;
+    flex-direction: column;
+    gap: 8px;
+    padding: 8px 10px 4px;
+  }
+
+  .theme-customize-panel.open {
+    display: flex;
+  }
+
+  .theme-customize-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+  }
+
+  .theme-customize-row label {
+    font-size: 12px;
+    font-weight: 600;
+    color: rgba(var(--ink-rgb), 0.75);
+  }
+
+  .theme-customize-row input[type="color"] {
+    width: 28px;
+    height: 22px;
+    padding: 0;
+    border: 0.5px solid rgba(var(--ink-rgb), 0.25);
+    border-radius: 5px;
+    background: none;
+    cursor: pointer;
+  }
+
+  .theme-customize-blobs {
+    display: flex;
+    gap: 4px;
+  }
+
+  .theme-customize-blobs input[type="color"] {
+    width: 20px;
+    height: 20px;
+  }
+
+  /* ---------- Multi-select ---------- */
+  .marquee-select {
+    position: fixed;
+    border: 1.5px solid rgba(106, 124, 255, 0.9);
+    background: rgba(106, 124, 255, 0.15);
+    border-radius: 3px;
+    z-index: 400;
+    pointer-events: none;
+  }
+
+  .multi-selected {
+    outline: 2.5px solid rgba(106, 124, 255, 0.95);
+    outline-offset: 3px;
+    border-radius: 14px;
+  }
+
+  .multi-select-bar {
+    display: none;
+    position: absolute;
+    left: 50%;
+    bottom: calc(24px + env(safe-area-inset-bottom, 0px));
+    transform: translateX(-50%);
+    align-items: center;
+    gap: 10px;
+    padding: 8px 10px 8px 14px;
+    border-radius: 999px;
+    background: rgba(var(--panel-rgb), 0.92);
+    backdrop-filter: blur(20px);
+    border: 0.5px solid rgba(var(--ink-rgb), 0.18);
+    box-shadow: 0 12px 32px rgba(0,0,0,0.35);
+    z-index: 60;
+  }
+
+  .multi-select-bar.open {
+    display: flex;
+  }
+
+  .multi-select-count {
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--ink-solid);
+    white-space: nowrap;
+  }
+
+  .multi-select-colors {
+    display: flex;
+    gap: 6px;
+  }
+
+  .multi-select-colors button {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    border: 1.5px solid rgba(var(--ink-rgb), 0.3);
+    cursor: pointer;
+    padding: 0;
+  }
+
+  .multi-select-delete-btn {
+    padding: 6px 14px;
+    border-radius: 999px;
+    border: none;
+    background: rgba(255, 99, 99, 0.25);
+    color: var(--ink-solid);
+    font-size: 12.5px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+
+  .multi-select-delete-btn:hover {
+    background: rgba(255, 99, 99, 0.4);
+  }
+
+  .multi-select-close-btn {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    border: none;
+    background: rgba(var(--ink-rgb), 0.12);
+    color: var(--ink-solid);
+    font-size: 14px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* A brief pulse so a jumped-to search result is easy to spot the
+     instant the canvas finishes animating there. */
+  @keyframes searchHighlightPulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(255, 199, 89, 0); }
+    25% { box-shadow: 0 0 0 6px rgba(255, 199, 89, 0.55); }
+  }
+
+  .search-highlight {
+    animation: searchHighlightPulse 0.8s ease-out 2;
   }
 
   .live-dot.on {
@@ -1329,6 +1546,294 @@
     background: #000;
   }
 
+  /* Draggable voice-memo cards on the Notes canvas */
+  .voice-memo {
+    position: absolute;
+    width: 240px;
+    border-radius: 12px;
+    box-shadow: 0 8px 28px rgba(0,0,0,0.35);
+    background: rgba(var(--panel-rgb), 0.94);
+    overflow: visible;
+  }
+
+  .voice-memo .vm-head {
+    height: 22px;
+    border-radius: 12px 12px 0 0;
+    background: rgba(0,0,0,0.18);
+    cursor: grab;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    touch-action: none;
+  }
+
+  .voice-memo .vm-head:active {
+    cursor: grabbing;
+  }
+
+  .voice-memo .vm-grip {
+    width: 34px;
+    height: 4px;
+    border-radius: 2px;
+    background: rgba(var(--ink-rgb), 0.35);
+  }
+
+  .voice-memo .vm-close {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: rgba(0,0,0,0.35);
+    border: none;
+    color: var(--ink-solid);
+    font-size: 12px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity 0.15s ease;
+  }
+
+  .voice-memo:hover .vm-close,
+  body.touch-device .vm-close {
+    opacity: 1;
+  }
+
+  .voice-memo .vm-body {
+    padding: 14px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .voice-memo .vm-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .voice-memo .vm-record-btn {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    border: none;
+    background: #e5484d;
+    color: #fff;
+    font-size: 13px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .voice-memo .vm-upload-btn {
+    font-size: 12px;
+    color: rgba(var(--ink-rgb), 0.75);
+    background: rgba(var(--ink-rgb), 0.08);
+    border-radius: 8px;
+    padding: 7px 10px;
+    cursor: pointer;
+  }
+
+  .voice-memo .vm-upload-btn input {
+    display: none;
+  }
+
+  .voice-memo .vm-rec-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #e5484d;
+    flex-shrink: 0;
+    animation: vmPulse 1.1s ease-in-out infinite;
+  }
+
+  @keyframes vmPulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.35; }
+  }
+
+  .voice-memo .vm-rec-timer {
+    font-size: 13px;
+    color: rgba(var(--ink-rgb), 0.85);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .voice-memo .vm-stop-btn {
+    margin-left: auto;
+    border: none;
+    background: rgba(var(--ink-rgb), 0.12);
+    color: rgba(var(--ink-rgb), 0.9);
+    border-radius: 8px;
+    padding: 6px 12px;
+    font-size: 12px;
+    cursor: pointer;
+  }
+
+  .voice-memo .vm-playback-row audio {
+    flex: 1;
+    height: 32px;
+    min-width: 0;
+  }
+
+  .voice-memo .vm-rerecord-btn {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    border: none;
+    background: rgba(var(--ink-rgb), 0.12);
+    color: rgba(var(--ink-rgb), 0.9);
+    font-size: 13px;
+    cursor: pointer;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .voice-memo .vm-error {
+    font-size: 11px;
+    color: #ff8a80;
+    line-height: 1.4;
+  }
+
+  /* Draggable file-attachment cards (PDF / DOC / etc.) on the Notes canvas */
+  .file-attachment {
+    position: absolute;
+    width: 220px;
+    border-radius: 12px;
+    box-shadow: 0 8px 28px rgba(0,0,0,0.35);
+    background: rgba(var(--panel-rgb), 0.94);
+    overflow: visible;
+  }
+
+  .file-attachment .fa-head {
+    height: 22px;
+    border-radius: 12px 12px 0 0;
+    background: rgba(0,0,0,0.18);
+    cursor: grab;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    touch-action: none;
+  }
+
+  .file-attachment .fa-head:active {
+    cursor: grabbing;
+  }
+
+  .file-attachment .fa-grip {
+    width: 34px;
+    height: 4px;
+    border-radius: 2px;
+    background: rgba(var(--ink-rgb), 0.35);
+  }
+
+  .file-attachment .fa-close {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: rgba(0,0,0,0.35);
+    border: none;
+    color: var(--ink-solid);
+    font-size: 12px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity 0.15s ease;
+  }
+
+  .file-attachment:hover .fa-close,
+  body.touch-device .fa-close {
+    opacity: 1;
+  }
+
+  .file-attachment .fa-body {
+    padding: 14px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .file-attachment .fa-empty-row {
+    display: flex;
+  }
+
+  .file-attachment .fa-upload-btn {
+    font-size: 12px;
+    color: rgba(var(--ink-rgb), 0.75);
+    background: rgba(var(--ink-rgb), 0.08);
+    border-radius: 8px;
+    padding: 8px 12px;
+    cursor: pointer;
+    flex: 1;
+    text-align: center;
+  }
+
+  .file-attachment .fa-upload-btn input {
+    display: none;
+  }
+
+  .file-attachment .fa-file-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .file-attachment .fa-icon {
+    font-size: 26px;
+    flex-shrink: 0;
+    line-height: 1;
+  }
+
+  .file-attachment .fa-info {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .file-attachment .fa-name {
+    font-size: 12.5px;
+    color: var(--ink-solid);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .file-attachment .fa-size {
+    font-size: 11px;
+    color: rgba(var(--ink-rgb), 0.55);
+  }
+
+  .file-attachment .fa-actions {
+    display: flex;
+    gap: 8px;
+  }
+
+  .file-attachment .fa-open-link,
+  .file-attachment .fa-replace-btn {
+    font-size: 11.5px;
+    color: rgba(var(--ink-rgb), 0.75);
+    background: rgba(var(--ink-rgb), 0.1);
+    border: none;
+    border-radius: 7px;
+    padding: 5px 9px;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-block;
+  }
+
+  .file-attachment .fa-replace-btn input {
+    display: none;
+  }
 
   /* Notes layer */
   .canvas-viewport {
@@ -2201,6 +2706,114 @@
     border-radius: 4px;
   }
 
+  /* Checklist note (a .note variant with checkable list items instead of
+     free-form rich text) */
+  .checklist-card .checklist-body {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    padding: 2px 10px 10px;
+  }
+
+  .checklist-items {
+    flex: 1;
+    overflow-y: auto;
+    touch-action: pan-y;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .checklist-items::-webkit-scrollbar {
+    width: 4px;
+  }
+
+  .checklist-items::-webkit-scrollbar-thumb {
+    background: rgba(var(--ink-rgb), 0.2);
+    border-radius: 4px;
+  }
+
+  .checklist-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    padding: 3px 2px;
+    border-radius: 6px;
+  }
+
+  .checklist-item:hover {
+    background: rgba(var(--ink-rgb), 0.06);
+  }
+
+  .checklist-checkbox {
+    width: 16px;
+    height: 16px;
+    margin-top: 2px;
+    flex-shrink: 0;
+    accent-color: rgba(var(--ink-rgb), 0.85);
+    cursor: pointer;
+  }
+
+  .checklist-text {
+    flex: 1;
+    min-width: 0;
+    outline: none;
+    color: var(--ink-solid);
+    font-family: -apple-system, "SF Pro Text", "SF Pro Display", BlinkMacSystemFont, sans-serif;
+    font-size: 13.5px;
+    line-height: 1.4;
+    padding: 1px 0;
+    word-break: break-word;
+  }
+
+  .checklist-text.is-empty::before {
+    content: attr(data-placeholder);
+    color: rgba(var(--ink-rgb), 0.45);
+  }
+
+  .checklist-item.done .checklist-text {
+    text-decoration: line-through;
+    color: rgba(var(--ink-rgb), 0.5);
+  }
+
+  .checklist-item-remove {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    border: none;
+    background: transparent;
+    color: rgba(var(--ink-rgb), 0.5);
+    font-size: 12px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    opacity: 0;
+    transition: opacity 0.15s ease;
+  }
+
+  .checklist-item:hover .checklist-item-remove,
+  body.touch-device .checklist-item-remove {
+    opacity: 1;
+  }
+
+  .checklist-add-row {
+    margin-top: 4px;
+    align-self: flex-start;
+    border: none;
+    background: transparent;
+    color: rgba(var(--ink-rgb), 0.55);
+    font-size: 12.5px;
+    cursor: pointer;
+    padding: 4px 4px;
+  }
+
+  .checklist-add-row:hover {
+    color: rgba(var(--ink-rgb), 0.85);
+  }
+
   /* Hint */
   .hint {
     position: absolute;
@@ -2669,6 +3282,149 @@
     background: rgba(var(--ink-rgb), 0.2);
   }
 
+  .tt-calendar-wrap {
+    position: relative;
+  }
+
+  .tt-calendar-panel {
+    display: none;
+    flex-direction: column;
+    gap: 8px;
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    width: 280px;
+    padding: 12px 14px;
+    border-radius: 14px;
+    background: rgba(var(--panel-rgb), 0.98);
+    border: 0.5px solid rgba(var(--ink-rgb), 0.18);
+    box-shadow: 0 12px 32px rgba(0,0,0,0.3);
+    z-index: 20;
+  }
+
+  .tt-calendar-panel.open {
+    display: flex;
+  }
+
+  .tt-calendar-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+  }
+
+  .tt-calendar-row label {
+    font-size: 12px;
+    font-weight: 600;
+    color: rgba(var(--ink-rgb), 0.75);
+  }
+
+  .tt-calendar-row input[type="date"] {
+    font-size: 12px;
+    border-radius: 6px;
+    border: 0.5px solid rgba(var(--ink-rgb), 0.25);
+    background: rgba(var(--ink-rgb), 0.06);
+    color: var(--ink-solid);
+    padding: 3px 5px;
+  }
+
+  .tt-calendar-divider {
+    height: 1px;
+    background: rgba(var(--ink-rgb), 0.15);
+    margin: 2px 0;
+  }
+
+  .tt-calendar-label {
+    font-size: 11.5px;
+    font-weight: 600;
+    color: rgba(var(--ink-rgb), 0.65);
+  }
+
+  .tt-calendar-exception-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11.5px;
+    color: rgba(var(--ink-rgb), 0.85);
+    padding: 3px 0;
+  }
+
+  .tt-calendar-exception-row .tt-exc-date {
+    font-variant-numeric: tabular-nums;
+    color: rgba(var(--ink-rgb), 0.6);
+    flex-shrink: 0;
+  }
+
+  .tt-calendar-exception-row .tt-exc-label {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .tt-calendar-exception-row .tt-exc-remove {
+    border: none;
+    background: transparent;
+    color: rgba(var(--ink-rgb), 0.5);
+    cursor: pointer;
+    font-size: 13px;
+    flex-shrink: 0;
+  }
+
+  .tt-calendar-exception-row .tt-exc-remove:hover {
+    color: rgba(var(--ink-rgb), 0.9);
+  }
+
+  .tt-calendar-add-row {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+  }
+
+  .tt-calendar-add-row input[type="date"] {
+    font-size: 11.5px;
+    border-radius: 6px;
+    border: 0.5px solid rgba(var(--ink-rgb), 0.25);
+    background: rgba(var(--ink-rgb), 0.06);
+    color: var(--ink-solid);
+    padding: 3px 4px;
+    width: 118px;
+  }
+
+  .tt-calendar-add-row input[type="text"] {
+    flex: 1;
+    min-width: 0;
+    font-size: 11.5px;
+    border-radius: 6px;
+    border: 0.5px solid rgba(var(--ink-rgb), 0.25);
+    background: rgba(var(--ink-rgb), 0.06);
+    color: var(--ink-solid);
+    padding: 3px 6px;
+  }
+
+  .tt-calendar-add-btn {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    border: none;
+    background: rgba(var(--ink-rgb), 0.15);
+    color: var(--ink-solid);
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+
+  .tt-calendar-download-btn {
+    width: 100%;
+    text-align: center;
+  }
+
+  .tt-calendar-hint {
+    font-size: 10.5px;
+    color: rgba(var(--ink-rgb), 0.5);
+    line-height: 1.4;
+  }
+
   .tt-grid-scroll {
     flex: 1;
     min-height: 0;
@@ -3035,14 +3791,25 @@
       <button class="tb-btn" id="addMenuBtn" title="Add" aria-label="Add">+</button>
       <div class="add-menu" id="addMenu">
         <button class="add-menu-item" id="addNote">Note</button>
+        <button class="add-menu-item" id="addChecklist">Checklist</button>
         <button class="add-menu-item" id="addStickyCanvas">Sticky Canvas</button>
         <button class="add-menu-item" id="addTextLine">Text Line</button>
         <button class="add-menu-item" id="addTable">Table</button>
         <button class="add-menu-item" id="addMedia">Insert Media</button>
+        <button class="add-menu-item" id="addVoiceMemo">Voice Memo</button>
+        <button class="add-menu-item" id="addFileAttachment">Attach File</button>
       </div>
     </div>
     <button class="tb-btn" id="undoBtn" title="Undo (Ctrl+Z)" aria-label="Undo" disabled>&#8630;</button>
     <button class="tb-btn" id="redoBtn" title="Redo (Ctrl+Shift+Z)" aria-label="Redo" disabled>&#8631;</button>
+    <button class="tb-btn" id="zoomFitBtn" title="Zoom to fit / recenter" aria-label="Zoom to fit / recenter">&#8982;</button>
+    <div class="add-menu-wrap" id="searchWrap">
+      <button class="tb-btn" id="searchBtn" title="Search notes, tables, timetable" aria-label="Search">&#128269;</button>
+      <div class="add-menu search-panel" id="searchPanel">
+        <input type="text" id="searchInput" class="search-input" placeholder="Search notes, tables, timetable&hellip;">
+        <div id="searchResults"></div>
+      </div>
+    </div>
     <button class="tb-btn" id="removeWorkspaceBg" title="Remove workspace background" aria-label="Remove workspace background" style="display:none;">&#8635;</button>
     <div class="add-menu-wrap" id="moreMenuWrap">
       <button class="tb-btn" id="moreMenuBtn" title="More options" aria-label="More options">&#8942;</button>
@@ -3055,6 +3822,27 @@
           <button class="theme-swatch" data-theme-id="solid-cream" title="Solid Cream" aria-label="Solid Cream theme" style="background: #f6f1e7;"></button>
           <button class="theme-swatch" data-theme-id="solid-ocean" title="Solid Ocean" aria-label="Solid Ocean theme" style="background: #0c1c2e;"></button>
           <button class="theme-swatch" data-theme-id="solid-blush" title="Solid Blush" aria-label="Solid Blush theme" style="background: #fbeef0;"></button>
+        </div>
+        <button class="add-menu-item" id="customizeThemeBtn">Customize Colors&hellip;</button>
+        <div class="theme-customize-panel" id="themeCustomizePanel">
+          <div class="theme-customize-row">
+            <label for="customBgColor">Background</label>
+            <input type="color" id="customBgColor">
+          </div>
+          <div class="theme-customize-row">
+            <label for="customTextColor">Text</label>
+            <input type="color" id="customTextColor">
+          </div>
+          <div class="theme-customize-row">
+            <label>Gradient accents</label>
+            <div class="theme-customize-blobs">
+              <input type="color" id="customBlob1" title="Accent 1">
+              <input type="color" id="customBlob2" title="Accent 2">
+              <input type="color" id="customBlob3" title="Accent 3">
+              <input type="color" id="customBlob4" title="Accent 4">
+            </div>
+          </div>
+          <button class="add-menu-item" id="resetThemeCustomBtn">Reset to Theme Default</button>
         </div>
         <div class="add-menu-divider"></div>
         <button class="add-menu-item" id="exportWorkspaceBtn">Export Workspace&hellip;</button>
@@ -3076,7 +3864,13 @@
     <div class="canvas-viewport" id="canvasViewport">
       <div class="notes-layer" id="notesLayer"></div>
     </div>
-    <div class="hint" id="hint">Drag the handle to move &middot; click the dot for color &middot; hover for B / I / U</div>
+    <div class="hint" id="hint">Drag the handle to move &middot; click the dot for color &middot; hover for B / I / U &middot; Shift+drag to select several</div>
+    <div class="multi-select-bar" id="multiSelectBar">
+      <span class="multi-select-count" id="multiSelectCount"></span>
+      <div class="multi-select-colors" id="multiSelectColors"></div>
+      <button class="multi-select-delete-btn" id="multiSelectDeleteBtn" title="Delete selected" aria-label="Delete selected">Delete</button>
+      <button class="multi-select-close-btn" id="multiSelectCloseBtn" title="Clear selection" aria-label="Clear selection">&times;</button>
+    </div>
     <div class="tl-toolbar" id="tlToolbar">
       <select id="tlFontSelect" title="Font family">
         <option value="" disabled selected>Font</option>
@@ -3113,6 +3907,30 @@
           <button class="tt-btn" id="ttRemovePeriod">&minus; Period</button>
           <button class="tt-btn" id="ttAddDay">+ Day</button>
           <button class="tt-btn" id="ttRemoveDay">&minus; Day</button>
+          <div class="tt-calendar-wrap" id="ttCalendarWrap">
+            <button class="tt-btn" id="ttCalendarBtn">Calendar&hellip;</button>
+            <div class="tt-calendar-panel" id="ttCalendarPanel">
+              <div class="tt-calendar-row">
+                <label for="termStartInput">Term start</label>
+                <input type="date" id="termStartInput">
+              </div>
+              <div class="tt-calendar-row">
+                <label for="termEndInput">Term end</label>
+                <input type="date" id="termEndInput">
+              </div>
+              <div class="tt-calendar-divider"></div>
+              <div class="tt-calendar-label">Term exceptions (no classes)</div>
+              <div id="termExceptionsList"></div>
+              <div class="tt-calendar-add-row">
+                <input type="date" id="termExceptionDateInput">
+                <input type="text" id="termExceptionLabelInput" placeholder="Label (optional)">
+                <button class="tt-calendar-add-btn" id="termExceptionAddBtn" aria-label="Add exception">+</button>
+              </div>
+              <div class="tt-calendar-divider"></div>
+              <button class="tt-btn tt-calendar-download-btn" id="downloadIcsBtn">Download Calendar (.ics)</button>
+              <div class="tt-calendar-hint">Import this file into Google Calendar, Apple Calendar, or Outlook for real reminders before each class.</div>
+            </div>
+          </div>
         </div>
       </div>
       <div class="tt-grid-scroll">
@@ -3320,13 +4138,60 @@
     }, 300);
   }
 
+  /* Zoom-to-fit / recenter: an infinite canvas has no edge to bump into
+     when you've panned or zoomed somewhere odd, so this is the way back
+     — frame every instance at once (or just re-center at 1x if the
+     canvas is empty), animated rather than snapped so it reads as
+     "returning" instead of a jump-cut. */
+  function zoomToFitCanvas() {
+    var els = layer.querySelectorAll('.note, .free-image, .free-video, .text-line-wrap, .voice-memo, .file-attachment');
+    var vpW = canvasViewport.clientWidth;
+    var vpH = canvasViewport.clientHeight;
+
+    if (!els.length) {
+      canvasZoom = 1;
+      canvasPanX = 0;
+      canvasPanY = 0;
+    } else {
+      var minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+      Array.prototype.forEach.call(els, function(el) {
+        var x = el.offsetLeft, y = el.offsetTop;
+        minX = Math.min(minX, x);
+        minY = Math.min(minY, y);
+        maxX = Math.max(maxX, x + el.offsetWidth);
+        maxY = Math.max(maxY, y + el.offsetHeight);
+      });
+
+      var PADDING = 80;
+      var boxW = Math.max(1, (maxX - minX) + PADDING * 2);
+      var boxH = Math.max(1, (maxY - minY) + PADDING * 2);
+      var newZoom = Math.min(vpW / boxW, vpH / boxH);
+      /* "Fit" should only ever zoom out to reveal more, or settle back to
+         1x when everything already fits comfortably — never zoom IN past
+         actual size just because a single small note is the only thing
+         on the board. */
+      newZoom = Math.max(CANVAS_ZOOM_MIN, Math.min(CANVAS_ZOOM_MAX, Math.min(newZoom, 1)));
+
+      var centerX = (minX + maxX) / 2;
+      var centerY = (minY + maxY) / 2;
+      canvasZoom = newZoom;
+      canvasPanX = vpW / 2 - centerX * newZoom;
+      canvasPanY = vpH / 2 - centerY * newZoom;
+    }
+
+    layer.style.transition = 'transform 0.35s cubic-bezier(0.2, 0.8, 0.2, 1)';
+    applyCanvasTransform();
+    canvasSaveViewDebounced();
+    setTimeout(function() { layer.style.transition = ''; }, 380);
+  }
+
   /* Something is "selected" (blocking canvas pan/zoom) if the gesture
      starts on an actual item, or a text line / table is currently
      showing its own selection UI. This is checked fresh at gesture time
      rather than tracked as one global flag, since selection state lives
      in a few different places (notes, tables, text lines). */
   function isCanvasInteractionBlocked(target) {
-    if (target && target.closest && target.closest('.note, .text-line-wrap, .free-image, .free-video, .tl-toolbar, .swatches, .table-row-btn, .table-col-btn, .table-card-wrap, .sc-canvas-wrap, .sc-toolbar')) return true;
+    if (target && target.closest && target.closest('.note, .text-line-wrap, .free-image, .free-video, .voice-memo, .file-attachment, .tl-toolbar, .swatches, .table-row-btn, .table-col-btn, .table-card-wrap, .sc-canvas-wrap, .sc-toolbar')) return true;
     if (typeof activeTextLineWrap !== 'undefined' && activeTextLineWrap) return true;
     if (document.querySelector('.table-card.selected')) return true;
     return false;
@@ -3354,6 +4219,110 @@
     canvasEndGestureSoon();
   }, { passive: false });
 
+  /* ---------- Multi-select ----------
+     Shift+drag on empty canvas draws a marquee; anything it touches
+     becomes multi-selected (a highlighted outline) and can then be
+     moved together (drag any one of them), colored together, or
+     deleted together via the floating bar this raises. */
+  var multiSelected = [];
+
+  function clearMultiSelection() {
+    multiSelected.forEach(function(el) { el.classList.remove('multi-selected'); });
+    multiSelected = [];
+    document.getElementById('multiSelectBar').classList.remove('open');
+  }
+
+  function setMultiSelection(els) {
+    multiSelected.forEach(function(el) { el.classList.remove('multi-selected'); });
+    multiSelected = els;
+    multiSelected.forEach(function(el) { el.classList.add('multi-selected'); });
+    var bar = document.getElementById('multiSelectBar');
+    if (multiSelected.length > 1) {
+      document.getElementById('multiSelectCount').textContent = multiSelected.length + ' selected';
+      bar.classList.add('open');
+    } else {
+      bar.classList.remove('open');
+    }
+  }
+
+  function deleteInstanceQuietly(el) {
+    if (el.__isTextLine && typeof activeTextLineWrap !== 'undefined' && activeTextLineWrap === el) {
+      deselectAllTextLines();
+    }
+    purgeConnectionsFor(el.dataset.linkId);
+    if (el.__cleanupListeners) el.__cleanupListeners();
+    el.remove();
+  }
+
+  function deleteMultiSelection() {
+    if (!multiSelected.length) return;
+    var toDelete = multiSelected.slice();
+    clearMultiSelection();
+    toDelete.forEach(deleteInstanceQuietly);
+    saveWorkspace();
+  }
+
+  function applyColorToMultiSelection(color) {
+    multiSelected.forEach(function(el) {
+      var dot = el.querySelector('.note-dot');
+      if (dot) setNoteColor(el, dot, color);
+    });
+    saveWorkspace();
+  }
+
+  var multiSelectColorsEl = document.getElementById('multiSelectColors');
+  colors.forEach(function(c) {
+    var sw = document.createElement('button');
+    sw.style.background = c;
+    sw.title = 'Color selected';
+    sw.addEventListener('click', function() { applyColorToMultiSelection(c); });
+    multiSelectColorsEl.appendChild(sw);
+  });
+  document.getElementById('multiSelectDeleteBtn').addEventListener('click', deleteMultiSelection);
+  document.getElementById('multiSelectCloseBtn').addEventListener('click', clearMultiSelection);
+
+  var marqueeActive = false;
+  var marqueeStartX = 0, marqueeStartY = 0;
+  var marqueeEl = null;
+  var marqueePointerId = null;
+
+  function beginMarquee(clientX, clientY) {
+    marqueeActive = true;
+    marqueeStartX = clientX;
+    marqueeStartY = clientY;
+    marqueeEl = document.createElement('div');
+    marqueeEl.className = 'marquee-select';
+    document.body.appendChild(marqueeEl);
+    updateMarqueeRect(clientX, clientY);
+  }
+
+  function updateMarqueeRect(curX, curY) {
+    var x = Math.min(marqueeStartX, curX);
+    var y = Math.min(marqueeStartY, curY);
+    marqueeEl.style.left = x + 'px';
+    marqueeEl.style.top = y + 'px';
+    marqueeEl.style.width = Math.abs(curX - marqueeStartX) + 'px';
+    marqueeEl.style.height = Math.abs(curY - marqueeStartY) + 'px';
+  }
+
+  function endMarquee() {
+    if (!marqueeEl) { marqueeActive = false; return; }
+    var rectSel = marqueeEl.getBoundingClientRect();
+    var wasDrag = rectSel.width > 4 || rectSel.height > 4;
+    marqueeEl.remove();
+    marqueeEl = null;
+    marqueeActive = false;
+    if (!wasDrag) return;
+
+    var hits = [];
+    layer.querySelectorAll('.note, .free-image, .free-video, .text-line-wrap, .voice-memo, .file-attachment').forEach(function(el) {
+      var r = el.getBoundingClientRect();
+      var intersects = !(r.right < rectSel.left || r.left > rectSel.right || r.bottom < rectSel.top || r.top > rectSel.bottom);
+      if (intersects) hits.push(el);
+    });
+    setMultiSelection(hits);
+  }
+
   /* Single-finger/mouse pan, plus two-finger pinch-to-zoom for touch —
      tracked as a small map of active pointers rather than the Touch Events
      API, so it shares coordinate handling with the mouse-wheel zoom above.
@@ -3369,6 +4338,7 @@
        moved to since, giving combined pan+zoom in one natural gesture
        instead of zoom anchored to a point that goes stale as fingers drift. */
     var pinchStartDist = 1, pinchStartZoom = 1, pinchWorldX = 0, pinchWorldY = 0;
+    var panMoveDist = 0;
 
     function activeIds() { return Object.keys(activePointers); }
 
@@ -3398,10 +4368,18 @@
       startY = y;
       startPanX = canvasPanX;
       startPanY = canvasPanY;
+      panMoveDist = 0;
     }
 
     canvasViewport.addEventListener('pointerdown', function(e) {
       if (isCanvasInteractionBlocked(e.target)) return;
+      if (e.shiftKey && e.pointerType !== 'touch' && activeIds().length === 0) {
+        clearMultiSelection();
+        canvasViewport.setPointerCapture(e.pointerId);
+        marqueePointerId = e.pointerId;
+        beginMarquee(e.clientX, e.clientY);
+        return;
+      }
       activePointers[e.pointerId] = { x: e.clientX, y: e.clientY };
       canvasViewport.setPointerCapture(e.pointerId);
       canvasBeginGesture();
@@ -3414,6 +4392,11 @@
     });
 
     canvasViewport.addEventListener('pointermove', function(e) {
+      if (marqueeActive) {
+        if (e.pointerId !== marqueePointerId) return;
+        updateMarqueeRect(e.clientX, e.clientY);
+        return;
+      }
       if (!activePointers[e.pointerId]) return;
       activePointers[e.pointerId] = { x: e.clientX, y: e.clientY };
 
@@ -3430,6 +4413,7 @@
       }
 
       if (!panning) return;
+      panMoveDist = Math.max(panMoveDist, Math.hypot(e.clientX - startX, e.clientY - startY));
       canvasPanX = startPanX + (e.clientX - startX);
       canvasPanY = startPanY + (e.clientY - startY);
       applyCanvasTransform();
@@ -3441,10 +4425,18 @@
         canvasViewport.classList.remove('panning');
         canvasSaveViewDebounced();
         canvasEndGestureSoon();
+        if (panMoveDist < 4 && multiSelected.length) {
+          clearMultiSelection();
+        }
       }
     }
 
     function releasePointer(e) {
+      if (marqueeActive && e.pointerId === marqueePointerId) {
+        marqueePointerId = null;
+        endMarquee();
+        return;
+      }
       delete activePointers[e.pointerId];
       var remaining = activeIds();
 
@@ -4249,6 +5241,229 @@
     return card;
   }
 
+  /* ---------- Checklist note: a .note variant with checkable list items
+     instead of free-form rich text. Enter adds a new item below and
+     focuses it (like Notes/Todoist); Backspace on an empty item removes
+     it and moves focus to the previous one, so the keyboard alone is
+     enough to build and prune a whole list. ---------- */
+  function createChecklistNote(data, targetLayer) {
+    targetLayer = targetLayer || layer;
+    var color = data && data.color ? data.color : colors[Math.floor(Math.random() * colors.length)];
+    var pos = data && data.x !== undefined ? { x: data.x, y: data.y } : randomPos(targetLayer, targetLayer === layer);
+
+    var card = document.createElement('div');
+    card.className = 'note checklist-card';
+    if (!data) card.classList.add('pop-in');
+    card.style.left = pos.x + 'px';
+    card.style.top = pos.y + 'px';
+    if (data && data.w) card.style.width = data.w + 'px';
+    if (data && data.h) card.style.height = data.h + 'px';
+    card.style.zIndex = ++topZ;
+
+    var head = document.createElement('div');
+    head.className = 'note-head';
+
+    var dotWrap = document.createElement('div');
+    dotWrap.className = 'note-dot-wrap';
+    var dot = document.createElement('button');
+    dot.className = 'note-dot';
+    dot.setAttribute('aria-label', 'Change checklist color');
+    var swatchPanel = document.createElement('div');
+    swatchPanel.className = 'swatches';
+    colors.forEach(function(c) {
+      var sw = document.createElement('button');
+      sw.className = 'swatch';
+      sw.style.background = c;
+      sw.addEventListener('click', function(e) {
+        e.stopPropagation();
+        setNoteColor(card, dot, c);
+        swatchPanel.classList.remove('open');
+        openSwatchPanel = null;
+        saveWorkspace();
+      });
+      swatchPanel.appendChild(sw);
+    });
+    var customWrap = document.createElement('div');
+    customWrap.className = 'swatch-custom';
+    var customInput = document.createElement('input');
+    customInput.type = 'color';
+    customInput.value = '#ffffff';
+    customInput.addEventListener('input', function(e) {
+      setNoteColor(card, dot, e.target.value);
+      saveWorkspace();
+    });
+    customWrap.appendChild(customInput);
+    swatchPanel.appendChild(customWrap);
+    dot.addEventListener('click', function(e) {
+      e.stopPropagation();
+      var isOpen = swatchPanel.classList.contains('open');
+      if (openSwatchPanel) openSwatchPanel.classList.remove('open');
+      if (!isOpen) {
+        swatchPanel.classList.add('open');
+        openSwatchPanel = swatchPanel;
+      } else {
+        openSwatchPanel = null;
+      }
+    });
+    dotWrap.appendChild(dot);
+    dotWrap.appendChild(swatchPanel);
+
+    var closeBtn = document.createElement('button');
+    closeBtn.className = 'note-close';
+    closeBtn.innerHTML = '&times;';
+    closeBtn.setAttribute('aria-label', 'Remove checklist');
+    closeBtn.addEventListener('click', function(e) {
+      e.stopPropagation();
+      purgeConnectionsFor(card.dataset.linkId);
+      if (card.__cleanupListeners) card.__cleanupListeners();
+      card.remove();
+      saveWorkspace();
+    });
+
+    head.appendChild(dotWrap);
+    head.appendChild(closeBtn);
+
+    var body = document.createElement('div');
+    body.className = 'checklist-body';
+    body.addEventListener('pointerdown', function(e) {
+      e.stopPropagation();
+      card.style.zIndex = ++topZ;
+    });
+
+    var itemsWrap = document.createElement('div');
+    itemsWrap.className = 'checklist-items';
+    body.appendChild(itemsWrap);
+
+    var addRow = document.createElement('button');
+    addRow.className = 'checklist-add-row';
+    addRow.textContent = '+ Add item';
+    addRow.addEventListener('pointerdown', function(e) { e.stopPropagation(); });
+    addRow.addEventListener('click', function(e) {
+      e.stopPropagation();
+      var row = addItemRow('', false);
+      row.querySelector('.checklist-text').focus();
+      saveWorkspace();
+    });
+    body.appendChild(addRow);
+
+    function addItemRow(text, done, beforeEl) {
+      var row = document.createElement('div');
+      row.className = 'checklist-item';
+      row.classList.toggle('done', !!done);
+
+      var cb = document.createElement('input');
+      cb.type = 'checkbox';
+      cb.className = 'checklist-checkbox';
+      cb.checked = !!done;
+      cb.addEventListener('change', function() {
+        row.classList.toggle('done', cb.checked);
+        saveWorkspace();
+      });
+
+      var textEl = document.createElement('div');
+      textEl.className = 'checklist-text';
+      textEl.contentEditable = 'true';
+      textEl.setAttribute('data-placeholder', 'List item…');
+      textEl.textContent = text || '';
+      textEl.classList.toggle('is-empty', !(text || '').trim());
+
+      textEl.addEventListener('input', function() {
+        textEl.classList.toggle('is-empty', !(textEl.textContent || '').trim());
+        saveWorkspace();
+      });
+      textEl.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          var newRow = addItemRow('', false, row.nextSibling);
+          newRow.querySelector('.checklist-text').focus();
+          saveWorkspace();
+        } else if (e.key === 'Backspace' && !textEl.textContent) {
+          var prev = row.previousElementSibling;
+          if (prev) {
+            e.preventDefault();
+            row.remove();
+            var prevText = prev.querySelector('.checklist-text');
+            prevText.focus();
+            /* Land the caret at the end of the previous item's text
+               instead of its start, matching how a real text editor
+               merges a deleted empty line into the one above. */
+            var range = document.createRange();
+            range.selectNodeContents(prevText);
+            range.collapse(false);
+            var sel = window.getSelection();
+            sel.removeAllRanges();
+            sel.addRange(range);
+            saveWorkspace();
+          }
+        }
+      });
+
+      var removeBtn = document.createElement('button');
+      removeBtn.className = 'checklist-item-remove';
+      removeBtn.innerHTML = '&times;';
+      removeBtn.setAttribute('aria-label', 'Remove item');
+      removeBtn.addEventListener('pointerdown', function(e) { e.stopPropagation(); });
+      removeBtn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        row.remove();
+        saveWorkspace();
+      });
+
+      row.appendChild(cb);
+      row.appendChild(textEl);
+      row.appendChild(removeBtn);
+      if (beforeEl) itemsWrap.insertBefore(row, beforeEl);
+      else itemsWrap.appendChild(row);
+      return row;
+    }
+
+    var initialItems = (data && Array.isArray(data.items) && data.items.length) ? data.items : [{ text: '', done: false }];
+    initialItems.forEach(function(item) { addItemRow(item.text, item.done); });
+
+    card.appendChild(head);
+    card.appendChild(body);
+
+    var dragHandle = document.createElement('div');
+    dragHandle.className = 'note-drag-handle';
+    dragHandle.title = 'Drag to move';
+    var dragGrip = document.createElement('div');
+    dragGrip.className = 'note-drag-grip';
+    dragHandle.appendChild(dragGrip);
+    card.appendChild(dragHandle);
+
+    var resizeHandle = document.createElement('div');
+    resizeHandle.className = 'resize-handle';
+    card.appendChild(resizeHandle);
+
+    targetLayer.appendChild(card);
+    attachConnectDot(card, canvasLinkLayer, data && data.linkId);
+    setNoteColor(card, dot, color);
+
+    card.__getChecklistItems = function() {
+      return Array.prototype.map.call(itemsWrap.querySelectorAll('.checklist-item'), function(row) {
+        return {
+          text: row.querySelector('.checklist-text').textContent || '',
+          done: row.classList.contains('done')
+        };
+      });
+    };
+
+    if (window.ResizeObserver) {
+      var roFirstFire = true;
+      var ro = new ResizeObserver(function() {
+        syncDotFor(card);
+        if (roFirstFire) { roFirstFire = false; return; }
+        saveWorkspace();
+      });
+      ro.observe(card);
+      card.__cleanupListeners = function() { ro.disconnect(); };
+    }
+
+    makeDraggable(card, dragHandle);
+    makeResizable(card, resizeHandle, 160, 140);
+    return card;
+  }
+
   /* ---------- Table: a note-card-style grid, resizable/draggable, with
      the same font/size/color/bold/italic/underline controls as sticky
      notes, plus +/- buttons on its edges (shown when selected) to add
@@ -4930,6 +6145,7 @@
 
   function makeDraggable(note, handle, onMove) {
     var offsetX = 0, offsetY = 0, dragging = false, inZoomCanvas = false;
+    var groupMembers = null, noteStartLeft = 0, noteStartTop = 0;
 
     handle.addEventListener('pointerdown', function(e) {
       if (isInteractiveTarget(e.target)) return;
@@ -4941,6 +6157,15 @@
       offsetX = e.clientX - rect.left;
       offsetY = e.clientY - rect.top;
       handle.setPointerCapture(e.pointerId);
+
+      groupMembers = null;
+      noteStartLeft = parseFloat(note.style.left) || 0;
+      noteStartTop = parseFloat(note.style.top) || 0;
+      if (inZoomCanvas && multiSelected.length > 1 && multiSelected.indexOf(note) !== -1) {
+        groupMembers = multiSelected.filter(function(el) { return el !== note; }).map(function(el) {
+          return { el: el, startLeft: parseFloat(el.style.left) || 0, startTop: parseFloat(el.style.top) || 0 };
+        });
+      }
       e.preventDefault();
     });
 
@@ -4954,6 +6179,14 @@
         var p = screenToCanvas(e.clientX - offsetX, e.clientY - offsetY);
         note.style.left = p.x + 'px';
         note.style.top = p.y + 'px';
+        if (groupMembers) {
+          var dx = p.x - noteStartLeft, dy = p.y - noteStartTop;
+          groupMembers.forEach(function(m) {
+            m.el.style.left = (m.startLeft + dx) + 'px';
+            m.el.style.top = (m.startTop + dy) + 'px';
+            syncDotFor(m.el);
+          });
+        }
       } else {
         var x = e.clientX - offsetX;
         var y = e.clientY - offsetY;
@@ -4970,6 +6203,7 @@
     function endDrag() {
       if (dragging) {
         dragging = false;
+        groupMembers = null;
         note.classList.remove('dragging');
         saveWorkspace();
       }
@@ -4986,6 +6220,7 @@
     e.stopPropagation();
     var wasOpen = addMenu.classList.contains('open');
     moreMenu.classList.remove('open');
+    document.getElementById('searchPanel').classList.remove('open');
     addMenu.classList.toggle('open', !wasOpen);
   });
 
@@ -4995,6 +6230,7 @@
     e.stopPropagation();
     var wasOpen = moreMenu.classList.contains('open');
     addMenu.classList.remove('open');
+    document.getElementById('searchPanel').classList.remove('open');
     if (!wasOpen) renderSnapshotsList();
     moreMenu.classList.toggle('open', !wasOpen);
   });
@@ -5016,6 +6252,102 @@
   var THEME_KEY = 'claude_workspace_theme_v1';
   var themeSwatchRow = document.getElementById('themeSwatchRow');
 
+  /* ---------- Theme color customization ----------
+     Lets someone tweak the handful of tokens that actually carry a
+     theme's identity (background, text, the four gradient accents)
+     without needing a whole new preset — stored separately from which
+     preset is active, and layered back on top of it every time
+     applyTheme() runs (picking a different built-in theme never
+     silently discards a customization; only the explicit reset does). */
+  var CUSTOM_COLORS_KEY = 'claude_workspace_custom_colors_v1';
+
+  function hexToRgbTriplet(hex) {
+    hex = hex.replace('#', '');
+    var r = parseInt(hex.substring(0, 2), 16);
+    var g = parseInt(hex.substring(2, 4), 16);
+    var b = parseInt(hex.substring(4, 6), 16);
+    return r + ', ' + g + ', ' + b;
+  }
+
+  function loadCustomColors() {
+    try {
+      var raw = localStorage.getItem(CUSTOM_COLORS_KEY);
+      return raw ? JSON.parse(raw) : {};
+    } catch (err) { return {}; }
+  }
+
+  function saveCustomColors(obj) {
+    try { localStorage.setItem(CUSTOM_COLORS_KEY, JSON.stringify(obj)); } catch (err) {}
+  }
+
+  function applyCustomColorOverrides() {
+    var overrides = loadCustomColors();
+    var rootStyle = document.documentElement.style;
+    if (overrides.bg) rootStyle.setProperty('--page-bg', overrides.bg);
+    else rootStyle.removeProperty('--page-bg');
+    if (overrides.text) {
+      rootStyle.setProperty('--ink-solid', overrides.text);
+      rootStyle.setProperty('--ink-rgb', hexToRgbTriplet(overrides.text));
+    } else {
+      rootStyle.removeProperty('--ink-solid');
+      rootStyle.removeProperty('--ink-rgb');
+    }
+    ['blob1', 'blob2', 'blob3', 'blob4'].forEach(function(key) {
+      if (overrides[key]) rootStyle.setProperty('--' + key, overrides[key]);
+      else rootStyle.removeProperty('--' + key);
+    });
+  }
+
+  function setCustomColor(key, value) {
+    var overrides = loadCustomColors();
+    overrides[key] = value;
+    saveCustomColors(overrides);
+    applyCustomColorOverrides();
+  }
+
+  function computedColorHex(varName) {
+    var val = getComputedStyle(document.documentElement).getPropertyValue(varName).trim();
+    return val || '#000000';
+  }
+
+  function populateCustomizeInputs() {
+    document.getElementById('customBgColor').value = computedColorHex('--page-bg');
+    document.getElementById('customTextColor').value = computedColorHex('--ink-solid');
+    document.getElementById('customBlob1').value = computedColorHex('--blob1');
+    document.getElementById('customBlob2').value = computedColorHex('--blob2');
+    document.getElementById('customBlob3').value = computedColorHex('--blob3');
+    document.getElementById('customBlob4').value = computedColorHex('--blob4');
+  }
+
+  document.getElementById('customBgColor').addEventListener('input', function(e) { setCustomColor('bg', e.target.value); });
+  document.getElementById('customTextColor').addEventListener('input', function(e) { setCustomColor('text', e.target.value); });
+  document.getElementById('customBlob1').addEventListener('input', function(e) { setCustomColor('blob1', e.target.value); });
+  document.getElementById('customBlob2').addEventListener('input', function(e) { setCustomColor('blob2', e.target.value); });
+  document.getElementById('customBlob3').addEventListener('input', function(e) { setCustomColor('blob3', e.target.value); });
+  document.getElementById('customBlob4').addEventListener('input', function(e) { setCustomColor('blob4', e.target.value); });
+
+  document.getElementById('customizeThemeBtn').addEventListener('click', function(e) {
+    e.stopPropagation();
+    var panel = document.getElementById('themeCustomizePanel');
+    var wasOpen = panel.classList.contains('open');
+    if (!wasOpen) populateCustomizeInputs();
+    panel.classList.toggle('open', !wasOpen);
+  });
+
+  document.getElementById('themeCustomizePanel').addEventListener('pointerdown', function(e) { e.stopPropagation(); });
+
+  document.getElementById('resetThemeCustomBtn').addEventListener('click', function(e) {
+    e.stopPropagation();
+    saveCustomColors({});
+    applyCustomColorOverrides();
+    populateCustomizeInputs();
+  });
+
+  /* Apply any customization saved from a previous session immediately
+     (the flash-prevention <script> right after </style> only restores
+     the base theme attribute, not these). */
+  applyCustomColorOverrides();
+
   function applyTheme(themeId, persist) {
     if (themeId) {
       document.documentElement.setAttribute('data-theme', themeId);
@@ -5028,6 +6360,11 @@
     if (persist) {
       try { localStorage.setItem(THEME_KEY, themeId); } catch (err) {}
     }
+    /* Any manually customized colors apply on top of whichever preset is
+       now active, so picking a different theme never silently discards
+       them — "Reset to Theme Default" in the customize panel is the only
+       thing that does. */
+    applyCustomColorOverrides();
   }
 
   themeSwatchRow.addEventListener('click', function(e) {
@@ -5133,6 +6470,7 @@
       moreMenu.classList.remove('open');
       if (activeTextLineWrap) deselectAllTextLines();
       document.querySelectorAll('.table-card.selected').forEach(function(t) { t.classList.remove('selected'); });
+      if (multiSelected.length) clearMultiSelection();
       return;
     }
 
@@ -5146,6 +6484,12 @@
       active.tagName === 'SELECT'
     ));
     if (isEditingText) return;
+
+    if (multiSelected.length) {
+      e.preventDefault();
+      deleteMultiSelection();
+      return;
+    }
 
     if (activeTextLineWrap) {
       e.preventDefault();
@@ -5162,6 +6506,14 @@
 
   document.getElementById('addNote').addEventListener('click', function() {
     createNote(undefined, layer);
+    var hint = document.getElementById('hint');
+    hint.style.display = 'none';
+    saveWorkspace();
+    addMenu.classList.remove('open');
+  });
+
+  document.getElementById('addChecklist').addEventListener('click', function() {
+    createChecklistNote(undefined, layer);
     var hint = document.getElementById('hint');
     hint.style.display = 'none';
     saveWorkspace();
@@ -5819,6 +7171,424 @@
     return fv;
   }
 
+  /* ---------- Voice memo (record or attach an audio clip) ----------
+     Compact card, drag handle up top like free-video. Three mutually
+     exclusive body states (empty / recording / has-audio) toggled by
+     showing/hiding rows rather than tracking a separate state string,
+     so the DOM itself is always the source of truth for what's shown. */
+  function createVoiceMemo(data) {
+    var vm = document.createElement('div');
+    vm.className = 'voice-memo';
+    var defaultPos = screenToCanvas(window.innerWidth / 2 - 120, window.innerHeight / 2 - 50);
+    var x = (data && data.x !== undefined) ? data.x : defaultPos.x;
+    var y = (data && data.y !== undefined) ? data.y : defaultPos.y;
+    vm.style.left = x + 'px';
+    vm.style.top = y + 'px';
+    vm.style.zIndex = ++topZ;
+
+    var head = document.createElement('div');
+    head.className = 'vm-head';
+    var grip = document.createElement('div');
+    grip.className = 'vm-grip';
+    head.appendChild(grip);
+
+    var closeBtn = document.createElement('button');
+    closeBtn.className = 'vm-close';
+    closeBtn.innerHTML = '&times;';
+    closeBtn.setAttribute('aria-label', 'Remove voice memo');
+    closeBtn.addEventListener('pointerdown', function(e) { e.stopPropagation(); });
+    closeBtn.addEventListener('click', function(e) {
+      e.stopPropagation();
+      purgeConnectionsFor(vm.dataset.linkId);
+      if (vm.__cleanupListeners) vm.__cleanupListeners();
+      vm.remove();
+      saveWorkspace();
+    });
+    head.appendChild(closeBtn);
+    vm.appendChild(head);
+
+    var body = document.createElement('div');
+    body.className = 'vm-body';
+    vm.appendChild(body);
+
+    var recordRow = document.createElement('div');
+    recordRow.className = 'vm-row vm-record-row';
+    var recordBtn = document.createElement('button');
+    recordBtn.className = 'vm-record-btn';
+    recordBtn.innerHTML = '&#9679;';
+    recordBtn.title = 'Record a voice memo';
+    recordBtn.setAttribute('aria-label', 'Start recording');
+    var uploadLabel = document.createElement('label');
+    uploadLabel.className = 'vm-upload-btn';
+    uploadLabel.textContent = 'Upload audio';
+    var uploadInput = document.createElement('input');
+    uploadInput.type = 'file';
+    uploadInput.accept = 'audio/*';
+    uploadLabel.appendChild(uploadInput);
+    recordRow.appendChild(recordBtn);
+    recordRow.appendChild(uploadLabel);
+    body.appendChild(recordRow);
+
+    var recordingRow = document.createElement('div');
+    recordingRow.className = 'vm-row vm-recording-row';
+    var recDot = document.createElement('span');
+    recDot.className = 'vm-rec-dot';
+    var recTimer = document.createElement('span');
+    recTimer.className = 'vm-rec-timer';
+    recTimer.textContent = '0:00';
+    var stopBtn = document.createElement('button');
+    stopBtn.className = 'vm-stop-btn';
+    stopBtn.textContent = 'Stop';
+    recordingRow.appendChild(recDot);
+    recordingRow.appendChild(recTimer);
+    recordingRow.appendChild(stopBtn);
+    body.appendChild(recordingRow);
+
+    var playbackRow = document.createElement('div');
+    playbackRow.className = 'vm-row vm-playback-row';
+    var audio = document.createElement('audio');
+    audio.controls = true;
+    audio.preload = 'metadata';
+    var reRecordBtn = document.createElement('button');
+    reRecordBtn.className = 'vm-rerecord-btn';
+    reRecordBtn.innerHTML = '&#8635;';
+    reRecordBtn.title = 'Re-record or replace';
+    reRecordBtn.setAttribute('aria-label', 'Re-record or replace this voice memo');
+    playbackRow.appendChild(audio);
+    playbackRow.appendChild(reRecordBtn);
+    body.appendChild(playbackRow);
+
+    var errorRow = document.createElement('div');
+    errorRow.className = 'vm-error';
+    errorRow.style.display = 'none';
+    body.appendChild(errorRow);
+
+    function showError(msg) {
+      errorRow.textContent = msg;
+      errorRow.style.display = 'block';
+    }
+    function clearError() { errorRow.style.display = 'none'; }
+
+    function setStateEmpty() {
+      recordRow.style.display = 'flex';
+      recordingRow.style.display = 'none';
+      playbackRow.style.display = 'none';
+    }
+    function setStateRecording() {
+      recordRow.style.display = 'none';
+      recordingRow.style.display = 'flex';
+      playbackRow.style.display = 'none';
+    }
+    function setStateHasAudio(src) {
+      audio.src = src;
+      recordRow.style.display = 'none';
+      recordingRow.style.display = 'none';
+      playbackRow.style.display = 'flex';
+      syncDotFor(vm);
+    }
+
+    if (data && data.src) {
+      setStateHasAudio(data.src);
+    } else {
+      setStateEmpty();
+    }
+
+    var mediaRecorder = null, mediaStream = null, chunks = [], recTimerInterval = null, recStartedAt = 0;
+
+    function stopStream() {
+      if (mediaStream) {
+        mediaStream.getTracks().forEach(function(t) { t.stop(); });
+        mediaStream = null;
+      }
+      if (recTimerInterval) { clearInterval(recTimerInterval); recTimerInterval = null; }
+    }
+
+    recordBtn.addEventListener('pointerdown', function(e) { e.stopPropagation(); });
+    recordBtn.addEventListener('click', function(e) {
+      e.stopPropagation();
+      clearError();
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia || !window.MediaRecorder) {
+        showError('Recording isn’t supported in this browser — try uploading an audio file instead.');
+        return;
+      }
+      navigator.mediaDevices.getUserMedia({ audio: true }).then(function(stream) {
+        mediaStream = stream;
+        chunks = [];
+        var mimeType = (window.MediaRecorder.isTypeSupported && MediaRecorder.isTypeSupported('audio/webm')) ? 'audio/webm' : '';
+        mediaRecorder = mimeType ? new MediaRecorder(stream, { mimeType: mimeType }) : new MediaRecorder(stream);
+        mediaRecorder.addEventListener('dataavailable', function(ev) {
+          if (ev.data && ev.data.size > 0) chunks.push(ev.data);
+        });
+        mediaRecorder.addEventListener('stop', function() {
+          stopStream();
+          var blob = new Blob(chunks, { type: mediaRecorder.mimeType || 'audio/webm' });
+          var reader = new FileReader();
+          reader.onload = function(ev) {
+            setStateHasAudio(ev.target.result);
+            saveWorkspace();
+          };
+          reader.readAsDataURL(blob);
+        });
+        mediaRecorder.start();
+        recStartedAt = Date.now();
+        recTimer.textContent = '0:00';
+        recTimerInterval = setInterval(function() {
+          var s = Math.floor((Date.now() - recStartedAt) / 1000);
+          var m = Math.floor(s / 60);
+          var ss = s % 60;
+          recTimer.textContent = m + ':' + (ss < 10 ? '0' : '') + ss;
+        }, 250);
+        setStateRecording();
+      }).catch(function() {
+        showError('Microphone access was blocked or unavailable.');
+      });
+    });
+
+    stopBtn.addEventListener('pointerdown', function(e) { e.stopPropagation(); });
+    stopBtn.addEventListener('click', function(e) {
+      e.stopPropagation();
+      if (mediaRecorder && mediaRecorder.state !== 'inactive') mediaRecorder.stop();
+    });
+
+    reRecordBtn.addEventListener('pointerdown', function(e) { e.stopPropagation(); });
+    reRecordBtn.addEventListener('click', function(e) {
+      e.stopPropagation();
+      clearError();
+      audio.removeAttribute('src');
+      setStateEmpty();
+      saveWorkspace();
+    });
+
+    uploadInput.addEventListener('pointerdown', function(e) { e.stopPropagation(); });
+    uploadInput.addEventListener('click', function(e) { e.stopPropagation(); });
+    uploadInput.addEventListener('change', function(e) {
+      var file = e.target.files && e.target.files[0];
+      e.target.value = '';
+      /* The accept="audio/*" attribute already steers the native picker
+         to audio files — not gating on file.type here too, since some
+         OSes report certain audio containers (.webm, .ogg) under a
+         video/* MIME type, which would otherwise reject a valid clip. */
+      if (!file) return;
+      if (file.size > MEDIA_WARN_BYTES) {
+        window.alert('That audio file is ' + Math.round(file.size / 1024 / 1024) +
+          'MB. Everything here is stored directly in the browser (and synced the ' +
+          'same way if you\'re in a live room), so a file this large may fail to ' +
+          'save or sync reliably — a shorter clip tends to work better.');
+      }
+      var reader = new FileReader();
+      reader.onload = function(ev) {
+        setStateHasAudio(ev.target.result);
+        saveWorkspace();
+      };
+      reader.readAsDataURL(file);
+    });
+
+    layer.appendChild(vm);
+    attachConnectDot(vm, canvasLinkLayer, data && data.linkId);
+    makeDraggable(vm, head);
+    if (window.ResizeObserver) {
+      var roFirstFire = true;
+      var ro = new ResizeObserver(function() {
+        syncDotFor(vm);
+        if (roFirstFire) { roFirstFire = false; return; }
+        saveWorkspace();
+      });
+      ro.observe(vm);
+      vm.__cleanupListeners = function() { ro.disconnect(); stopStream(); };
+    } else {
+      vm.__cleanupListeners = function() { stopStream(); };
+    }
+    return vm;
+  }
+
+  /* ---------- File attachment (PDF / DOC / any other document) ----------
+     Same compact-card shape as voice-memo (grip header, empty/has-file
+     body states), but for an arbitrary document instead of audio: shows
+     an icon guessed from the file extension, name, size, an Open link
+     (native download/open via the browser, same as any other <a
+     download>) and a Replace control. */
+  function fileExtIcon(name) {
+    var ext = (name || '').split('.').pop().toLowerCase();
+    if (ext === 'pdf') return '📕';
+    if (ext === 'doc' || ext === 'docx' || ext === 'rtf' || ext === 'odt') return '📘';
+    if (ext === 'xls' || ext === 'xlsx' || ext === 'csv') return '📗';
+    if (ext === 'ppt' || ext === 'pptx') return '📙';
+    if (ext === 'txt' || ext === 'md') return '📄';
+    return '📎';
+  }
+
+  function formatFileSize(bytes) {
+    if (!bytes && bytes !== 0) return '';
+    if (bytes < 1024) return bytes + ' B';
+    if (bytes < 1024 * 1024) return Math.round(bytes / 1024) + ' KB';
+    return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+  }
+
+  function createFileAttachment(data) {
+    var fa = document.createElement('div');
+    fa.className = 'file-attachment';
+    var defaultPos = screenToCanvas(window.innerWidth / 2 - 110, window.innerHeight / 2 - 45);
+    var x = (data && data.x !== undefined) ? data.x : defaultPos.x;
+    var y = (data && data.y !== undefined) ? data.y : defaultPos.y;
+    fa.style.left = x + 'px';
+    fa.style.top = y + 'px';
+    fa.style.zIndex = ++topZ;
+
+    var head = document.createElement('div');
+    head.className = 'fa-head';
+    var grip = document.createElement('div');
+    grip.className = 'fa-grip';
+    head.appendChild(grip);
+
+    var closeBtn = document.createElement('button');
+    closeBtn.className = 'fa-close';
+    closeBtn.innerHTML = '&times;';
+    closeBtn.setAttribute('aria-label', 'Remove file attachment');
+    closeBtn.addEventListener('pointerdown', function(e) { e.stopPropagation(); });
+    closeBtn.addEventListener('click', function(e) {
+      e.stopPropagation();
+      purgeConnectionsFor(fa.dataset.linkId);
+      if (fa.__cleanupListeners) fa.__cleanupListeners();
+      fa.remove();
+      saveWorkspace();
+    });
+    head.appendChild(closeBtn);
+    fa.appendChild(head);
+
+    var body = document.createElement('div');
+    body.className = 'fa-body';
+    fa.appendChild(body);
+
+    var emptyRow = document.createElement('div');
+    emptyRow.className = 'fa-empty-row';
+    var uploadLabel = document.createElement('label');
+    uploadLabel.className = 'fa-upload-btn';
+    uploadLabel.textContent = 'Choose a file…';
+    var uploadInput = document.createElement('input');
+    uploadInput.type = 'file';
+    uploadInput.accept = '.pdf,.doc,.docx,.txt,.rtf,.odt,.xls,.xlsx,.ppt,.pptx,.csv,.md';
+    uploadLabel.appendChild(uploadInput);
+    emptyRow.appendChild(uploadLabel);
+    body.appendChild(emptyRow);
+
+    var fileRow = document.createElement('div');
+    fileRow.className = 'fa-file-row';
+    var icon = document.createElement('div');
+    icon.className = 'fa-icon';
+    var info = document.createElement('div');
+    info.className = 'fa-info';
+    var nameEl = document.createElement('div');
+    nameEl.className = 'fa-name';
+    var sizeEl = document.createElement('div');
+    sizeEl.className = 'fa-size';
+    info.appendChild(nameEl);
+    info.appendChild(sizeEl);
+    fileRow.appendChild(icon);
+    fileRow.appendChild(info);
+    body.appendChild(fileRow);
+
+    var actions = document.createElement('div');
+    actions.className = 'fa-actions';
+    var openLink = document.createElement('a');
+    openLink.className = 'fa-open-link';
+    openLink.textContent = 'Open';
+    openLink.target = '_blank';
+    openLink.rel = 'noopener';
+    var replaceLabel = document.createElement('label');
+    replaceLabel.className = 'fa-replace-btn';
+    replaceLabel.textContent = 'Replace';
+    var replaceInput = document.createElement('input');
+    replaceInput.type = 'file';
+    replaceInput.accept = uploadInput.accept;
+    replaceLabel.appendChild(replaceInput);
+    actions.appendChild(openLink);
+    actions.appendChild(replaceLabel);
+    body.appendChild(actions);
+
+    var fileName = null, fileSize = 0;
+
+    function setStateEmpty() {
+      emptyRow.style.display = 'flex';
+      fileRow.style.display = 'none';
+      actions.style.display = 'none';
+    }
+    function setStateHasFile(src, name, size) {
+      fileName = name || 'file';
+      fileSize = size || 0;
+      icon.textContent = fileExtIcon(fileName);
+      nameEl.textContent = fileName;
+      nameEl.title = fileName;
+      sizeEl.textContent = formatFileSize(fileSize);
+      openLink.href = src;
+      openLink.download = fileName;
+      emptyRow.style.display = 'none';
+      fileRow.style.display = 'flex';
+      actions.style.display = 'flex';
+      syncDotFor(fa);
+    }
+
+    if (data && data.src) {
+      setStateHasFile(data.src, data.name, data.size);
+    } else {
+      setStateEmpty();
+    }
+
+    function handleFile(file) {
+      if (!file) return;
+      if (file.size > MEDIA_WARN_BYTES) {
+        window.alert('That file is ' + Math.round(file.size / 1024 / 1024) +
+          'MB. Everything here is stored directly in the browser (and synced ' +
+          'the same way if you\'re in a live room), so a file this large may ' +
+          'fail to save or sync reliably — a smaller file tends to work better.');
+      }
+      var reader = new FileReader();
+      reader.onload = function(ev) {
+        setStateHasFile(ev.target.result, file.name, file.size);
+        saveWorkspace();
+      };
+      reader.readAsDataURL(file);
+    }
+
+    uploadInput.addEventListener('pointerdown', function(e) { e.stopPropagation(); });
+    uploadInput.addEventListener('click', function(e) { e.stopPropagation(); });
+    uploadInput.addEventListener('change', function(e) {
+      var file = e.target.files && e.target.files[0];
+      e.target.value = '';
+      handleFile(file);
+    });
+
+    replaceLabel.addEventListener('pointerdown', function(e) { e.stopPropagation(); });
+    replaceInput.addEventListener('pointerdown', function(e) { e.stopPropagation(); });
+    replaceInput.addEventListener('click', function(e) { e.stopPropagation(); });
+    replaceInput.addEventListener('change', function(e) {
+      var file = e.target.files && e.target.files[0];
+      e.target.value = '';
+      handleFile(file);
+    });
+
+    openLink.addEventListener('pointerdown', function(e) { e.stopPropagation(); });
+    openLink.addEventListener('click', function(e) { e.stopPropagation(); });
+
+    layer.appendChild(fa);
+    attachConnectDot(fa, canvasLinkLayer, data && data.linkId);
+    makeDraggable(fa, head);
+    if (window.ResizeObserver) {
+      var roFirstFire = true;
+      var ro = new ResizeObserver(function() {
+        syncDotFor(fa);
+        if (roFirstFire) { roFirstFire = false; return; }
+        saveWorkspace();
+      });
+      ro.observe(fa);
+      fa.__cleanupListeners = function() { ro.disconnect(); };
+    }
+
+    fa.__getFileData = function() {
+      return { src: openLink.href && openLink.href.indexOf('data:') === 0 ? openLink.href : null, name: fileName, size: fileSize };
+    };
+    return fa;
+  }
+
   /* ---------- Drag & drop overlay (images and videos - "Insert Media") ---------- */
   var dropOverlay = document.getElementById('dropOverlay');
   var mediaFileInput = document.getElementById('mediaFileInput');
@@ -5843,6 +7613,190 @@
 
   document.getElementById('undoBtn').addEventListener('click', function() { performUndo(); });
   document.getElementById('redoBtn').addEventListener('click', function() { performRedo(); });
+  document.getElementById('zoomFitBtn').addEventListener('click', function() { zoomToFitCanvas(); });
+
+  /* ---------- Search ----------
+     Searches everything text-bearing — notes, tables, text lines,
+     timetable cells, subject quick notes — and jumps to whichever result
+     you pick: canvas instances get centered and briefly highlighted;
+     timetable/subject results switch tabs (and open the Subject Notes
+     panel) first. */
+  var searchWrap = document.getElementById('searchWrap');
+  var searchBtn = document.getElementById('searchBtn');
+  var searchPanel = document.getElementById('searchPanel');
+  var searchInput = document.getElementById('searchInput');
+  var searchResultsEl = document.getElementById('searchResults');
+
+  function stripTagsForSearch(html) {
+    var scratch = document.createElement('div');
+    scratch.innerHTML = html || '';
+    return scratch.textContent || '';
+  }
+
+  function escapeHtmlForSearch(s) {
+    return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  }
+
+  function makeSearchSnippet(text, query) {
+    text = text.replace(/\s+/g, ' ').trim();
+    var idx = text.toLowerCase().indexOf(query);
+    if (idx === -1) return escapeHtmlForSearch(text.slice(0, 60));
+    var start = Math.max(0, idx - 18);
+    var end = Math.min(text.length, idx + query.length + 34);
+    var snippet = (start > 0 ? '…' : '') + text.slice(start, end) + (end < text.length ? '…' : '');
+    var esc = escapeHtmlForSearch(snippet);
+    var reIdx = esc.toLowerCase().indexOf(query.toLowerCase());
+    if (reIdx !== -1) {
+      esc = esc.slice(0, reIdx) + '<b>' + esc.slice(reIdx, reIdx + query.length) + '</b>' + esc.slice(reIdx + query.length);
+    }
+    return esc;
+  }
+
+  function highlightAfterJump(el) {
+    el.classList.remove('search-highlight');
+    void el.offsetWidth; /* restart the animation if it's already mid-pulse */
+    el.classList.add('search-highlight');
+    setTimeout(function() { el.classList.remove('search-highlight'); }, 1700);
+  }
+
+  function jumpToCanvasEl(el) {
+    var boardBtn = document.querySelector('.subswitch-btn[data-sub="board"]');
+    if (boardBtn && !boardBtn.classList.contains('active')) boardBtn.click();
+
+    var vpW = canvasViewport.clientWidth;
+    var vpH = canvasViewport.clientHeight;
+    var targetZoom = Math.max(CANVAS_ZOOM_MIN, Math.min(CANVAS_ZOOM_MAX, canvasZoom < 0.5 ? 1 : canvasZoom));
+    var centerX = el.offsetLeft + el.offsetWidth / 2;
+    var centerY = el.offsetTop + el.offsetHeight / 2;
+    canvasZoom = targetZoom;
+    canvasPanX = vpW / 2 - centerX * targetZoom;
+    canvasPanY = vpH / 2 - centerY * targetZoom;
+    layer.style.transition = 'transform 0.35s cubic-bezier(0.2, 0.8, 0.2, 1)';
+    applyCanvasTransform();
+    canvasSaveViewDebounced();
+    setTimeout(function() { layer.style.transition = ''; }, 380);
+    setTimeout(function() { highlightAfterJump(el); }, 200);
+  }
+
+  function jumpToTimetableCell(key) {
+    var ttBtn = document.querySelector('.subswitch-btn[data-sub="timetable"]');
+    if (ttBtn && !ttBtn.classList.contains('active')) ttBtn.click();
+    setTimeout(function() {
+      var cellEl = ttCellEls[key];
+      if (!cellEl) return;
+      cellEl.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' });
+      setTimeout(function() { highlightAfterJump(cellEl); }, 250);
+    }, 50);
+  }
+
+  function jumpToSubject(id) {
+    var ttBtn = document.querySelector('.subswitch-btn[data-sub="timetable"]');
+    if (ttBtn && !ttBtn.classList.contains('active')) ttBtn.click();
+    setSubjectsCollapseOpen(true);
+    switchToSubject(id);
+    setTimeout(function() {
+      if (notebookWrap) highlightAfterJump(notebookWrap);
+    }, 250);
+  }
+
+  function runSearch(rawQuery) {
+    var query = rawQuery.trim().toLowerCase();
+    searchResultsEl.innerHTML = '';
+    if (!query) return;
+
+    var matches = [];
+
+    layer.querySelectorAll('.note:not(.sticky-canvas-card):not(.table-card):not(.checklist-card)').forEach(function(n) {
+      var body = n.querySelector('.note-text');
+      var text = body ? body.textContent : '';
+      if (text.toLowerCase().indexOf(query) !== -1) {
+        matches.push({ kind: 'Note', snippet: makeSearchSnippet(text, query), action: function() { jumpToCanvasEl(n); } });
+      }
+    });
+
+    layer.querySelectorAll('.checklist-card').forEach(function(n) {
+      var text = Array.prototype.map.call(n.querySelectorAll('.checklist-text'), function(t) { return t.textContent; }).join(' · ');
+      if (text.toLowerCase().indexOf(query) !== -1) {
+        matches.push({ kind: 'Checklist', snippet: makeSearchSnippet(text, query), action: function() { jumpToCanvasEl(n); } });
+      }
+    });
+
+    layer.querySelectorAll('.table-card').forEach(function(n) {
+      var cells = n.querySelectorAll('.table-grid td');
+      var hitText = null;
+      Array.prototype.some.call(cells, function(td) {
+        var t = td.textContent;
+        if (t && t.toLowerCase().indexOf(query) !== -1) { hitText = t; return true; }
+        return false;
+      });
+      if (hitText !== null) {
+        matches.push({ kind: 'Table', snippet: makeSearchSnippet(hitText, query), action: function() { jumpToCanvasEl(n); } });
+      }
+    });
+
+    layer.querySelectorAll('.text-line-wrap').forEach(function(wrap) {
+      var el = wrap.querySelector('.text-line');
+      var text = el ? el.textContent : '';
+      if (text.toLowerCase().indexOf(query) !== -1) {
+        matches.push({ kind: 'Text Line', snippet: makeSearchSnippet(text, query), action: function() { jumpToCanvasEl(wrap); } });
+      }
+    });
+
+    Object.keys(timetable.cells || {}).forEach(function(key) {
+      var cell = timetable.cells[key];
+      if (!cell) return;
+      var combined = [stripTagsForSearch(cell.subject), cell.room, cell.teacher].filter(Boolean).join(' · ');
+      if (combined.toLowerCase().indexOf(query) !== -1) {
+        matches.push({ kind: 'Timetable', snippet: makeSearchSnippet(combined, query), action: function() { jumpToTimetableCell(key); } });
+      }
+    });
+
+    subjects.forEach(function(s) {
+      var combined = s.name + ' ' + stripTagsForSearch(subjectQuickNotes[s.id] || '');
+      if (combined.toLowerCase().indexOf(query) !== -1) {
+        matches.push({ kind: 'Subject', snippet: makeSearchSnippet(combined, query), action: function() { jumpToSubject(s.id); } });
+      }
+    });
+
+    if (!matches.length) {
+      var empty = document.createElement('div');
+      empty.className = 'search-empty';
+      empty.textContent = 'No matches';
+      searchResultsEl.appendChild(empty);
+      return;
+    }
+
+    matches.slice(0, 30).forEach(function(m) {
+      var item = document.createElement('button');
+      item.className = 'add-menu-item search-result-item';
+      item.innerHTML = '<span class="search-result-kind">' + m.kind + '</span>' + m.snippet;
+      item.addEventListener('click', function() {
+        searchPanel.classList.remove('open');
+        m.action();
+      });
+      searchResultsEl.appendChild(item);
+    });
+  }
+
+  searchBtn.addEventListener('click', function(e) {
+    e.stopPropagation();
+    var wasOpen = searchPanel.classList.contains('open');
+    addMenu.classList.remove('open');
+    moreMenu.classList.remove('open');
+    searchPanel.classList.toggle('open', !wasOpen);
+    if (!wasOpen) {
+      searchInput.value = '';
+      searchResultsEl.innerHTML = '';
+      setTimeout(function() { searchInput.focus(); }, 50);
+    }
+  });
+
+  searchInput.addEventListener('input', function() { runSearch(searchInput.value); });
+  searchInput.addEventListener('pointerdown', function(e) { e.stopPropagation(); });
+
+  document.addEventListener('pointerdown', function(e) {
+    if (!e.target.closest('#searchWrap')) searchPanel.classList.remove('open');
+  });
 
   function showOverlay() { dropOverlay.classList.add('show'); }
   function hideOverlay() { dropOverlay.classList.remove('show'); dragCounter = 0; }
@@ -5857,6 +7811,20 @@
     } else {
       showOverlay();
     }
+    addMenu.classList.remove('open');
+  });
+
+  document.getElementById('addVoiceMemo').addEventListener('click', function() {
+    createVoiceMemo(undefined);
+    document.getElementById('hint').style.display = 'none';
+    saveWorkspace();
+    addMenu.classList.remove('open');
+  });
+
+  document.getElementById('addFileAttachment').addEventListener('click', function() {
+    createFileAttachment(undefined);
+    document.getElementById('hint').style.display = 'none';
+    saveWorkspace();
     addMenu.classList.remove('open');
   });
 
@@ -6604,6 +8572,218 @@
     highlightCurrentPeriodCells();
   }, 30000);
 
+  /* ---------- Calendar export (.ics) + term exceptions ----------
+     No OAuth/API credentials means no real push integration with Google
+     or Apple Calendar — instead the timetable is exported as a standard
+     .ics file (one recurring weekly VEVENT per non-free class, each with
+     its own 10-minute-before VALARM), which any calendar app can import
+     and will then generate its own real native notifications for, no
+     ongoing connection required. "Term exceptions" are calendar dates
+     with no classes (a holiday, an inset day) — encoded as RRULE EXDATE
+     entries on any event whose weekday the exception date falls on. */
+  function defaultTermSettings() { return { startDate: '', endDate: '', exceptions: [] }; }
+
+  var termSettings = defaultTermSettings();
+
+  function normalizeTermSettings(t) {
+    var base = defaultTermSettings();
+    if (!t) return base;
+    return {
+      startDate: typeof t.startDate === 'string' ? t.startDate : base.startDate,
+      endDate: typeof t.endDate === 'string' ? t.endDate : base.endDate,
+      exceptions: Array.isArray(t.exceptions) ? t.exceptions.filter(function(e) { return e && e.date; }) : base.exceptions
+    };
+  }
+
+  var termStartInput = document.getElementById('termStartInput');
+  var termEndInput = document.getElementById('termEndInput');
+  var termExceptionsList = document.getElementById('termExceptionsList');
+  var termExceptionDateInput = document.getElementById('termExceptionDateInput');
+  var termExceptionLabelInput = document.getElementById('termExceptionLabelInput');
+  var ttCalendarBtn = document.getElementById('ttCalendarBtn');
+  var ttCalendarPanel = document.getElementById('ttCalendarPanel');
+
+  function formatExceptionDate(dateStr) {
+    var parts = dateStr.split('-');
+    if (parts.length !== 3) return dateStr;
+    var d = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
+    return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+  }
+
+  function renderTermExceptions() {
+    termExceptionsList.innerHTML = '';
+    termSettings.exceptions
+      .slice()
+      .sort(function(a, b) { return a.date < b.date ? -1 : a.date > b.date ? 1 : 0; })
+      .forEach(function(exc) {
+        var row = document.createElement('div');
+        row.className = 'tt-calendar-exception-row';
+        var dateEl = document.createElement('span');
+        dateEl.className = 'tt-exc-date';
+        dateEl.textContent = formatExceptionDate(exc.date);
+        var labelEl = document.createElement('span');
+        labelEl.className = 'tt-exc-label';
+        labelEl.textContent = exc.label || '';
+        var removeBtn = document.createElement('button');
+        removeBtn.className = 'tt-exc-remove';
+        removeBtn.innerHTML = '&times;';
+        removeBtn.setAttribute('aria-label', 'Remove exception');
+        removeBtn.addEventListener('click', function() {
+          termSettings.exceptions = termSettings.exceptions.filter(function(e) { return e !== exc; });
+          renderTermExceptions();
+          saveWorkspace();
+        });
+        row.appendChild(dateEl);
+        row.appendChild(labelEl);
+        row.appendChild(removeBtn);
+        termExceptionsList.appendChild(row);
+      });
+  }
+
+  ttCalendarBtn.addEventListener('click', function(e) {
+    e.stopPropagation();
+    var wasOpen = ttCalendarPanel.classList.contains('open');
+    if (!wasOpen) {
+      termStartInput.value = termSettings.startDate || '';
+      termEndInput.value = termSettings.endDate || '';
+      renderTermExceptions();
+    }
+    ttCalendarPanel.classList.toggle('open', !wasOpen);
+  });
+
+  document.addEventListener('pointerdown', function(e) {
+    if (!e.target.closest('#ttCalendarWrap')) ttCalendarPanel.classList.remove('open');
+  });
+  ttCalendarPanel.addEventListener('pointerdown', function(e) { e.stopPropagation(); });
+
+  termStartInput.addEventListener('change', function() {
+    termSettings.startDate = termStartInput.value;
+    saveWorkspace();
+  });
+  termEndInput.addEventListener('change', function() {
+    termSettings.endDate = termEndInput.value;
+    saveWorkspace();
+  });
+
+  document.getElementById('termExceptionAddBtn').addEventListener('click', function() {
+    var date = termExceptionDateInput.value;
+    if (!date) return;
+    var label = termExceptionLabelInput.value.trim();
+    termSettings.exceptions.push({ date: date, label: label });
+    termExceptionDateInput.value = '';
+    termExceptionLabelInput.value = '';
+    renderTermExceptions();
+    saveWorkspace();
+  });
+
+  var ICS_DAY_CODE = { Mon: 'MO', Tue: 'TU', Wed: 'WE', Thu: 'TH', Fri: 'FR', Sat: 'SA', Sun: 'SU' };
+
+  function icsPad(n) { return n < 10 ? '0' + n : '' + n; }
+
+  function icsDateTime(date, hh, mm) {
+    return date.getFullYear() + icsPad(date.getMonth() + 1) + icsPad(date.getDate()) +
+      'T' + icsPad(hh) + icsPad(mm) + '00';
+  }
+
+  function parseLocalDate(dateStr) {
+    var parts = (dateStr || '').split('-');
+    if (parts.length !== 3) return null;
+    var d = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
+    return isNaN(d.getTime()) ? null : d;
+  }
+
+  function firstOccurrenceOnOrAfter(startDate, targetWeekday) {
+    var d = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate());
+    var diff = (targetWeekday - d.getDay() + 7) % 7;
+    d.setDate(d.getDate() + diff);
+    return d;
+  }
+
+  function icsEscape(text) {
+    return (text || '').replace(/\\/g, '\\\\').replace(/;/g, '\\;').replace(/,/g, '\\,').replace(/\n/g, '\\n');
+  }
+
+  function generateICS() {
+    var start = parseLocalDate(termSettings.startDate) || new Date();
+    var end = parseLocalDate(termSettings.endDate);
+    if (!end || end < start) {
+      end = new Date(start.getFullYear(), start.getMonth(), start.getDate() + 16 * 7);
+    }
+
+    var lines = [
+      'BEGIN:VCALENDAR',
+      'VERSION:2.0',
+      'PRODID:-//Notesino//Timetable//EN',
+      'CALSCALE:GREGORIAN',
+      'METHOD:PUBLISH',
+      'X-WR-CALNAME:Notesino Timetable'
+    ];
+
+    timetable.days.forEach(function(dayCode, dIdx) {
+      var jsWeekday = JS_DAY_TO_CODE.indexOf(dayCode);
+      if (jsWeekday === -1) return;
+      var byDay = ICS_DAY_CODE[dayCode];
+      if (!byDay) return;
+
+      timetable.periods.forEach(function(period, pIdx) {
+        var entry = timetable.cells[ttKey(dIdx, pIdx)];
+        var subjectText = entry && entry.subject ? stripTagsForSearch(entry.subject).trim() : '';
+        if (!entry || entry.free || !subjectText) return;
+
+        var startParts = (period.start || '00:00').split(':');
+        var endParts = (period.end || '00:00').split(':');
+        var startHH = Number(startParts[0]) || 0, startMM = Number(startParts[1]) || 0;
+        var endHH = Number(endParts[0]) || 0, endMM = Number(endParts[1]) || 0;
+
+        var firstDate = firstOccurrenceOnOrAfter(start, jsWeekday);
+        if (firstDate > end) return;
+
+        var dtstart = icsDateTime(firstDate, startHH, startMM);
+        var dtend = icsDateTime(firstDate, endHH, endMM);
+        var untilDate = new Date(end.getFullYear(), end.getMonth(), end.getDate());
+        var until = icsDateTime(untilDate, startHH, startMM);
+
+        var exdates = termSettings.exceptions
+          .map(function(exc) { return parseLocalDate(exc.date); })
+          .filter(function(d) { return d && d >= start && d <= end && d.getDay() === jsWeekday; })
+          .map(function(d) { return icsDateTime(d, startHH, startMM); });
+
+        lines.push('BEGIN:VEVENT');
+        lines.push('UID:tt-' + dIdx + '-' + pIdx + '@notesino.local');
+        lines.push('DTSTART:' + dtstart);
+        lines.push('DTEND:' + dtend);
+        lines.push('RRULE:FREQ=WEEKLY;BYDAY=' + byDay + ';UNTIL=' + until);
+        if (exdates.length) lines.push('EXDATE:' + exdates.join(','));
+        lines.push('SUMMARY:' + icsEscape(subjectText));
+        if (entry.room) lines.push('LOCATION:' + icsEscape(entry.room));
+        if (entry.teacher) lines.push('DESCRIPTION:' + icsEscape('Teacher: ' + entry.teacher));
+        lines.push('BEGIN:VALARM');
+        lines.push('ACTION:DISPLAY');
+        lines.push('DESCRIPTION:' + icsEscape(subjectText) + ' starts soon');
+        lines.push('TRIGGER:-PT10M');
+        lines.push('END:VALARM');
+        lines.push('END:VEVENT');
+      });
+    });
+
+    lines.push('END:VCALENDAR');
+    return lines.join('\r\n');
+  }
+
+  document.getElementById('downloadIcsBtn').addEventListener('click', function() {
+    var ics = generateICS();
+    var blob = new Blob([ics], { type: 'text/calendar;charset=utf-8' });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = 'notesino-timetable.ics';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(function() { URL.revokeObjectURL(url); }, 1000);
+    ttCalendarPanel.classList.remove('open');
+  });
+
   /* ---------- Persistence (localStorage) ---------- */
   var STORAGE_KEY = 'claude_workspace_v2';
   var saveTimer = null;
@@ -6695,7 +8875,7 @@
   }
 
   function collectNotesFrom(targetLayer) {
-    return Array.prototype.map.call(targetLayer.querySelectorAll('.note:not(.sticky-canvas-card):not(.table-card)'), function(n) {
+    return Array.prototype.map.call(targetLayer.querySelectorAll('.note:not(.sticky-canvas-card):not(.table-card):not(.checklist-card)'), function(n) {
       var b = n.querySelector('.note-text');
       var bgImg = n.style.backgroundImage;
       var bgMatch = bgImg && bgImg.match(/url\((['"]?)(.*?)\1\)/);
@@ -6743,6 +8923,21 @@
     });
   }
 
+  function collectChecklistsFrom(targetLayer) {
+    return Array.prototype.map.call(targetLayer.querySelectorAll('.checklist-card'), function(n) {
+      var items = n.__getChecklistItems ? n.__getChecklistItems() : [];
+      return {
+        x: parseFloat(n.style.left) || 0,
+        y: parseFloat(n.style.top) || 0,
+        w: n.offsetWidth,
+        h: n.offsetHeight,
+        color: n.querySelector('.note-dot').style.background,
+        items: items,
+        linkId: n.dataset.linkId
+      };
+    });
+  }
+
   function collectTextLinesFrom(targetLayer) {
     var out = [];
     Array.prototype.forEach.call(targetLayer.children, function(wrap) {
@@ -6772,6 +8967,7 @@
     var stickyCanvases = collectStickyCanvasesFrom(layer);
     var textLines = collectTextLinesFrom(layer);
     var tables = collectTablesFrom(layer);
+    var checklists = collectChecklistsFrom(layer);
 
     var images = Array.prototype.map.call(layer.querySelectorAll('.free-image'), function(fi) {
       return {
@@ -6795,6 +8991,28 @@
       };
     });
 
+    var voiceMemos = Array.prototype.map.call(layer.querySelectorAll('.voice-memo'), function(vm) {
+      var audioEl = vm.querySelector('audio');
+      return {
+        x: parseFloat(vm.style.left) || 0,
+        y: parseFloat(vm.style.top) || 0,
+        src: (audioEl && audioEl.src && audioEl.src.indexOf('data:') === 0) ? audioEl.src : null,
+        linkId: vm.dataset.linkId
+      };
+    });
+
+    var fileAttachments = Array.prototype.map.call(layer.querySelectorAll('.file-attachment'), function(fa) {
+      var fd = fa.__getFileData ? fa.__getFileData() : { src: null, name: null, size: 0 };
+      return {
+        x: parseFloat(fa.style.left) || 0,
+        y: parseFloat(fa.style.top) || 0,
+        src: fd.src,
+        name: fd.name,
+        size: fd.size,
+        linkId: fa.dataset.linkId
+      };
+    });
+
     var subjectsOut = subjects.map(function(s) {
       return { id: s.id, name: s.name, color: s.color, quickNote: subjectQuickNotes[s.id] || '' };
     });
@@ -6804,13 +9022,17 @@
       stickyCanvases: stickyCanvases,
       textLines: textLines,
       tables: tables,
+      checklists: checklists,
       images: images,
       videos: videos,
+      voiceMemos: voiceMemos,
+      fileAttachments: fileAttachments,
       workspaceBg: workspaceBgSrc,
       subjects: subjectsOut,
       activeSubjectId: activeSubjectId,
       connections: canvasConnections,
-      timetable: timetable
+      timetable: timetable,
+      termSettings: termSettings
     };
   }
 
@@ -6932,7 +9154,7 @@
   }
 
   function clearWorkspaceUI() {
-    layer.querySelectorAll('.note, .free-image, .free-video').forEach(function(el) {
+    layer.querySelectorAll('.note, .free-image, .free-video, .voice-memo, .file-attachment').forEach(function(el) {
       if (el.__cleanupListeners) el.__cleanupListeners();
       el.remove();
     });
@@ -6951,6 +9173,7 @@
     activeSubjectId = null;
     workspaceBgSrc = null;
     timetable = defaultTimetable();
+    termSettings = defaultTermSettings();
     updateRemoveWorkspaceBgVisibility();
   }
 
@@ -6977,11 +9200,20 @@
     if (state.tables && state.tables.length) {
       state.tables.forEach(function(t) { createTable(t, layer); });
     }
+    if (state.checklists && state.checklists.length) {
+      state.checklists.forEach(function(c) { createChecklistNote(c, layer); });
+    }
     if (state.images && state.images.length) {
       state.images.forEach(function(img) { createFreeImage(img); });
     }
     if (state.videos && state.videos.length) {
       state.videos.forEach(function(v) { createFreeVideo(v); });
+    }
+    if (state.voiceMemos && state.voiceMemos.length) {
+      state.voiceMemos.forEach(function(v) { createVoiceMemo(v); });
+    }
+    if (state.fileAttachments && state.fileAttachments.length) {
+      state.fileAttachments.forEach(function(f) { createFileAttachment(f); });
     }
 
     if (state.subjects && state.subjects.length) {
@@ -7000,12 +9232,16 @@
 
     timetable = normalizeTimetable(state.timetable);
     renderTimetable();
+    termSettings = normalizeTermSettings(state.termSettings);
 
     return !!((state.notes && state.notes.length) ||
               (state.stickyCanvases && state.stickyCanvases.length) ||
               (state.textLines && state.textLines.length) ||
               (state.tables && state.tables.length) ||
+              (state.checklists && state.checklists.length) ||
               (state.images && state.images.length) ||
+              (state.voiceMemos && state.voiceMemos.length) ||
+              (state.fileAttachments && state.fileAttachments.length) ||
               (state.subjects && state.subjects.length));
   }
 

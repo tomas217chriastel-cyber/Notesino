@@ -3059,6 +3059,9 @@
         <div class="add-menu-divider"></div>
         <button class="add-menu-item" id="exportWorkspaceBtn">Export Workspace&hellip;</button>
         <button class="add-menu-item" id="importWorkspaceBtn">Import Workspace&hellip;</button>
+        <div class="add-menu-divider" id="snapshotsDivider" style="display:none;"></div>
+        <div class="theme-picker-label" id="snapshotsLabel" style="display:none;">Restore a Previous Version</div>
+        <div id="snapshotsList"></div>
       </div>
     </div>
     <input type="file" id="importFileInput" accept="application/json,.json" style="display:none;">
@@ -4992,6 +4995,7 @@
     e.stopPropagation();
     var wasOpen = moreMenu.classList.contains('open');
     addMenu.classList.remove('open');
+    if (!wasOpen) renderSnapshotsList();
     moreMenu.classList.toggle('open', !wasOpen);
   });
 
@@ -6831,7 +6835,100 @@
       } catch (err) {}
       pushToRoomIfActive(state);
       pushTimetableToNative();
+      maybeTakeAutosaveSnapshot(json);
     }, 200);
+  }
+
+  /* ---------- Autosave snapshots ----------
+     A rotating history of full workspace states, independent of the undo
+     stack (which lives only in memory and is gone the moment the tab
+     reloads) — the safety net for "I closed this yesterday and need to
+     get back to how it looked before today's changes", which undo can't
+     reach across a reload. Snapshots only every SNAPSHOT_INTERVAL_MS
+     apart and capped at SNAPSHOT_LIMIT entries, since each one is a full
+     copy of the workspace — images/videos included — and localStorage
+     has a real, fairly small quota that the *regular* save absolutely
+     has to keep fitting in. */
+  var SNAPSHOTS_KEY = 'claude_workspace_snapshots_v1';
+  var SNAPSHOT_INTERVAL_MS = 10 * 60 * 1000;
+  var SNAPSHOT_LIMIT = 6;
+  var lastSnapshotTakenAt = Date.now();
+
+  function loadSnapshots() {
+    try {
+      var raw = localStorage.getItem(SNAPSHOTS_KEY);
+      return raw ? JSON.parse(raw) : [];
+    } catch (err) { return []; }
+  }
+
+  function maybeTakeAutosaveSnapshot(json) {
+    var now = Date.now();
+    if (now - lastSnapshotTakenAt < SNAPSHOT_INTERVAL_MS) return;
+    lastSnapshotTakenAt = now;
+    var list = loadSnapshots();
+    list.push({ t: now, json: json });
+    if (list.length > SNAPSHOT_LIMIT) list = list.slice(list.length - SNAPSHOT_LIMIT);
+    try {
+      localStorage.setItem(SNAPSHOTS_KEY, JSON.stringify(list));
+    } catch (err) {
+      /* Quota trouble — drop the oldest snapshot and try once more. A
+         failed autosave snapshot must never risk the regular save. */
+      try {
+        list.shift();
+        localStorage.setItem(SNAPSHOTS_KEY, JSON.stringify(list));
+      } catch (err2) {}
+    }
+  }
+
+  function relativeTimeLabel(ts) {
+    var diffSec = Math.round((Date.now() - ts) / 1000);
+    if (diffSec < 60) return 'Just now';
+    var diffMin = Math.round(diffSec / 60);
+    if (diffMin < 60) return diffMin + ' minute' + (diffMin === 1 ? '' : 's') + ' ago';
+    var diffHr = Math.round(diffMin / 60);
+    if (diffHr < 24) return diffHr + ' hour' + (diffHr === 1 ? '' : 's') + ' ago';
+    var diffDay = Math.round(diffHr / 24);
+    return diffDay + ' day' + (diffDay === 1 ? '' : 's') + ' ago';
+  }
+
+  function renderSnapshotsList() {
+    var list = loadSnapshots();
+    var container = document.getElementById('snapshotsList');
+    var divider = document.getElementById('snapshotsDivider');
+    var label = document.getElementById('snapshotsLabel');
+    container.innerHTML = '';
+    var hasAny = list.length > 0;
+    divider.style.display = hasAny ? 'block' : 'none';
+    label.style.display = hasAny ? 'block' : 'none';
+    /* Most recent first. */
+    list.slice().reverse().forEach(function(entry) {
+      var btn = document.createElement('button');
+      btn.className = 'add-menu-item';
+      btn.textContent = relativeTimeLabel(entry.t);
+      btn.addEventListener('click', function() {
+        moreMenu.classList.remove('open');
+        var ok = window.confirm(
+          'Restore the workspace as it looked ' + relativeTimeLabel(entry.t).toLowerCase() +
+          '? This replaces everything currently here (you can still undo it with Ctrl+Z right after).'
+        );
+        if (!ok) return;
+        var state;
+        try { state = JSON.parse(entry.json); } catch (err) { return; }
+        /* Deliberately NOT wrapped in withStateRestoreGuard — restoring a
+           snapshot is a real, undoable user action (like import), so this
+           should register a normal undo checkpoint. saveWorkspace() runs
+           synchronously right after, which starts its debounce timer
+           before any recreated instance's ResizeObserver can fire its
+           own (harmless but unrelated) first callback. */
+        clearWorkspaceUI();
+        applyState(state);
+        renderSubjectsList();
+        renderSubjectCanvas();
+        document.getElementById('hint').style.display = 'none';
+        saveWorkspace();
+      });
+      container.appendChild(btn);
+    });
   }
 
   function clearWorkspaceUI() {

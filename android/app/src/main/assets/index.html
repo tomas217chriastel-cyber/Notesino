@@ -157,8 +157,13 @@
   /* Toolbar */
   .toolbar {
     position: absolute;
-    top: 24px;
-    right: 24px;
+    /* viewport-fit=cover draws edge-to-edge under a phone's notch/Dynamic
+       Island and home-indicator area, so edge-anchored chrome needs its
+       own safe-area padding on top of the usual visual margin —
+       env() falls back to 0 on anything without a safe area (desktop,
+       older phones), so this is a no-op there. */
+    top: calc(24px + env(safe-area-inset-top, 0px));
+    right: calc(24px + env(safe-area-inset-right, 0px));
     display: flex;
     gap: 8px;
     z-index: 5;
@@ -758,8 +763,8 @@
 
   .drop-overlay-close {
     position: absolute;
-    top: 24px;
-    right: 24px;
+    top: calc(24px + env(safe-area-inset-top, 0px));
+    right: calc(24px + env(safe-area-inset-right, 0px));
     width: 38px;
     height: 38px;
     border-radius: 50%;
@@ -1239,10 +1244,28 @@
     min-width: 160px;
   }
 
+  .note:hover {
+    box-shadow: 0 12px 40px rgba(0,0,0,0.24), 0 2px 4px rgba(0,0,0,0.1);
+  }
+
   .note.dragging {
     box-shadow: 0 20px 48px rgba(0,0,0,0.3);
     z-index: 100;
     transition: none;
+  }
+
+  /* A quick materialize animation for instances created via the add menu
+     (not ones being restored from a save/reload/room-sync, which would
+     look chaotic all popping in together) — purely transform+opacity so
+     it never touches layout, and finishes well before any interaction
+     could plausibly begin. */
+  @keyframes notesinoPopIn {
+    from { opacity: 0; transform: scale(0.85); }
+    to { opacity: 1; transform: scale(1); }
+  }
+
+  .pop-in {
+    animation: notesinoPopIn 0.22s cubic-bezier(0.2, 0.8, 0.3, 1.1) both;
   }
 
   .note-head {
@@ -2037,7 +2060,7 @@
   /* Hint */
   .hint {
     position: absolute;
-    bottom: 22px;
+    bottom: calc(22px + env(safe-area-inset-bottom, 0px));
     left: 50%;
     transform: translateX(-50%);
     color: rgba(255,255,255,0.4);
@@ -2092,13 +2115,13 @@
     }
 
     .toolbar {
-      top: 14px;
-      right: 14px;
+      top: calc(14px + env(safe-area-inset-top, 0px));
+      right: calc(14px + env(safe-area-inset-right, 0px));
       gap: 6px;
     }
 
     #shareToolbar {
-      left: 14px;
+      left: calc(14px + env(safe-area-inset-left, 0px));
     }
 
     .tb-btn {
@@ -2108,7 +2131,7 @@
     }
 
     .notes-subswitcher {
-      top: 58px;
+      top: calc(58px + env(safe-area-inset-top, 0px));
     }
 
     .subswitch-btn {
@@ -2118,7 +2141,7 @@
 
     .hint {
       font-size: 10.5px;
-      bottom: 14px;
+      bottom: calc(14px + env(safe-area-inset-bottom, 0px));
     }
 
     /* Notes canvas: smaller default note size and tighter text for mobile */
@@ -2846,7 +2869,7 @@
 
   <h1 class="app-title">Notesino</h1>
 
-  <div class="toolbar" id="shareToolbar" style="left:24px; right:auto;">
+  <div class="toolbar" id="shareToolbar" style="left:calc(24px + env(safe-area-inset-left, 0px)); right:auto;">
     <button class="tb-btn" id="shareBtn" title="Collaborate live" aria-label="Collaborate live">
       &#128279;
       <span class="live-dot" id="liveDot"></span>
@@ -2865,6 +2888,14 @@
       </div>
     </div>
     <button class="tb-btn" id="removeWorkspaceBg" title="Remove workspace background" aria-label="Remove workspace background" style="display:none;">&#8635;</button>
+    <div class="add-menu-wrap" id="moreMenuWrap">
+      <button class="tb-btn" id="moreMenuBtn" title="More options" aria-label="More options">&#8942;</button>
+      <div class="add-menu" id="moreMenu">
+        <button class="add-menu-item" id="exportWorkspaceBtn">Export Workspace&hellip;</button>
+        <button class="add-menu-item" id="importWorkspaceBtn">Import Workspace&hellip;</button>
+      </div>
+    </div>
+    <input type="file" id="importFileInput" accept="application/json,.json" style="display:none;">
   </div>
 
   <div class="notes-subswitcher" id="notesSubswitcher">
@@ -3350,6 +3381,7 @@
 
     var note = document.createElement('div');
     note.className = 'note';
+    if (!data) note.classList.add('pop-in');
     note.style.left = pos.x + 'px';
     note.style.top = pos.y + 'px';
     if (data && data.w) note.style.width = data.w + 'px';
@@ -3645,6 +3677,7 @@
     closeBtn.addEventListener('click', function(e) {
       e.stopPropagation();
       purgeConnectionsFor(note.dataset.linkId);
+      if (note.__cleanupListeners) note.__cleanupListeners();
       note.remove();
       saveWorkspace();
     });
@@ -3684,6 +3717,11 @@
         });
       });
       ro.observe(note);
+      /* A ResizeObserver keeps its observed target (and everything its own
+         callback closure captures) reachable even after it's removed from
+         the DOM — plain removal doesn't undo .observe(), so every deleted
+         instance would otherwise leak its whole subtree forever. */
+      note.__cleanupListeners = function() { ro.disconnect(); };
     } else {
       note.addEventListener('pointerup', function() {
         updateNoteScale();
@@ -3707,6 +3745,7 @@
 
     var card = document.createElement('div');
     card.className = 'note sticky-canvas-card';
+    if (!data) card.classList.add('pop-in');
     card.style.left = pos.x + 'px';
     card.style.top = pos.y + 'px';
     card.style.width = (data && data.w ? data.w : 220) + 'px';
@@ -3768,6 +3807,7 @@
     closeBtn.addEventListener('click', function(e) {
       e.stopPropagation();
       purgeConnectionsFor(card.dataset.linkId);
+      if (card.__cleanupListeners) card.__cleanupListeners();
       card.remove();
       saveWorkspace();
     });
@@ -4018,6 +4058,7 @@
         });
       });
       scRo.observe(scCanvasWrap);
+      card.__cleanupListeners = function() { scRo.disconnect(); };
     } else {
       window.addEventListener('resize', function() { scResize(true); });
     }
@@ -4045,6 +4086,7 @@
 
     var card = document.createElement('div');
     card.className = 'note table-card';
+    if (!data) card.classList.add('pop-in');
     card.style.left = pos.x + 'px';
     card.style.top = pos.y + 'px';
     card.style.width = (data && data.w ? data.w : 280) + 'px';
@@ -4156,11 +4198,15 @@
     closeBtn.className = 'note-close';
     closeBtn.innerHTML = '&times;';
     closeBtn.setAttribute('aria-label', 'Remove table');
-    closeBtn.addEventListener('click', function(e) {
-      e.stopPropagation();
+    card.__deleteTable = function() {
       purgeConnectionsFor(card.dataset.linkId);
+      card.__cleanupListeners();
       card.remove();
       saveWorkspace();
+    };
+    closeBtn.addEventListener('click', function(e) {
+      e.stopPropagation();
+      card.__deleteTable();
     });
 
     headRight.appendChild(fontSelect);
@@ -4174,7 +4220,7 @@
     head.appendChild(headRight);
 
     var tableSavedRange = null;
-    document.addEventListener('selectionchange', function() {
+    function tableSelectionChangeHandler() {
       var sel = window.getSelection();
       if (sel && sel.rangeCount > 0 && !sel.isCollapsed) {
         var anchor = sel.anchorNode;
@@ -4182,7 +4228,8 @@
           tableSavedRange = sel.getRangeAt(0).cloneRange();
         }
       }
-    });
+    }
+    document.addEventListener('selectionchange', tableSelectionChangeHandler);
 
     function tableRestoreSelection() {
       if (!tableSavedRange) return false;
@@ -4339,11 +4386,24 @@
       });
       card.classList.add('selected');
     });
-    document.addEventListener('pointerdown', function(e) {
+    function tableDeselectHandler(e) {
       if (card.classList.contains('selected') && !card.contains(e.target)) {
         card.classList.remove('selected');
       }
-    });
+    }
+    document.addEventListener('pointerdown', tableDeselectHandler);
+
+    /* These two are document-level listeners a per-instance closure would
+       otherwise leak forever (they'd keep firing, and keep this whole card
+       reachable from the GC's perspective, even years after it's deleted) —
+       clearWorkspaceUI's bulk remove() and this card's own close button
+       both route through this single cleanup hook so neither path can
+       forget it. */
+    card.__cleanupListeners = function() {
+      document.removeEventListener('selectionchange', tableSelectionChangeHandler);
+      document.removeEventListener('pointerdown', tableDeselectHandler);
+      if (tblRo) tblRo.disconnect();
+    };
 
     if (window.ResizeObserver) {
       var tblRaf = null;
@@ -4406,6 +4466,7 @@
 
     var wrap = document.createElement('div');
     wrap.className = 'text-line-wrap';
+    if (!data) wrap.classList.add('pop-in');
     wrap.style.left = pos.x + 'px';
     wrap.style.top = pos.y + 'px';
     wrap.style.zIndex = ++topZ;
@@ -4435,6 +4496,7 @@
     wrap.__deleteTextLine = function() {
       if (activeTextLineWrap === wrap) deselectAllTextLines();
       purgeConnectionsFor(wrap.dataset.linkId);
+      wrap.__cleanupListeners();
       wrap.remove();
       saveWorkspace();
     };
@@ -4504,11 +4566,15 @@
     })();
 
     /* Any pointer down outside this line deselects it */
-    document.addEventListener('pointerdown', function(e) {
+    function tlOutsideDeselectHandler(e) {
       if (activeTextLineWrap === wrap && !wrap.contains(e.target) && !e.target.closest('.tl-toolbar')) {
         deselectAllTextLines();
       }
-    });
+    }
+    document.addEventListener('pointerdown', tlOutsideDeselectHandler);
+    wrap.__cleanupListeners = function() {
+      document.removeEventListener('pointerdown', tlOutsideDeselectHandler);
+    };
 
     wrap.__isTextLine = true;
     return wrap;
@@ -4725,12 +4791,127 @@
 
   addMenuBtn.addEventListener('click', function(e) {
     e.stopPropagation();
-    addMenu.classList.toggle('open');
+    var wasOpen = addMenu.classList.contains('open');
+    moreMenu.classList.remove('open');
+    addMenu.classList.toggle('open', !wasOpen);
+  });
+
+  var moreMenuBtn = document.getElementById('moreMenuBtn');
+  var moreMenu = document.getElementById('moreMenu');
+  moreMenuBtn.addEventListener('click', function(e) {
+    e.stopPropagation();
+    var wasOpen = moreMenu.classList.contains('open');
+    addMenu.classList.remove('open');
+    moreMenu.classList.toggle('open', !wasOpen);
   });
 
   document.addEventListener('pointerdown', function(e) {
-    if (addMenu.classList.contains('open') && !e.target.closest('.add-menu-wrap')) {
+    if (e.target.closest('.add-menu-wrap')) return;
+    addMenu.classList.remove('open');
+    moreMenu.classList.remove('open');
+  });
+
+  /* ---------- Export / Import workspace as a file ----------
+     A plain JSON download of exactly what collectState() already produces
+     (the same shape saved to localStorage and synced to a live room), so
+     it round-trips through applyState() untouched — this is a real
+     backup/restore/share-with-another-device path, not a new format. */
+  document.getElementById('exportWorkspaceBtn').addEventListener('click', function() {
+    moreMenu.classList.remove('open');
+    var state = collectState();
+    var json = JSON.stringify(state, null, 2);
+    var blob = new Blob([json], { type: 'application/json' });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    var stamp = new Date().toISOString().slice(0, 10);
+    a.href = url;
+    a.download = 'notesino-backup-' + stamp + '.json';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(function() { URL.revokeObjectURL(url); }, 1000);
+  });
+
+  var importFileInput = document.getElementById('importFileInput');
+  document.getElementById('importWorkspaceBtn').addEventListener('click', function() {
+    moreMenu.classList.remove('open');
+    importFileInput.click();
+  });
+
+  importFileInput.addEventListener('change', function(e) {
+    var file = e.target.files && e.target.files[0];
+    importFileInput.value = '';
+    if (!file) return;
+
+    var reader = new FileReader();
+    reader.onload = function(ev) {
+      var parsed;
+      try {
+        parsed = JSON.parse(ev.target.result);
+      } catch (err) {
+        window.alert('That file isn\'t valid JSON — nothing was imported.');
+        return;
+      }
+      var looksLikeWorkspace = parsed && typeof parsed === 'object' &&
+        ('notes' in parsed || 'tables' in parsed || 'timetable' in parsed ||
+         'stickyCanvases' in parsed || 'textLines' in parsed || 'images' in parsed || 'videos' in parsed);
+      if (!looksLikeWorkspace) {
+        window.alert('That file doesn\'t look like a Notesino workspace export — nothing was imported.');
+        return;
+      }
+      var ok = window.confirm(
+        'Importing will replace everything currently in this workspace ' +
+        '(notes, tables, timetable, everything) with the contents of this file. ' +
+        'This can\'t be undone. Continue?'
+      );
+      if (!ok) return;
+
+      clearWorkspaceUI();
+      applyState(parsed);
+      saveWorkspace();
+      document.getElementById('hint').style.display = 'none';
+    };
+    reader.readAsText(file);
+  });
+
+  /* ---------- Keyboard shortcuts ----------
+     Escape backs out of whatever's currently "active" (an open menu, a
+     selected text line, a selected table) without touching anything else.
+     Delete/Backspace removes the selected text line or table — but only
+     when focus isn't inside actual editable text, since Backspace there
+     needs to delete a character, not the whole instance. Notes/sticky
+     canvases/images/videos don't have a click-to-select state today, so
+     there's nothing keyboard-deletable for those yet. */
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
       addMenu.classList.remove('open');
+      moreMenu.classList.remove('open');
+      if (activeTextLineWrap) deselectAllTextLines();
+      document.querySelectorAll('.table-card.selected').forEach(function(t) { t.classList.remove('selected'); });
+      return;
+    }
+
+    if (e.key !== 'Delete' && e.key !== 'Backspace') return;
+
+    var active = document.activeElement;
+    var isEditingText = !!(active && (
+      active.isContentEditable ||
+      active.tagName === 'INPUT' ||
+      active.tagName === 'TEXTAREA' ||
+      active.tagName === 'SELECT'
+    ));
+    if (isEditingText) return;
+
+    if (activeTextLineWrap) {
+      e.preventDefault();
+      activeTextLineWrap.__deleteTextLine();
+      return;
+    }
+
+    var selectedTable = document.querySelector('.table-card.selected');
+    if (selectedTable && selectedTable.__deleteTable) {
+      e.preventDefault();
+      selectedTable.__deleteTable();
     }
   });
 
@@ -5251,6 +5432,7 @@
     closeBtn.addEventListener('click', function(e) {
       e.stopPropagation();
       purgeConnectionsFor(fi.dataset.linkId);
+      if (fi.__cleanupListeners) fi.__cleanupListeners();
       fi.remove();
       saveWorkspace();
     });
@@ -5282,6 +5464,7 @@
     if (window.ResizeObserver) {
       var ro = new ResizeObserver(function() { syncDotFor(fi); saveWorkspace(); });
       ro.observe(fi);
+      fi.__cleanupListeners = function() { ro.disconnect(); };
     }
     return fi;
   }
@@ -5348,6 +5531,7 @@
     closeBtn.addEventListener('click', function(e) {
       e.stopPropagation();
       purgeConnectionsFor(fv.dataset.linkId);
+      if (fv.__cleanupListeners) fv.__cleanupListeners();
       fv.remove();
       saveWorkspace();
     });
@@ -5375,6 +5559,7 @@
     if (window.ResizeObserver) {
       var ro = new ResizeObserver(function() { syncDotFor(fv); saveWorkspace(); });
       ro.observe(fv);
+      fv.__cleanupListeners = function() { ro.disconnect(); };
     }
     return fv;
   }
@@ -6293,9 +6478,15 @@
   }
 
   function clearWorkspaceUI() {
-    layer.querySelectorAll('.note, .free-image, .free-video').forEach(function(el) { el.remove(); });
+    layer.querySelectorAll('.note, .free-image, .free-video').forEach(function(el) {
+      if (el.__cleanupListeners) el.__cleanupListeners();
+      el.remove();
+    });
     Array.prototype.forEach.call(layer.children, function(el) {
-      if (el.__isTextLine) el.remove();
+      if (el.__isTextLine) {
+        if (el.__cleanupListeners) el.__cleanupListeners();
+        el.remove();
+      }
     });
     deselectAllTextLines();
     resetLinkLayer(canvasLinkLayer);

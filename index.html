@@ -3043,6 +3043,7 @@
     </div>
     <button class="tb-btn" id="undoBtn" title="Undo (Ctrl+Z)" aria-label="Undo" disabled>&#8630;</button>
     <button class="tb-btn" id="redoBtn" title="Redo (Ctrl+Shift+Z)" aria-label="Redo" disabled>&#8631;</button>
+    <button class="tb-btn" id="zoomFitBtn" title="Zoom to fit / recenter" aria-label="Zoom to fit / recenter">&#8982;</button>
     <button class="tb-btn" id="removeWorkspaceBg" title="Remove workspace background" aria-label="Remove workspace background" style="display:none;">&#8635;</button>
     <div class="add-menu-wrap" id="moreMenuWrap">
       <button class="tb-btn" id="moreMenuBtn" title="More options" aria-label="More options">&#8942;</button>
@@ -3318,6 +3319,53 @@
         localStorage.setItem(CANVAS_VIEW_KEY, JSON.stringify({ x: canvasPanX, y: canvasPanY, z: canvasZoom }));
       } catch (err) {}
     }, 300);
+  }
+
+  /* Zoom-to-fit / recenter: an infinite canvas has no edge to bump into
+     when you've panned or zoomed somewhere odd, so this is the way back
+     — frame every instance at once (or just re-center at 1x if the
+     canvas is empty), animated rather than snapped so it reads as
+     "returning" instead of a jump-cut. */
+  function zoomToFitCanvas() {
+    var els = layer.querySelectorAll('.note, .free-image, .free-video, .text-line-wrap');
+    var vpW = canvasViewport.clientWidth;
+    var vpH = canvasViewport.clientHeight;
+
+    if (!els.length) {
+      canvasZoom = 1;
+      canvasPanX = 0;
+      canvasPanY = 0;
+    } else {
+      var minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+      Array.prototype.forEach.call(els, function(el) {
+        var x = el.offsetLeft, y = el.offsetTop;
+        minX = Math.min(minX, x);
+        minY = Math.min(minY, y);
+        maxX = Math.max(maxX, x + el.offsetWidth);
+        maxY = Math.max(maxY, y + el.offsetHeight);
+      });
+
+      var PADDING = 80;
+      var boxW = Math.max(1, (maxX - minX) + PADDING * 2);
+      var boxH = Math.max(1, (maxY - minY) + PADDING * 2);
+      var newZoom = Math.min(vpW / boxW, vpH / boxH);
+      /* "Fit" should only ever zoom out to reveal more, or settle back to
+         1x when everything already fits comfortably — never zoom IN past
+         actual size just because a single small note is the only thing
+         on the board. */
+      newZoom = Math.max(CANVAS_ZOOM_MIN, Math.min(CANVAS_ZOOM_MAX, Math.min(newZoom, 1)));
+
+      var centerX = (minX + maxX) / 2;
+      var centerY = (minY + maxY) / 2;
+      canvasZoom = newZoom;
+      canvasPanX = vpW / 2 - centerX * newZoom;
+      canvasPanY = vpH / 2 - centerY * newZoom;
+    }
+
+    layer.style.transition = 'transform 0.35s cubic-bezier(0.2, 0.8, 0.2, 1)';
+    applyCanvasTransform();
+    canvasSaveViewDebounced();
+    setTimeout(function() { layer.style.transition = ''; }, 380);
   }
 
   /* Something is "selected" (blocking canvas pan/zoom) if the gesture
@@ -5843,6 +5891,7 @@
 
   document.getElementById('undoBtn').addEventListener('click', function() { performUndo(); });
   document.getElementById('redoBtn').addEventListener('click', function() { performRedo(); });
+  document.getElementById('zoomFitBtn').addEventListener('click', function() { zoomToFitCanvas(); });
 
   function showOverlay() { dropOverlay.classList.add('show'); }
   function hideOverlay() { dropOverlay.classList.remove('show'); dragCounter = 0; }

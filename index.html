@@ -3261,6 +3261,149 @@
     background: rgba(var(--ink-rgb), 0.2);
   }
 
+  .tt-calendar-wrap {
+    position: relative;
+  }
+
+  .tt-calendar-panel {
+    display: none;
+    flex-direction: column;
+    gap: 8px;
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    width: 280px;
+    padding: 12px 14px;
+    border-radius: 14px;
+    background: rgba(var(--panel-rgb), 0.98);
+    border: 0.5px solid rgba(var(--ink-rgb), 0.18);
+    box-shadow: 0 12px 32px rgba(0,0,0,0.3);
+    z-index: 20;
+  }
+
+  .tt-calendar-panel.open {
+    display: flex;
+  }
+
+  .tt-calendar-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+  }
+
+  .tt-calendar-row label {
+    font-size: 12px;
+    font-weight: 600;
+    color: rgba(var(--ink-rgb), 0.75);
+  }
+
+  .tt-calendar-row input[type="date"] {
+    font-size: 12px;
+    border-radius: 6px;
+    border: 0.5px solid rgba(var(--ink-rgb), 0.25);
+    background: rgba(var(--ink-rgb), 0.06);
+    color: var(--ink-solid);
+    padding: 3px 5px;
+  }
+
+  .tt-calendar-divider {
+    height: 1px;
+    background: rgba(var(--ink-rgb), 0.15);
+    margin: 2px 0;
+  }
+
+  .tt-calendar-label {
+    font-size: 11.5px;
+    font-weight: 600;
+    color: rgba(var(--ink-rgb), 0.65);
+  }
+
+  .tt-calendar-exception-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11.5px;
+    color: rgba(var(--ink-rgb), 0.85);
+    padding: 3px 0;
+  }
+
+  .tt-calendar-exception-row .tt-exc-date {
+    font-variant-numeric: tabular-nums;
+    color: rgba(var(--ink-rgb), 0.6);
+    flex-shrink: 0;
+  }
+
+  .tt-calendar-exception-row .tt-exc-label {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .tt-calendar-exception-row .tt-exc-remove {
+    border: none;
+    background: transparent;
+    color: rgba(var(--ink-rgb), 0.5);
+    cursor: pointer;
+    font-size: 13px;
+    flex-shrink: 0;
+  }
+
+  .tt-calendar-exception-row .tt-exc-remove:hover {
+    color: rgba(var(--ink-rgb), 0.9);
+  }
+
+  .tt-calendar-add-row {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+  }
+
+  .tt-calendar-add-row input[type="date"] {
+    font-size: 11.5px;
+    border-radius: 6px;
+    border: 0.5px solid rgba(var(--ink-rgb), 0.25);
+    background: rgba(var(--ink-rgb), 0.06);
+    color: var(--ink-solid);
+    padding: 3px 4px;
+    width: 118px;
+  }
+
+  .tt-calendar-add-row input[type="text"] {
+    flex: 1;
+    min-width: 0;
+    font-size: 11.5px;
+    border-radius: 6px;
+    border: 0.5px solid rgba(var(--ink-rgb), 0.25);
+    background: rgba(var(--ink-rgb), 0.06);
+    color: var(--ink-solid);
+    padding: 3px 6px;
+  }
+
+  .tt-calendar-add-btn {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    border: none;
+    background: rgba(var(--ink-rgb), 0.15);
+    color: var(--ink-solid);
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+
+  .tt-calendar-download-btn {
+    width: 100%;
+    text-align: center;
+  }
+
+  .tt-calendar-hint {
+    font-size: 10.5px;
+    color: rgba(var(--ink-rgb), 0.5);
+    line-height: 1.4;
+  }
+
   .tt-grid-scroll {
     flex: 1;
     min-height: 0;
@@ -3743,6 +3886,30 @@
           <button class="tt-btn" id="ttRemovePeriod">&minus; Period</button>
           <button class="tt-btn" id="ttAddDay">+ Day</button>
           <button class="tt-btn" id="ttRemoveDay">&minus; Day</button>
+          <div class="tt-calendar-wrap" id="ttCalendarWrap">
+            <button class="tt-btn" id="ttCalendarBtn">Calendar&hellip;</button>
+            <div class="tt-calendar-panel" id="ttCalendarPanel">
+              <div class="tt-calendar-row">
+                <label for="termStartInput">Term start</label>
+                <input type="date" id="termStartInput">
+              </div>
+              <div class="tt-calendar-row">
+                <label for="termEndInput">Term end</label>
+                <input type="date" id="termEndInput">
+              </div>
+              <div class="tt-calendar-divider"></div>
+              <div class="tt-calendar-label">Term exceptions (no classes)</div>
+              <div id="termExceptionsList"></div>
+              <div class="tt-calendar-add-row">
+                <input type="date" id="termExceptionDateInput">
+                <input type="text" id="termExceptionLabelInput" placeholder="Label (optional)">
+                <button class="tt-calendar-add-btn" id="termExceptionAddBtn" aria-label="Add exception">+</button>
+              </div>
+              <div class="tt-calendar-divider"></div>
+              <button class="tt-btn tt-calendar-download-btn" id="downloadIcsBtn">Download Calendar (.ics)</button>
+              <div class="tt-calendar-hint">Import this file into Google Calendar, Apple Calendar, or Outlook for real reminders before each class.</div>
+            </div>
+          </div>
         </div>
       </div>
       <div class="tt-grid-scroll">
@@ -8384,6 +8551,218 @@
     highlightCurrentPeriodCells();
   }, 30000);
 
+  /* ---------- Calendar export (.ics) + term exceptions ----------
+     No OAuth/API credentials means no real push integration with Google
+     or Apple Calendar — instead the timetable is exported as a standard
+     .ics file (one recurring weekly VEVENT per non-free class, each with
+     its own 10-minute-before VALARM), which any calendar app can import
+     and will then generate its own real native notifications for, no
+     ongoing connection required. "Term exceptions" are calendar dates
+     with no classes (a holiday, an inset day) — encoded as RRULE EXDATE
+     entries on any event whose weekday the exception date falls on. */
+  function defaultTermSettings() { return { startDate: '', endDate: '', exceptions: [] }; }
+
+  var termSettings = defaultTermSettings();
+
+  function normalizeTermSettings(t) {
+    var base = defaultTermSettings();
+    if (!t) return base;
+    return {
+      startDate: typeof t.startDate === 'string' ? t.startDate : base.startDate,
+      endDate: typeof t.endDate === 'string' ? t.endDate : base.endDate,
+      exceptions: Array.isArray(t.exceptions) ? t.exceptions.filter(function(e) { return e && e.date; }) : base.exceptions
+    };
+  }
+
+  var termStartInput = document.getElementById('termStartInput');
+  var termEndInput = document.getElementById('termEndInput');
+  var termExceptionsList = document.getElementById('termExceptionsList');
+  var termExceptionDateInput = document.getElementById('termExceptionDateInput');
+  var termExceptionLabelInput = document.getElementById('termExceptionLabelInput');
+  var ttCalendarBtn = document.getElementById('ttCalendarBtn');
+  var ttCalendarPanel = document.getElementById('ttCalendarPanel');
+
+  function formatExceptionDate(dateStr) {
+    var parts = dateStr.split('-');
+    if (parts.length !== 3) return dateStr;
+    var d = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
+    return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+  }
+
+  function renderTermExceptions() {
+    termExceptionsList.innerHTML = '';
+    termSettings.exceptions
+      .slice()
+      .sort(function(a, b) { return a.date < b.date ? -1 : a.date > b.date ? 1 : 0; })
+      .forEach(function(exc) {
+        var row = document.createElement('div');
+        row.className = 'tt-calendar-exception-row';
+        var dateEl = document.createElement('span');
+        dateEl.className = 'tt-exc-date';
+        dateEl.textContent = formatExceptionDate(exc.date);
+        var labelEl = document.createElement('span');
+        labelEl.className = 'tt-exc-label';
+        labelEl.textContent = exc.label || '';
+        var removeBtn = document.createElement('button');
+        removeBtn.className = 'tt-exc-remove';
+        removeBtn.innerHTML = '&times;';
+        removeBtn.setAttribute('aria-label', 'Remove exception');
+        removeBtn.addEventListener('click', function() {
+          termSettings.exceptions = termSettings.exceptions.filter(function(e) { return e !== exc; });
+          renderTermExceptions();
+          saveWorkspace();
+        });
+        row.appendChild(dateEl);
+        row.appendChild(labelEl);
+        row.appendChild(removeBtn);
+        termExceptionsList.appendChild(row);
+      });
+  }
+
+  ttCalendarBtn.addEventListener('click', function(e) {
+    e.stopPropagation();
+    var wasOpen = ttCalendarPanel.classList.contains('open');
+    if (!wasOpen) {
+      termStartInput.value = termSettings.startDate || '';
+      termEndInput.value = termSettings.endDate || '';
+      renderTermExceptions();
+    }
+    ttCalendarPanel.classList.toggle('open', !wasOpen);
+  });
+
+  document.addEventListener('pointerdown', function(e) {
+    if (!e.target.closest('#ttCalendarWrap')) ttCalendarPanel.classList.remove('open');
+  });
+  ttCalendarPanel.addEventListener('pointerdown', function(e) { e.stopPropagation(); });
+
+  termStartInput.addEventListener('change', function() {
+    termSettings.startDate = termStartInput.value;
+    saveWorkspace();
+  });
+  termEndInput.addEventListener('change', function() {
+    termSettings.endDate = termEndInput.value;
+    saveWorkspace();
+  });
+
+  document.getElementById('termExceptionAddBtn').addEventListener('click', function() {
+    var date = termExceptionDateInput.value;
+    if (!date) return;
+    var label = termExceptionLabelInput.value.trim();
+    termSettings.exceptions.push({ date: date, label: label });
+    termExceptionDateInput.value = '';
+    termExceptionLabelInput.value = '';
+    renderTermExceptions();
+    saveWorkspace();
+  });
+
+  var ICS_DAY_CODE = { Mon: 'MO', Tue: 'TU', Wed: 'WE', Thu: 'TH', Fri: 'FR', Sat: 'SA', Sun: 'SU' };
+
+  function icsPad(n) { return n < 10 ? '0' + n : '' + n; }
+
+  function icsDateTime(date, hh, mm) {
+    return date.getFullYear() + icsPad(date.getMonth() + 1) + icsPad(date.getDate()) +
+      'T' + icsPad(hh) + icsPad(mm) + '00';
+  }
+
+  function parseLocalDate(dateStr) {
+    var parts = (dateStr || '').split('-');
+    if (parts.length !== 3) return null;
+    var d = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
+    return isNaN(d.getTime()) ? null : d;
+  }
+
+  function firstOccurrenceOnOrAfter(startDate, targetWeekday) {
+    var d = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate());
+    var diff = (targetWeekday - d.getDay() + 7) % 7;
+    d.setDate(d.getDate() + diff);
+    return d;
+  }
+
+  function icsEscape(text) {
+    return (text || '').replace(/\\/g, '\\\\').replace(/;/g, '\\;').replace(/,/g, '\\,').replace(/\n/g, '\\n');
+  }
+
+  function generateICS() {
+    var start = parseLocalDate(termSettings.startDate) || new Date();
+    var end = parseLocalDate(termSettings.endDate);
+    if (!end || end < start) {
+      end = new Date(start.getFullYear(), start.getMonth(), start.getDate() + 16 * 7);
+    }
+
+    var lines = [
+      'BEGIN:VCALENDAR',
+      'VERSION:2.0',
+      'PRODID:-//Notesino//Timetable//EN',
+      'CALSCALE:GREGORIAN',
+      'METHOD:PUBLISH',
+      'X-WR-CALNAME:Notesino Timetable'
+    ];
+
+    timetable.days.forEach(function(dayCode, dIdx) {
+      var jsWeekday = JS_DAY_TO_CODE.indexOf(dayCode);
+      if (jsWeekday === -1) return;
+      var byDay = ICS_DAY_CODE[dayCode];
+      if (!byDay) return;
+
+      timetable.periods.forEach(function(period, pIdx) {
+        var entry = timetable.cells[ttKey(dIdx, pIdx)];
+        var subjectText = entry && entry.subject ? stripTagsForSearch(entry.subject).trim() : '';
+        if (!entry || entry.free || !subjectText) return;
+
+        var startParts = (period.start || '00:00').split(':');
+        var endParts = (period.end || '00:00').split(':');
+        var startHH = Number(startParts[0]) || 0, startMM = Number(startParts[1]) || 0;
+        var endHH = Number(endParts[0]) || 0, endMM = Number(endParts[1]) || 0;
+
+        var firstDate = firstOccurrenceOnOrAfter(start, jsWeekday);
+        if (firstDate > end) return;
+
+        var dtstart = icsDateTime(firstDate, startHH, startMM);
+        var dtend = icsDateTime(firstDate, endHH, endMM);
+        var untilDate = new Date(end.getFullYear(), end.getMonth(), end.getDate());
+        var until = icsDateTime(untilDate, startHH, startMM);
+
+        var exdates = termSettings.exceptions
+          .map(function(exc) { return parseLocalDate(exc.date); })
+          .filter(function(d) { return d && d >= start && d <= end && d.getDay() === jsWeekday; })
+          .map(function(d) { return icsDateTime(d, startHH, startMM); });
+
+        lines.push('BEGIN:VEVENT');
+        lines.push('UID:tt-' + dIdx + '-' + pIdx + '@notesino.local');
+        lines.push('DTSTART:' + dtstart);
+        lines.push('DTEND:' + dtend);
+        lines.push('RRULE:FREQ=WEEKLY;BYDAY=' + byDay + ';UNTIL=' + until);
+        if (exdates.length) lines.push('EXDATE:' + exdates.join(','));
+        lines.push('SUMMARY:' + icsEscape(subjectText));
+        if (entry.room) lines.push('LOCATION:' + icsEscape(entry.room));
+        if (entry.teacher) lines.push('DESCRIPTION:' + icsEscape('Teacher: ' + entry.teacher));
+        lines.push('BEGIN:VALARM');
+        lines.push('ACTION:DISPLAY');
+        lines.push('DESCRIPTION:' + icsEscape(subjectText) + ' starts soon');
+        lines.push('TRIGGER:-PT10M');
+        lines.push('END:VALARM');
+        lines.push('END:VEVENT');
+      });
+    });
+
+    lines.push('END:VCALENDAR');
+    return lines.join('\r\n');
+  }
+
+  document.getElementById('downloadIcsBtn').addEventListener('click', function() {
+    var ics = generateICS();
+    var blob = new Blob([ics], { type: 'text/calendar;charset=utf-8' });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = 'notesino-timetable.ics';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(function() { URL.revokeObjectURL(url); }, 1000);
+    ttCalendarPanel.classList.remove('open');
+  });
+
   /* ---------- Persistence (localStorage) ---------- */
   var STORAGE_KEY = 'claude_workspace_v2';
   var saveTimer = null;
@@ -8631,7 +9010,8 @@
       subjects: subjectsOut,
       activeSubjectId: activeSubjectId,
       connections: canvasConnections,
-      timetable: timetable
+      timetable: timetable,
+      termSettings: termSettings
     };
   }
 
@@ -8772,6 +9152,7 @@
     activeSubjectId = null;
     workspaceBgSrc = null;
     timetable = defaultTimetable();
+    termSettings = defaultTermSettings();
     updateRemoveWorkspaceBgVisibility();
   }
 
@@ -8830,6 +9211,7 @@
 
     timetable = normalizeTimetable(state.timetable);
     renderTimetable();
+    termSettings = normalizeTermSettings(state.termSettings);
 
     return !!((state.notes && state.notes.length) ||
               (state.stickyCanvases && state.stickyCanvases.length) ||

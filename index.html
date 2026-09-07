@@ -2552,6 +2552,114 @@
     border-radius: 4px;
   }
 
+  /* Checklist note (a .note variant with checkable list items instead of
+     free-form rich text) */
+  .checklist-card .checklist-body {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    padding: 2px 10px 10px;
+  }
+
+  .checklist-items {
+    flex: 1;
+    overflow-y: auto;
+    touch-action: pan-y;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .checklist-items::-webkit-scrollbar {
+    width: 4px;
+  }
+
+  .checklist-items::-webkit-scrollbar-thumb {
+    background: rgba(var(--ink-rgb), 0.2);
+    border-radius: 4px;
+  }
+
+  .checklist-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    padding: 3px 2px;
+    border-radius: 6px;
+  }
+
+  .checklist-item:hover {
+    background: rgba(var(--ink-rgb), 0.06);
+  }
+
+  .checklist-checkbox {
+    width: 16px;
+    height: 16px;
+    margin-top: 2px;
+    flex-shrink: 0;
+    accent-color: rgba(var(--ink-rgb), 0.85);
+    cursor: pointer;
+  }
+
+  .checklist-text {
+    flex: 1;
+    min-width: 0;
+    outline: none;
+    color: var(--ink-solid);
+    font-family: -apple-system, "SF Pro Text", "SF Pro Display", BlinkMacSystemFont, sans-serif;
+    font-size: 13.5px;
+    line-height: 1.4;
+    padding: 1px 0;
+    word-break: break-word;
+  }
+
+  .checklist-text.is-empty::before {
+    content: attr(data-placeholder);
+    color: rgba(var(--ink-rgb), 0.45);
+  }
+
+  .checklist-item.done .checklist-text {
+    text-decoration: line-through;
+    color: rgba(var(--ink-rgb), 0.5);
+  }
+
+  .checklist-item-remove {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    border: none;
+    background: transparent;
+    color: rgba(var(--ink-rgb), 0.5);
+    font-size: 12px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    opacity: 0;
+    transition: opacity 0.15s ease;
+  }
+
+  .checklist-item:hover .checklist-item-remove,
+  body.touch-device .checklist-item-remove {
+    opacity: 1;
+  }
+
+  .checklist-add-row {
+    margin-top: 4px;
+    align-self: flex-start;
+    border: none;
+    background: transparent;
+    color: rgba(var(--ink-rgb), 0.55);
+    font-size: 12.5px;
+    cursor: pointer;
+    padding: 4px 4px;
+  }
+
+  .checklist-add-row:hover {
+    color: rgba(var(--ink-rgb), 0.85);
+  }
+
   /* Hint */
   .hint {
     position: absolute;
@@ -3386,6 +3494,7 @@
       <button class="tb-btn" id="addMenuBtn" title="Add" aria-label="Add">+</button>
       <div class="add-menu" id="addMenu">
         <button class="add-menu-item" id="addNote">Note</button>
+        <button class="add-menu-item" id="addChecklist">Checklist</button>
         <button class="add-menu-item" id="addStickyCanvas">Sticky Canvas</button>
         <button class="add-menu-item" id="addTextLine">Text Line</button>
         <button class="add-menu-item" id="addTable">Table</button>
@@ -4810,6 +4919,229 @@
     return card;
   }
 
+  /* ---------- Checklist note: a .note variant with checkable list items
+     instead of free-form rich text. Enter adds a new item below and
+     focuses it (like Notes/Todoist); Backspace on an empty item removes
+     it and moves focus to the previous one, so the keyboard alone is
+     enough to build and prune a whole list. ---------- */
+  function createChecklistNote(data, targetLayer) {
+    targetLayer = targetLayer || layer;
+    var color = data && data.color ? data.color : colors[Math.floor(Math.random() * colors.length)];
+    var pos = data && data.x !== undefined ? { x: data.x, y: data.y } : randomPos(targetLayer, targetLayer === layer);
+
+    var card = document.createElement('div');
+    card.className = 'note checklist-card';
+    if (!data) card.classList.add('pop-in');
+    card.style.left = pos.x + 'px';
+    card.style.top = pos.y + 'px';
+    if (data && data.w) card.style.width = data.w + 'px';
+    if (data && data.h) card.style.height = data.h + 'px';
+    card.style.zIndex = ++topZ;
+
+    var head = document.createElement('div');
+    head.className = 'note-head';
+
+    var dotWrap = document.createElement('div');
+    dotWrap.className = 'note-dot-wrap';
+    var dot = document.createElement('button');
+    dot.className = 'note-dot';
+    dot.setAttribute('aria-label', 'Change checklist color');
+    var swatchPanel = document.createElement('div');
+    swatchPanel.className = 'swatches';
+    colors.forEach(function(c) {
+      var sw = document.createElement('button');
+      sw.className = 'swatch';
+      sw.style.background = c;
+      sw.addEventListener('click', function(e) {
+        e.stopPropagation();
+        setNoteColor(card, dot, c);
+        swatchPanel.classList.remove('open');
+        openSwatchPanel = null;
+        saveWorkspace();
+      });
+      swatchPanel.appendChild(sw);
+    });
+    var customWrap = document.createElement('div');
+    customWrap.className = 'swatch-custom';
+    var customInput = document.createElement('input');
+    customInput.type = 'color';
+    customInput.value = '#ffffff';
+    customInput.addEventListener('input', function(e) {
+      setNoteColor(card, dot, e.target.value);
+      saveWorkspace();
+    });
+    customWrap.appendChild(customInput);
+    swatchPanel.appendChild(customWrap);
+    dot.addEventListener('click', function(e) {
+      e.stopPropagation();
+      var isOpen = swatchPanel.classList.contains('open');
+      if (openSwatchPanel) openSwatchPanel.classList.remove('open');
+      if (!isOpen) {
+        swatchPanel.classList.add('open');
+        openSwatchPanel = swatchPanel;
+      } else {
+        openSwatchPanel = null;
+      }
+    });
+    dotWrap.appendChild(dot);
+    dotWrap.appendChild(swatchPanel);
+
+    var closeBtn = document.createElement('button');
+    closeBtn.className = 'note-close';
+    closeBtn.innerHTML = '&times;';
+    closeBtn.setAttribute('aria-label', 'Remove checklist');
+    closeBtn.addEventListener('click', function(e) {
+      e.stopPropagation();
+      purgeConnectionsFor(card.dataset.linkId);
+      if (card.__cleanupListeners) card.__cleanupListeners();
+      card.remove();
+      saveWorkspace();
+    });
+
+    head.appendChild(dotWrap);
+    head.appendChild(closeBtn);
+
+    var body = document.createElement('div');
+    body.className = 'checklist-body';
+    body.addEventListener('pointerdown', function(e) {
+      e.stopPropagation();
+      card.style.zIndex = ++topZ;
+    });
+
+    var itemsWrap = document.createElement('div');
+    itemsWrap.className = 'checklist-items';
+    body.appendChild(itemsWrap);
+
+    var addRow = document.createElement('button');
+    addRow.className = 'checklist-add-row';
+    addRow.textContent = '+ Add item';
+    addRow.addEventListener('pointerdown', function(e) { e.stopPropagation(); });
+    addRow.addEventListener('click', function(e) {
+      e.stopPropagation();
+      var row = addItemRow('', false);
+      row.querySelector('.checklist-text').focus();
+      saveWorkspace();
+    });
+    body.appendChild(addRow);
+
+    function addItemRow(text, done, beforeEl) {
+      var row = document.createElement('div');
+      row.className = 'checklist-item';
+      row.classList.toggle('done', !!done);
+
+      var cb = document.createElement('input');
+      cb.type = 'checkbox';
+      cb.className = 'checklist-checkbox';
+      cb.checked = !!done;
+      cb.addEventListener('change', function() {
+        row.classList.toggle('done', cb.checked);
+        saveWorkspace();
+      });
+
+      var textEl = document.createElement('div');
+      textEl.className = 'checklist-text';
+      textEl.contentEditable = 'true';
+      textEl.setAttribute('data-placeholder', 'List item…');
+      textEl.textContent = text || '';
+      textEl.classList.toggle('is-empty', !(text || '').trim());
+
+      textEl.addEventListener('input', function() {
+        textEl.classList.toggle('is-empty', !(textEl.textContent || '').trim());
+        saveWorkspace();
+      });
+      textEl.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          var newRow = addItemRow('', false, row.nextSibling);
+          newRow.querySelector('.checklist-text').focus();
+          saveWorkspace();
+        } else if (e.key === 'Backspace' && !textEl.textContent) {
+          var prev = row.previousElementSibling;
+          if (prev) {
+            e.preventDefault();
+            row.remove();
+            var prevText = prev.querySelector('.checklist-text');
+            prevText.focus();
+            /* Land the caret at the end of the previous item's text
+               instead of its start, matching how a real text editor
+               merges a deleted empty line into the one above. */
+            var range = document.createRange();
+            range.selectNodeContents(prevText);
+            range.collapse(false);
+            var sel = window.getSelection();
+            sel.removeAllRanges();
+            sel.addRange(range);
+            saveWorkspace();
+          }
+        }
+      });
+
+      var removeBtn = document.createElement('button');
+      removeBtn.className = 'checklist-item-remove';
+      removeBtn.innerHTML = '&times;';
+      removeBtn.setAttribute('aria-label', 'Remove item');
+      removeBtn.addEventListener('pointerdown', function(e) { e.stopPropagation(); });
+      removeBtn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        row.remove();
+        saveWorkspace();
+      });
+
+      row.appendChild(cb);
+      row.appendChild(textEl);
+      row.appendChild(removeBtn);
+      if (beforeEl) itemsWrap.insertBefore(row, beforeEl);
+      else itemsWrap.appendChild(row);
+      return row;
+    }
+
+    var initialItems = (data && Array.isArray(data.items) && data.items.length) ? data.items : [{ text: '', done: false }];
+    initialItems.forEach(function(item) { addItemRow(item.text, item.done); });
+
+    card.appendChild(head);
+    card.appendChild(body);
+
+    var dragHandle = document.createElement('div');
+    dragHandle.className = 'note-drag-handle';
+    dragHandle.title = 'Drag to move';
+    var dragGrip = document.createElement('div');
+    dragGrip.className = 'note-drag-grip';
+    dragHandle.appendChild(dragGrip);
+    card.appendChild(dragHandle);
+
+    var resizeHandle = document.createElement('div');
+    resizeHandle.className = 'resize-handle';
+    card.appendChild(resizeHandle);
+
+    targetLayer.appendChild(card);
+    attachConnectDot(card, canvasLinkLayer, data && data.linkId);
+    setNoteColor(card, dot, color);
+
+    card.__getChecklistItems = function() {
+      return Array.prototype.map.call(itemsWrap.querySelectorAll('.checklist-item'), function(row) {
+        return {
+          text: row.querySelector('.checklist-text').textContent || '',
+          done: row.classList.contains('done')
+        };
+      });
+    };
+
+    if (window.ResizeObserver) {
+      var roFirstFire = true;
+      var ro = new ResizeObserver(function() {
+        syncDotFor(card);
+        if (roFirstFire) { roFirstFire = false; return; }
+        saveWorkspace();
+      });
+      ro.observe(card);
+      card.__cleanupListeners = function() { ro.disconnect(); };
+    }
+
+    makeDraggable(card, dragHandle);
+    makeResizable(card, resizeHandle, 160, 140);
+    return card;
+  }
+
   /* ---------- Table: a note-card-style grid, resizable/draggable, with
      the same font/size/color/bold/italic/underline controls as sticky
      notes, plus +/- buttons on its edges (shown when selected) to add
@@ -5858,6 +6190,14 @@
     addMenu.classList.remove('open');
   });
 
+  document.getElementById('addChecklist').addEventListener('click', function() {
+    createChecklistNote(undefined, layer);
+    var hint = document.getElementById('hint');
+    hint.style.display = 'none';
+    saveWorkspace();
+    addMenu.classList.remove('open');
+  });
+
   document.getElementById('addStickyCanvas').addEventListener('click', function() {
     createStickyCanvas(undefined, layer);
     var hint = document.getElementById('hint');
@@ -6856,11 +7196,18 @@
 
     var matches = [];
 
-    layer.querySelectorAll('.note:not(.sticky-canvas-card):not(.table-card)').forEach(function(n) {
+    layer.querySelectorAll('.note:not(.sticky-canvas-card):not(.table-card):not(.checklist-card)').forEach(function(n) {
       var body = n.querySelector('.note-text');
       var text = body ? body.textContent : '';
       if (text.toLowerCase().indexOf(query) !== -1) {
         matches.push({ kind: 'Note', snippet: makeSearchSnippet(text, query), action: function() { jumpToCanvasEl(n); } });
+      }
+    });
+
+    layer.querySelectorAll('.checklist-card').forEach(function(n) {
+      var text = Array.prototype.map.call(n.querySelectorAll('.checklist-text'), function(t) { return t.textContent; }).join(' · ');
+      if (text.toLowerCase().indexOf(query) !== -1) {
+        matches.push({ kind: 'Checklist', snippet: makeSearchSnippet(text, query), action: function() { jumpToCanvasEl(n); } });
       }
     });
 
@@ -7799,7 +8146,7 @@
   }
 
   function collectNotesFrom(targetLayer) {
-    return Array.prototype.map.call(targetLayer.querySelectorAll('.note:not(.sticky-canvas-card):not(.table-card)'), function(n) {
+    return Array.prototype.map.call(targetLayer.querySelectorAll('.note:not(.sticky-canvas-card):not(.table-card):not(.checklist-card)'), function(n) {
       var b = n.querySelector('.note-text');
       var bgImg = n.style.backgroundImage;
       var bgMatch = bgImg && bgImg.match(/url\((['"]?)(.*?)\1\)/);
@@ -7847,6 +8194,21 @@
     });
   }
 
+  function collectChecklistsFrom(targetLayer) {
+    return Array.prototype.map.call(targetLayer.querySelectorAll('.checklist-card'), function(n) {
+      var items = n.__getChecklistItems ? n.__getChecklistItems() : [];
+      return {
+        x: parseFloat(n.style.left) || 0,
+        y: parseFloat(n.style.top) || 0,
+        w: n.offsetWidth,
+        h: n.offsetHeight,
+        color: n.querySelector('.note-dot').style.background,
+        items: items,
+        linkId: n.dataset.linkId
+      };
+    });
+  }
+
   function collectTextLinesFrom(targetLayer) {
     var out = [];
     Array.prototype.forEach.call(targetLayer.children, function(wrap) {
@@ -7876,6 +8238,7 @@
     var stickyCanvases = collectStickyCanvasesFrom(layer);
     var textLines = collectTextLinesFrom(layer);
     var tables = collectTablesFrom(layer);
+    var checklists = collectChecklistsFrom(layer);
 
     var images = Array.prototype.map.call(layer.querySelectorAll('.free-image'), function(fi) {
       return {
@@ -7918,6 +8281,7 @@
       stickyCanvases: stickyCanvases,
       textLines: textLines,
       tables: tables,
+      checklists: checklists,
       images: images,
       videos: videos,
       voiceMemos: voiceMemos,
@@ -8092,6 +8456,9 @@
     if (state.tables && state.tables.length) {
       state.tables.forEach(function(t) { createTable(t, layer); });
     }
+    if (state.checklists && state.checklists.length) {
+      state.checklists.forEach(function(c) { createChecklistNote(c, layer); });
+    }
     if (state.images && state.images.length) {
       state.images.forEach(function(img) { createFreeImage(img); });
     }
@@ -8123,6 +8490,7 @@
               (state.stickyCanvases && state.stickyCanvases.length) ||
               (state.textLines && state.textLines.length) ||
               (state.tables && state.tables.length) ||
+              (state.checklists && state.checklists.length) ||
               (state.images && state.images.length) ||
               (state.voiceMemos && state.voiceMemos.length) ||
               (state.subjects && state.subjects.length));

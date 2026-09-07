@@ -1651,8 +1651,18 @@
 
   .text-line {
     position: relative;
-    width: 100%;
-    height: 100%;
+    /* Sized to its own text (up to a max width, where it then wraps)
+       rather than 100% of the wrap, which sizes to fit-content — a
+       wrap-sized-to-child next to a child-sized-to-100%-of-wrap is a
+       circular dependency neither side can resolve, and was collapsing
+       every text line into a narrow, many-lines-tall column (which is
+       also why the connect-dot at its corner looked like it was
+       "levitating" off to the side: it was correctly anchored to a
+       badly-sized box). Legacy explicit-size instances (saved before
+       resize became a pure scale control) override this below. */
+    width: max-content;
+    max-width: calc(90vw - 12px);
+    height: auto;
     padding: 4px 6px;
     color: var(--ink-solid);
     font-family: "Poppins", -apple-system, sans-serif;
@@ -1667,6 +1677,12 @@
     background: transparent;
     border-radius: 6px;
     box-sizing: border-box;
+  }
+
+  .text-line-wrap.tl-manual-size .text-line {
+    width: 100%;
+    height: 100%;
+    max-width: none;
   }
 
   .text-line:empty::before {
@@ -4650,30 +4666,50 @@
     });
 
     el.addEventListener('input', function() {
+      if (activeTextLineWrap === wrap) positionTlToolbar(wrap);
+      syncDotFor(wrap);
       saveWorkspace();
     });
+
+    /* Typing (or the initial content on load) changes the wrap's own
+       auto-fit box size without going through drag/resize, which is the
+       other reason the connect-dot could end up looking "levitated" —
+       every other instance type already keeps its dot in sync this way
+       via its own ResizeObserver; text lines just never had one. */
+    if (window.ResizeObserver) {
+      var tlRo = new ResizeObserver(function() { syncDotFor(wrap); });
+      tlRo.observe(wrap);
+    }
 
     makeDraggable(wrap, handle, function() {
       if (activeTextLineWrap === wrap) positionTlToolbar(wrap);
     });
 
-    /* Resizing scales the text itself (via --tl-scale) as well as the
-       box, so the text stays proportional to how big you drag the
-       corner \u2014 works the same with mouse drag or touch drag. */
+    /* Resizing is a pure font-scale control (via --tl-scale): drag the
+       corner further from the text's own top-left to grow it, closer to
+       shrink it \u2014 the same "distance from a fixed anchor" convention as
+       resizing a text box in any slide/design tool. The wrap always
+       auto-fits whatever size the (scaled) text ends up being, so there's
+       no separate box-dimension to fight with the font size over, and no
+       way for the two to drift out of sync. */
     (function() {
-      var startX = 0, startY = 0, startW = 0, startH = 0, startScale = 1, resizing = false;
+      var anchorX = 0, anchorY = 0, startDist = 1, startScale = 1, resizing = false;
       resizeHandle.style.touchAction = 'none';
 
       resizeHandle.addEventListener('pointerdown', function(e) {
         resizing = true;
         selectTextLine(wrap, el);
-        startX = e.clientX;
-        startY = e.clientY;
+        /* Drop any legacy fixed width/height (from data saved before this
+           became a pure scale control) \u2014 from here on this instance
+           auto-fits its text like every other text line. */
+        wrap.classList.remove('tl-manual-size');
+        wrap.style.width = '';
+        wrap.style.height = '';
         var rect = wrap.getBoundingClientRect();
-        startW = rect.width;
-        startH = rect.height;
+        anchorX = rect.left;
+        anchorY = rect.top;
+        startDist = Math.hypot(e.clientX - anchorX, e.clientY - anchorY) || 1;
         startScale = parseFloat(getComputedStyle(wrap).getPropertyValue('--tl-scale')) || 1;
-        wrap.classList.add('tl-manual-size');
         wrap.style.zIndex = ++topZ;
         resizeHandle.setPointerCapture(e.pointerId);
         e.preventDefault();
@@ -4682,17 +4718,11 @@
 
       resizeHandle.addEventListener('pointermove', function(e) {
         if (!resizing) return;
-        var dx = e.clientX - startX;
-        var dy = e.clientY - startY;
-        var newW = Math.max(50, startW + dx);
-        var newH = Math.max(30, startH + dy);
-        wrap.style.width = newW + 'px';
-        wrap.style.height = newH + 'px';
-        /* scale text proportionally to the larger dimension change */
-        var ratio = Math.max(newW / startW, newH / startH);
-        var newScale = Math.max(0.5, Math.min(6, startScale * ratio));
+        var dist = Math.hypot(e.clientX - anchorX, e.clientY - anchorY);
+        var newScale = Math.max(0.5, Math.min(6, startScale * (dist / startDist)));
         wrap.style.setProperty('--tl-scale', newScale);
         positionTlToolbar(wrap);
+        syncDotFor(wrap);
         e.preventDefault();
         e.stopPropagation();
       });
@@ -4716,6 +4746,7 @@
     document.addEventListener('pointerdown', tlOutsideDeselectHandler);
     wrap.__cleanupListeners = function() {
       document.removeEventListener('pointerdown', tlOutsideDeselectHandler);
+      if (tlRo) tlRo.disconnect();
     };
 
     wrap.__isTextLine = true;
@@ -6580,11 +6611,16 @@
       if (!wrap.__isTextLine) return;
       var el = wrap.querySelector('.text-line');
       var scale = parseFloat(getComputedStyle(wrap).getPropertyValue('--tl-scale')) || 1;
+      /* Only persist explicit pixel dimensions for legacy manually-sized
+         instances — everything else auto-fits its (scaled) text, and
+         saving its current offsetWidth/offsetHeight here would force it
+         back into fixed-size mode on the very next reload, undoing that. */
+      var isManual = wrap.classList.contains('tl-manual-size');
       out.push({
         x: parseFloat(wrap.style.left) || 0,
         y: parseFloat(wrap.style.top) || 0,
-        w: wrap.offsetWidth || undefined,
-        h: wrap.offsetHeight || undefined,
+        w: isManual ? wrap.offsetWidth : undefined,
+        h: isManual ? wrap.offsetHeight : undefined,
         scale: scale,
         html: el ? el.innerHTML : '',
         linkId: wrap.dataset.linkId

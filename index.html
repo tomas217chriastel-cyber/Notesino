@@ -1680,6 +1680,139 @@
     line-height: 1.4;
   }
 
+  /* Draggable file-attachment cards (PDF / DOC / etc.) on the Notes canvas */
+  .file-attachment {
+    position: absolute;
+    width: 220px;
+    border-radius: 12px;
+    box-shadow: 0 8px 28px rgba(0,0,0,0.35);
+    background: rgba(var(--panel-rgb), 0.94);
+    overflow: visible;
+  }
+
+  .file-attachment .fa-head {
+    height: 22px;
+    border-radius: 12px 12px 0 0;
+    background: rgba(0,0,0,0.18);
+    cursor: grab;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    touch-action: none;
+  }
+
+  .file-attachment .fa-head:active {
+    cursor: grabbing;
+  }
+
+  .file-attachment .fa-grip {
+    width: 34px;
+    height: 4px;
+    border-radius: 2px;
+    background: rgba(var(--ink-rgb), 0.35);
+  }
+
+  .file-attachment .fa-close {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: rgba(0,0,0,0.35);
+    border: none;
+    color: var(--ink-solid);
+    font-size: 12px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity 0.15s ease;
+  }
+
+  .file-attachment:hover .fa-close,
+  body.touch-device .fa-close {
+    opacity: 1;
+  }
+
+  .file-attachment .fa-body {
+    padding: 14px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .file-attachment .fa-empty-row {
+    display: flex;
+  }
+
+  .file-attachment .fa-upload-btn {
+    font-size: 12px;
+    color: rgba(var(--ink-rgb), 0.75);
+    background: rgba(var(--ink-rgb), 0.08);
+    border-radius: 8px;
+    padding: 8px 12px;
+    cursor: pointer;
+    flex: 1;
+    text-align: center;
+  }
+
+  .file-attachment .fa-upload-btn input {
+    display: none;
+  }
+
+  .file-attachment .fa-file-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .file-attachment .fa-icon {
+    font-size: 26px;
+    flex-shrink: 0;
+    line-height: 1;
+  }
+
+  .file-attachment .fa-info {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .file-attachment .fa-name {
+    font-size: 12.5px;
+    color: var(--ink-solid);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .file-attachment .fa-size {
+    font-size: 11px;
+    color: rgba(var(--ink-rgb), 0.55);
+  }
+
+  .file-attachment .fa-actions {
+    display: flex;
+    gap: 8px;
+  }
+
+  .file-attachment .fa-open-link,
+  .file-attachment .fa-replace-btn {
+    font-size: 11.5px;
+    color: rgba(var(--ink-rgb), 0.75);
+    background: rgba(var(--ink-rgb), 0.1);
+    border: none;
+    border-radius: 7px;
+    padding: 5px 9px;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-block;
+  }
+
+  .file-attachment .fa-replace-btn input {
+    display: none;
+  }
 
   /* Notes layer */
   .canvas-viewport {
@@ -3500,6 +3633,7 @@
         <button class="add-menu-item" id="addTable">Table</button>
         <button class="add-menu-item" id="addMedia">Insert Media</button>
         <button class="add-menu-item" id="addVoiceMemo">Voice Memo</button>
+        <button class="add-menu-item" id="addFileAttachment">Attach File</button>
       </div>
     </div>
     <button class="tb-btn" id="undoBtn" title="Undo (Ctrl+Z)" aria-label="Undo" disabled>&#8630;</button>
@@ -3822,7 +3956,7 @@
      canvas is empty), animated rather than snapped so it reads as
      "returning" instead of a jump-cut. */
   function zoomToFitCanvas() {
-    var els = layer.querySelectorAll('.note, .free-image, .free-video, .text-line-wrap, .voice-memo');
+    var els = layer.querySelectorAll('.note, .free-image, .free-video, .text-line-wrap, .voice-memo, .file-attachment');
     var vpW = canvasViewport.clientWidth;
     var vpH = canvasViewport.clientHeight;
 
@@ -3869,7 +4003,7 @@
      rather than tracked as one global flag, since selection state lives
      in a few different places (notes, tables, text lines). */
   function isCanvasInteractionBlocked(target) {
-    if (target && target.closest && target.closest('.note, .text-line-wrap, .free-image, .free-video, .voice-memo, .tl-toolbar, .swatches, .table-row-btn, .table-col-btn, .table-card-wrap, .sc-canvas-wrap, .sc-toolbar')) return true;
+    if (target && target.closest && target.closest('.note, .text-line-wrap, .free-image, .free-video, .voice-memo, .file-attachment, .tl-toolbar, .swatches, .table-row-btn, .table-col-btn, .table-card-wrap, .sc-canvas-wrap, .sc-toolbar')) return true;
     if (typeof activeTextLineWrap !== 'undefined' && activeTextLineWrap) return true;
     if (document.querySelector('.table-card.selected')) return true;
     return false;
@@ -3993,7 +4127,7 @@
     if (!wasDrag) return;
 
     var hits = [];
-    layer.querySelectorAll('.note, .free-image, .free-video, .text-line-wrap, .voice-memo').forEach(function(el) {
+    layer.querySelectorAll('.note, .free-image, .free-video, .text-line-wrap, .voice-memo, .file-attachment').forEach(function(el) {
       var r = el.getBoundingClientRect();
       var intersects = !(r.right < rectSel.left || r.left > rectSel.right || r.bottom < rectSel.top || r.top > rectSel.bottom);
       if (intersects) hits.push(el);
@@ -7079,6 +7213,194 @@
     return vm;
   }
 
+  /* ---------- File attachment (PDF / DOC / any other document) ----------
+     Same compact-card shape as voice-memo (grip header, empty/has-file
+     body states), but for an arbitrary document instead of audio: shows
+     an icon guessed from the file extension, name, size, an Open link
+     (native download/open via the browser, same as any other <a
+     download>) and a Replace control. */
+  function fileExtIcon(name) {
+    var ext = (name || '').split('.').pop().toLowerCase();
+    if (ext === 'pdf') return '📕';
+    if (ext === 'doc' || ext === 'docx' || ext === 'rtf' || ext === 'odt') return '📘';
+    if (ext === 'xls' || ext === 'xlsx' || ext === 'csv') return '📗';
+    if (ext === 'ppt' || ext === 'pptx') return '📙';
+    if (ext === 'txt' || ext === 'md') return '📄';
+    return '📎';
+  }
+
+  function formatFileSize(bytes) {
+    if (!bytes && bytes !== 0) return '';
+    if (bytes < 1024) return bytes + ' B';
+    if (bytes < 1024 * 1024) return Math.round(bytes / 1024) + ' KB';
+    return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+  }
+
+  function createFileAttachment(data) {
+    var fa = document.createElement('div');
+    fa.className = 'file-attachment';
+    var defaultPos = screenToCanvas(window.innerWidth / 2 - 110, window.innerHeight / 2 - 45);
+    var x = (data && data.x !== undefined) ? data.x : defaultPos.x;
+    var y = (data && data.y !== undefined) ? data.y : defaultPos.y;
+    fa.style.left = x + 'px';
+    fa.style.top = y + 'px';
+    fa.style.zIndex = ++topZ;
+
+    var head = document.createElement('div');
+    head.className = 'fa-head';
+    var grip = document.createElement('div');
+    grip.className = 'fa-grip';
+    head.appendChild(grip);
+
+    var closeBtn = document.createElement('button');
+    closeBtn.className = 'fa-close';
+    closeBtn.innerHTML = '&times;';
+    closeBtn.setAttribute('aria-label', 'Remove file attachment');
+    closeBtn.addEventListener('pointerdown', function(e) { e.stopPropagation(); });
+    closeBtn.addEventListener('click', function(e) {
+      e.stopPropagation();
+      purgeConnectionsFor(fa.dataset.linkId);
+      if (fa.__cleanupListeners) fa.__cleanupListeners();
+      fa.remove();
+      saveWorkspace();
+    });
+    head.appendChild(closeBtn);
+    fa.appendChild(head);
+
+    var body = document.createElement('div');
+    body.className = 'fa-body';
+    fa.appendChild(body);
+
+    var emptyRow = document.createElement('div');
+    emptyRow.className = 'fa-empty-row';
+    var uploadLabel = document.createElement('label');
+    uploadLabel.className = 'fa-upload-btn';
+    uploadLabel.textContent = 'Choose a file…';
+    var uploadInput = document.createElement('input');
+    uploadInput.type = 'file';
+    uploadInput.accept = '.pdf,.doc,.docx,.txt,.rtf,.odt,.xls,.xlsx,.ppt,.pptx,.csv,.md';
+    uploadLabel.appendChild(uploadInput);
+    emptyRow.appendChild(uploadLabel);
+    body.appendChild(emptyRow);
+
+    var fileRow = document.createElement('div');
+    fileRow.className = 'fa-file-row';
+    var icon = document.createElement('div');
+    icon.className = 'fa-icon';
+    var info = document.createElement('div');
+    info.className = 'fa-info';
+    var nameEl = document.createElement('div');
+    nameEl.className = 'fa-name';
+    var sizeEl = document.createElement('div');
+    sizeEl.className = 'fa-size';
+    info.appendChild(nameEl);
+    info.appendChild(sizeEl);
+    fileRow.appendChild(icon);
+    fileRow.appendChild(info);
+    body.appendChild(fileRow);
+
+    var actions = document.createElement('div');
+    actions.className = 'fa-actions';
+    var openLink = document.createElement('a');
+    openLink.className = 'fa-open-link';
+    openLink.textContent = 'Open';
+    openLink.target = '_blank';
+    openLink.rel = 'noopener';
+    var replaceLabel = document.createElement('label');
+    replaceLabel.className = 'fa-replace-btn';
+    replaceLabel.textContent = 'Replace';
+    var replaceInput = document.createElement('input');
+    replaceInput.type = 'file';
+    replaceInput.accept = uploadInput.accept;
+    replaceLabel.appendChild(replaceInput);
+    actions.appendChild(openLink);
+    actions.appendChild(replaceLabel);
+    body.appendChild(actions);
+
+    var fileName = null, fileSize = 0;
+
+    function setStateEmpty() {
+      emptyRow.style.display = 'flex';
+      fileRow.style.display = 'none';
+      actions.style.display = 'none';
+    }
+    function setStateHasFile(src, name, size) {
+      fileName = name || 'file';
+      fileSize = size || 0;
+      icon.textContent = fileExtIcon(fileName);
+      nameEl.textContent = fileName;
+      nameEl.title = fileName;
+      sizeEl.textContent = formatFileSize(fileSize);
+      openLink.href = src;
+      openLink.download = fileName;
+      emptyRow.style.display = 'none';
+      fileRow.style.display = 'flex';
+      actions.style.display = 'flex';
+      syncDotFor(fa);
+    }
+
+    if (data && data.src) {
+      setStateHasFile(data.src, data.name, data.size);
+    } else {
+      setStateEmpty();
+    }
+
+    function handleFile(file) {
+      if (!file) return;
+      if (file.size > MEDIA_WARN_BYTES) {
+        window.alert('That file is ' + Math.round(file.size / 1024 / 1024) +
+          'MB. Everything here is stored directly in the browser (and synced ' +
+          'the same way if you\'re in a live room), so a file this large may ' +
+          'fail to save or sync reliably — a smaller file tends to work better.');
+      }
+      var reader = new FileReader();
+      reader.onload = function(ev) {
+        setStateHasFile(ev.target.result, file.name, file.size);
+        saveWorkspace();
+      };
+      reader.readAsDataURL(file);
+    }
+
+    uploadInput.addEventListener('pointerdown', function(e) { e.stopPropagation(); });
+    uploadInput.addEventListener('click', function(e) { e.stopPropagation(); });
+    uploadInput.addEventListener('change', function(e) {
+      var file = e.target.files && e.target.files[0];
+      e.target.value = '';
+      handleFile(file);
+    });
+
+    replaceLabel.addEventListener('pointerdown', function(e) { e.stopPropagation(); });
+    replaceInput.addEventListener('pointerdown', function(e) { e.stopPropagation(); });
+    replaceInput.addEventListener('click', function(e) { e.stopPropagation(); });
+    replaceInput.addEventListener('change', function(e) {
+      var file = e.target.files && e.target.files[0];
+      e.target.value = '';
+      handleFile(file);
+    });
+
+    openLink.addEventListener('pointerdown', function(e) { e.stopPropagation(); });
+    openLink.addEventListener('click', function(e) { e.stopPropagation(); });
+
+    layer.appendChild(fa);
+    attachConnectDot(fa, canvasLinkLayer, data && data.linkId);
+    makeDraggable(fa, head);
+    if (window.ResizeObserver) {
+      var roFirstFire = true;
+      var ro = new ResizeObserver(function() {
+        syncDotFor(fa);
+        if (roFirstFire) { roFirstFire = false; return; }
+        saveWorkspace();
+      });
+      ro.observe(fa);
+      fa.__cleanupListeners = function() { ro.disconnect(); };
+    }
+
+    fa.__getFileData = function() {
+      return { src: openLink.href && openLink.href.indexOf('data:') === 0 ? openLink.href : null, name: fileName, size: fileSize };
+    };
+    return fa;
+  }
+
   /* ---------- Drag & drop overlay (images and videos - "Insert Media") ---------- */
   var dropOverlay = document.getElementById('dropOverlay');
   var mediaFileInput = document.getElementById('mediaFileInput');
@@ -7306,6 +7628,13 @@
 
   document.getElementById('addVoiceMemo').addEventListener('click', function() {
     createVoiceMemo(undefined);
+    document.getElementById('hint').style.display = 'none';
+    saveWorkspace();
+    addMenu.classList.remove('open');
+  });
+
+  document.getElementById('addFileAttachment').addEventListener('click', function() {
+    createFileAttachment(undefined);
     document.getElementById('hint').style.display = 'none';
     saveWorkspace();
     addMenu.classList.remove('open');
@@ -8272,6 +8601,18 @@
       };
     });
 
+    var fileAttachments = Array.prototype.map.call(layer.querySelectorAll('.file-attachment'), function(fa) {
+      var fd = fa.__getFileData ? fa.__getFileData() : { src: null, name: null, size: 0 };
+      return {
+        x: parseFloat(fa.style.left) || 0,
+        y: parseFloat(fa.style.top) || 0,
+        src: fd.src,
+        name: fd.name,
+        size: fd.size,
+        linkId: fa.dataset.linkId
+      };
+    });
+
     var subjectsOut = subjects.map(function(s) {
       return { id: s.id, name: s.name, color: s.color, quickNote: subjectQuickNotes[s.id] || '' };
     });
@@ -8285,6 +8626,7 @@
       images: images,
       videos: videos,
       voiceMemos: voiceMemos,
+      fileAttachments: fileAttachments,
       workspaceBg: workspaceBgSrc,
       subjects: subjectsOut,
       activeSubjectId: activeSubjectId,
@@ -8411,7 +8753,7 @@
   }
 
   function clearWorkspaceUI() {
-    layer.querySelectorAll('.note, .free-image, .free-video, .voice-memo').forEach(function(el) {
+    layer.querySelectorAll('.note, .free-image, .free-video, .voice-memo, .file-attachment').forEach(function(el) {
       if (el.__cleanupListeners) el.__cleanupListeners();
       el.remove();
     });
@@ -8468,6 +8810,9 @@
     if (state.voiceMemos && state.voiceMemos.length) {
       state.voiceMemos.forEach(function(v) { createVoiceMemo(v); });
     }
+    if (state.fileAttachments && state.fileAttachments.length) {
+      state.fileAttachments.forEach(function(f) { createFileAttachment(f); });
+    }
 
     if (state.subjects && state.subjects.length) {
       subjects = state.subjects.map(function(s) { return { id: s.id, name: s.name, color: s.color }; });
@@ -8493,6 +8838,7 @@
               (state.checklists && state.checklists.length) ||
               (state.images && state.images.length) ||
               (state.voiceMemos && state.voiceMemos.length) ||
+              (state.fileAttachments && state.fileAttachments.length) ||
               (state.subjects && state.subjects.length));
   }
 

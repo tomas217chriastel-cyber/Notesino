@@ -276,6 +276,12 @@
     transform: scale(0.92);
   }
 
+  .tb-btn:disabled {
+    opacity: 0.35;
+    cursor: default;
+    pointer-events: none;
+  }
+
   .live-dot {
     position: absolute;
     top: 3px;
@@ -1651,8 +1657,18 @@
 
   .text-line {
     position: relative;
-    width: 100%;
-    height: 100%;
+    /* Sized to its own text (up to a max width, where it then wraps)
+       rather than 100% of the wrap, which sizes to fit-content — a
+       wrap-sized-to-child next to a child-sized-to-100%-of-wrap is a
+       circular dependency neither side can resolve, and was collapsing
+       every text line into a narrow, many-lines-tall column (which is
+       also why the connect-dot at its corner looked like it was
+       "levitating" off to the side: it was correctly anchored to a
+       badly-sized box). Legacy explicit-size instances (saved before
+       resize became a pure scale control) override this below. */
+    width: max-content;
+    max-width: calc(90vw - 12px);
+    height: auto;
     padding: 4px 6px;
     color: var(--ink-solid);
     font-family: "Poppins", -apple-system, sans-serif;
@@ -1667,6 +1683,12 @@
     background: transparent;
     border-radius: 6px;
     box-sizing: border-box;
+  }
+
+  .text-line-wrap.tl-manual-size .text-line {
+    width: 100%;
+    height: 100%;
+    max-width: none;
   }
 
   .text-line:empty::before {
@@ -3019,6 +3041,8 @@
         <button class="add-menu-item" id="addMedia">Insert Media</button>
       </div>
     </div>
+    <button class="tb-btn" id="undoBtn" title="Undo (Ctrl+Z)" aria-label="Undo" disabled>&#8630;</button>
+    <button class="tb-btn" id="redoBtn" title="Redo (Ctrl+Shift+Z)" aria-label="Redo" disabled>&#8631;</button>
     <button class="tb-btn" id="removeWorkspaceBg" title="Remove workspace background" aria-label="Remove workspace background" style="display:none;">&#8635;</button>
     <div class="add-menu-wrap" id="moreMenuWrap">
       <button class="tb-btn" id="moreMenuBtn" title="More options" aria-label="More options">&#8942;</button>
@@ -3035,6 +3059,9 @@
         <div class="add-menu-divider"></div>
         <button class="add-menu-item" id="exportWorkspaceBtn">Export Workspace&hellip;</button>
         <button class="add-menu-item" id="importWorkspaceBtn">Import Workspace&hellip;</button>
+        <div class="add-menu-divider" id="snapshotsDivider" style="display:none;"></div>
+        <div class="theme-picker-label" id="snapshotsLabel" style="display:none;">Restore a Previous Version</div>
+        <div id="snapshotsList"></div>
       </div>
     </div>
     <input type="file" id="importFileInput" accept="application/json,.json" style="display:none;">
@@ -3849,12 +3876,17 @@
 
     if (window.ResizeObserver) {
       var noteScaleRaf = null;
+      var roFirstFire = true;
       var ro = new ResizeObserver(function() {
         if (noteScaleRaf) cancelAnimationFrame(noteScaleRaf);
         noteScaleRaf = requestAnimationFrame(function() {
           noteScaleRaf = null;
           updateNoteScale();
           syncDotFor(note);
+          /* ResizeObserver always fires once immediately just to report
+             the initial size, regardless of whether anything actually
+             changed — save only from real, later resizes. */
+          if (roFirstFire) { roFirstFire = false; return; }
           saveWorkspace();
         });
       });
@@ -4190,12 +4222,14 @@
 
     if (window.ResizeObserver) {
       var scRaf = null;
+      var scRoFirstFire = true;
       var scRo = new ResizeObserver(function() {
         if (scRaf) cancelAnimationFrame(scRaf);
         scRaf = requestAnimationFrame(function() {
           scRaf = null;
           scResize(true);
           syncDotFor(card);
+          if (scRoFirstFire) { scRoFirstFire = false; return; }
           saveWorkspace();
         });
       });
@@ -4549,11 +4583,13 @@
 
     if (window.ResizeObserver) {
       var tblRaf = null;
+      var tblRoFirstFire = true;
       var tblRo = new ResizeObserver(function() {
         if (tblRaf) cancelAnimationFrame(tblRaf);
         tblRaf = requestAnimationFrame(function() {
           tblRaf = null;
           syncDotFor(card);
+          if (tblRoFirstFire) { tblRoFirstFire = false; return; }
           saveWorkspace();
         });
       });
@@ -4650,30 +4686,50 @@
     });
 
     el.addEventListener('input', function() {
+      if (activeTextLineWrap === wrap) positionTlToolbar(wrap);
+      syncDotFor(wrap);
       saveWorkspace();
     });
+
+    /* Typing (or the initial content on load) changes the wrap's own
+       auto-fit box size without going through drag/resize, which is the
+       other reason the connect-dot could end up looking "levitated" —
+       every other instance type already keeps its dot in sync this way
+       via its own ResizeObserver; text lines just never had one. */
+    if (window.ResizeObserver) {
+      var tlRo = new ResizeObserver(function() { syncDotFor(wrap); });
+      tlRo.observe(wrap);
+    }
 
     makeDraggable(wrap, handle, function() {
       if (activeTextLineWrap === wrap) positionTlToolbar(wrap);
     });
 
-    /* Resizing scales the text itself (via --tl-scale) as well as the
-       box, so the text stays proportional to how big you drag the
-       corner \u2014 works the same with mouse drag or touch drag. */
+    /* Resizing is a pure font-scale control (via --tl-scale): drag the
+       corner further from the text's own top-left to grow it, closer to
+       shrink it \u2014 the same "distance from a fixed anchor" convention as
+       resizing a text box in any slide/design tool. The wrap always
+       auto-fits whatever size the (scaled) text ends up being, so there's
+       no separate box-dimension to fight with the font size over, and no
+       way for the two to drift out of sync. */
     (function() {
-      var startX = 0, startY = 0, startW = 0, startH = 0, startScale = 1, resizing = false;
+      var anchorX = 0, anchorY = 0, startDist = 1, startScale = 1, resizing = false;
       resizeHandle.style.touchAction = 'none';
 
       resizeHandle.addEventListener('pointerdown', function(e) {
         resizing = true;
         selectTextLine(wrap, el);
-        startX = e.clientX;
-        startY = e.clientY;
+        /* Drop any legacy fixed width/height (from data saved before this
+           became a pure scale control) \u2014 from here on this instance
+           auto-fits its text like every other text line. */
+        wrap.classList.remove('tl-manual-size');
+        wrap.style.width = '';
+        wrap.style.height = '';
         var rect = wrap.getBoundingClientRect();
-        startW = rect.width;
-        startH = rect.height;
+        anchorX = rect.left;
+        anchorY = rect.top;
+        startDist = Math.hypot(e.clientX - anchorX, e.clientY - anchorY) || 1;
         startScale = parseFloat(getComputedStyle(wrap).getPropertyValue('--tl-scale')) || 1;
-        wrap.classList.add('tl-manual-size');
         wrap.style.zIndex = ++topZ;
         resizeHandle.setPointerCapture(e.pointerId);
         e.preventDefault();
@@ -4682,17 +4738,11 @@
 
       resizeHandle.addEventListener('pointermove', function(e) {
         if (!resizing) return;
-        var dx = e.clientX - startX;
-        var dy = e.clientY - startY;
-        var newW = Math.max(50, startW + dx);
-        var newH = Math.max(30, startH + dy);
-        wrap.style.width = newW + 'px';
-        wrap.style.height = newH + 'px';
-        /* scale text proportionally to the larger dimension change */
-        var ratio = Math.max(newW / startW, newH / startH);
-        var newScale = Math.max(0.5, Math.min(6, startScale * ratio));
+        var dist = Math.hypot(e.clientX - anchorX, e.clientY - anchorY);
+        var newScale = Math.max(0.5, Math.min(6, startScale * (dist / startDist)));
         wrap.style.setProperty('--tl-scale', newScale);
         positionTlToolbar(wrap);
+        syncDotFor(wrap);
         e.preventDefault();
         e.stopPropagation();
       });
@@ -4716,6 +4766,7 @@
     document.addEventListener('pointerdown', tlOutsideDeselectHandler);
     wrap.__cleanupListeners = function() {
       document.removeEventListener('pointerdown', tlOutsideDeselectHandler);
+      if (tlRo) tlRo.disconnect();
     };
 
     wrap.__isTextLine = true;
@@ -4944,6 +4995,7 @@
     e.stopPropagation();
     var wasOpen = moreMenu.classList.contains('open');
     addMenu.classList.remove('open');
+    if (!wasOpen) renderSnapshotsList();
     moreMenu.classList.toggle('open', !wasOpen);
   });
 
@@ -5037,7 +5089,7 @@
       var ok = window.confirm(
         'Importing will replace everything currently in this workspace ' +
         '(notes, tables, timetable, everything) with the contents of this file. ' +
-        'This can\'t be undone. Continue?'
+        'You can undo it with Ctrl+Z right after, but that history is lost on reload. Continue?'
       );
       if (!ok) return;
 
@@ -5058,6 +5110,24 @@
      canvases/images/videos don't have a click-to-select state today, so
      there's nothing keyboard-deletable for those yet. */
   document.addEventListener('keydown', function(e) {
+    var isUndoKey = (e.ctrlKey || e.metaKey) && !e.shiftKey && e.key.toLowerCase() === 'z';
+    var isRedoKey = ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key.toLowerCase() === 'z') ||
+                    ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'y');
+    if (isUndoKey || isRedoKey) {
+      var editingNow = document.activeElement && (
+        document.activeElement.isContentEditable ||
+        document.activeElement.tagName === 'INPUT' ||
+        document.activeElement.tagName === 'TEXTAREA'
+      );
+      /* Inside a text field, Ctrl+Z/Y should undo/redo the last few
+         characters typed (the browser already does this natively) — only
+         intercept it as a whole-workspace undo everywhere else. */
+      if (editingNow) return;
+      e.preventDefault();
+      if (isUndoKey) performUndo(); else performRedo();
+      return;
+    }
+
     if (e.key === 'Escape') {
       addMenu.classList.remove('open');
       moreMenu.classList.remove('open');
@@ -5637,7 +5707,12 @@
     makeImageDraggable(fi);
     makeResizable(fi, fiResizeHandle);
     if (window.ResizeObserver) {
-      var ro = new ResizeObserver(function() { syncDotFor(fi); saveWorkspace(); });
+      var roFirstFire = true;
+      var ro = new ResizeObserver(function() {
+        syncDotFor(fi);
+        if (roFirstFire) { roFirstFire = false; return; }
+        saveWorkspace();
+      });
       ro.observe(fi);
       fi.__cleanupListeners = function() { ro.disconnect(); };
     }
@@ -5732,7 +5807,12 @@
     makeDraggable(fv, head);
     makeResizable(fv, fvResizeHandle, 160, 120);
     if (window.ResizeObserver) {
-      var ro = new ResizeObserver(function() { syncDotFor(fv); saveWorkspace(); });
+      var roFirstFire = true;
+      var ro = new ResizeObserver(function() {
+        syncDotFor(fv);
+        if (roFirstFire) { roFirstFire = false; return; }
+        saveWorkspace();
+      });
       ro.observe(fv);
       fv.__cleanupListeners = function() { ro.disconnect(); };
     }
@@ -5760,6 +5840,9 @@
     updateRemoveWorkspaceBgVisibility();
     saveWorkspace();
   });
+
+  document.getElementById('undoBtn').addEventListener('click', function() { performUndo(); });
+  document.getElementById('redoBtn').addEventListener('click', function() { performRedo(); });
 
   function showOverlay() { dropOverlay.classList.add('show'); }
   function hideOverlay() { dropOverlay.classList.remove('show'); dragCounter = 0; }
@@ -6525,6 +6608,92 @@
   var STORAGE_KEY = 'claude_workspace_v2';
   var saveTimer = null;
 
+  /* ---------- Undo / redo ----------
+     Snapshot-based rather than tracking a "command" per mutation type —
+     collectState()/applyState() already exist, are already proven (they're
+     the same round-trip save/load and import/export already use), and a
+     workspace is small enough that keeping ~50 JSON snapshots costs
+     nothing worth optimizing for. lastSnapshotJSON is "the state as of the
+     last checkpoint"; saveWorkspace() pushes it to the undo stack the
+     first time it's called in a burst of changes (a pending debounce
+     timer means we're still mid-burst), so rapid edits like typing
+     coalesce into one undo step instead of one per keystroke. */
+  var undoStack = [];
+  var redoStack = [];
+  var lastSnapshotJSON = null;
+  var UNDO_LIMIT = 50;
+  /* Every instance type's ResizeObserver fires once on its own, shortly
+     after .observe() starts, to report its initial size — completely
+     unrelated to the user doing anything, but its callback calls
+     saveWorkspace() like any other content change. That's invisible
+     during normal use (it just re-confirms the same size that was about
+     to be saved anyway), but every clearWorkspaceUI()+applyState() bulk
+     restore (undo, redo, import, remote sync, the initial page load)
+     recreates every instance and its observer from scratch, so a whole
+     wave of these "nothing really changed" saves lands a frame or two
+     later — each one landing as its own undo checkpoint if left
+     unguarded, which corrupts the very history undo/redo depend on
+     (an undo click would silently consume one of these self-inflicted
+     entries instead of actually undoing anything). This flag tells
+     saveWorkspace() to keep persisting normally but skip the undo-stack
+     bookkeeping while one of those restores (and its aftermath) is in
+     flight; the double rAF gives the deferred observer callbacks a
+     chance to land before it's lifted. */
+  var isRestoringState = false;
+  function withStateRestoreGuard(fn) {
+    isRestoringState = true;
+    fn();
+    requestAnimationFrame(function() {
+      requestAnimationFrame(function() {
+        isRestoringState = false;
+      });
+    });
+  }
+
+  function noteUndoCheckpoint(json) {
+    lastSnapshotJSON = json;
+  }
+
+  function performUndo() {
+    if (!undoStack.length || lastSnapshotJSON === null) return;
+    var prev = undoStack.pop();
+    redoStack.push(lastSnapshotJSON);
+    applyUndoRedoSnapshot(prev);
+  }
+
+  function performRedo() {
+    if (!redoStack.length || lastSnapshotJSON === null) return;
+    var next = redoStack.pop();
+    undoStack.push(lastSnapshotJSON);
+    applyUndoRedoSnapshot(next);
+  }
+
+  function applyUndoRedoSnapshot(json) {
+    var state;
+    try { state = JSON.parse(json); } catch (err) { return; }
+    clearTimeout(saveTimer);
+    saveTimer = null;
+    withStateRestoreGuard(function() {
+      clearWorkspaceUI();
+      applyState(state);
+      renderSubjectsList();
+      renderSubjectCanvas();
+      document.getElementById('hint').style.display = 'none';
+    });
+    lastSnapshotJSON = json;
+    try { localStorage.setItem(STORAGE_KEY, json); } catch (err) {}
+    pushToRoomIfActive(state);
+    pushTimetableToNative();
+    updateUndoRedoButtons();
+  }
+
+  function updateUndoRedoButtons() {
+    var undoBtn = document.getElementById('undoBtn');
+    var redoBtn = document.getElementById('redoBtn');
+    if (undoBtn) undoBtn.disabled = undoStack.length === 0;
+    if (redoBtn) redoBtn.disabled = redoStack.length === 0;
+  }
+
   function collectNotesFrom(targetLayer) {
     return Array.prototype.map.call(targetLayer.querySelectorAll('.note:not(.sticky-canvas-card):not(.table-card)'), function(n) {
       var b = n.querySelector('.note-text');
@@ -6580,11 +6749,16 @@
       if (!wrap.__isTextLine) return;
       var el = wrap.querySelector('.text-line');
       var scale = parseFloat(getComputedStyle(wrap).getPropertyValue('--tl-scale')) || 1;
+      /* Only persist explicit pixel dimensions for legacy manually-sized
+         instances — everything else auto-fits its (scaled) text, and
+         saving its current offsetWidth/offsetHeight here would force it
+         back into fixed-size mode on the very next reload, undoing that. */
+      var isManual = wrap.classList.contains('tl-manual-size');
       out.push({
         x: parseFloat(wrap.style.left) || 0,
         y: parseFloat(wrap.style.top) || 0,
-        w: wrap.offsetWidth || undefined,
-        h: wrap.offsetHeight || undefined,
+        w: isManual ? wrap.offsetWidth : undefined,
+        h: isManual ? wrap.offsetHeight : undefined,
         scale: scale,
         html: el ? el.innerHTML : '',
         linkId: wrap.dataset.linkId
@@ -6641,15 +6815,120 @@
   }
 
   function saveWorkspace() {
+    /* First call in a new burst (no debounce already pending) — the
+       checkpoint still reflects "before this change", which is exactly
+       what undo should step back to. */
+    if (!saveTimer && lastSnapshotJSON !== null && !isRestoringState) {
+      undoStack.push(lastSnapshotJSON);
+      if (undoStack.length > UNDO_LIMIT) undoStack.shift();
+      redoStack = [];
+      updateUndoRedoButtons();
+    }
     clearTimeout(saveTimer);
     saveTimer = setTimeout(function() {
+      saveTimer = null;
       var state = collectState();
+      var json = JSON.stringify(state);
+      noteUndoCheckpoint(json);
       try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+        localStorage.setItem(STORAGE_KEY, json);
       } catch (err) {}
       pushToRoomIfActive(state);
       pushTimetableToNative();
+      maybeTakeAutosaveSnapshot(json);
     }, 200);
+  }
+
+  /* ---------- Autosave snapshots ----------
+     A rotating history of full workspace states, independent of the undo
+     stack (which lives only in memory and is gone the moment the tab
+     reloads) — the safety net for "I closed this yesterday and need to
+     get back to how it looked before today's changes", which undo can't
+     reach across a reload. Snapshots only every SNAPSHOT_INTERVAL_MS
+     apart and capped at SNAPSHOT_LIMIT entries, since each one is a full
+     copy of the workspace — images/videos included — and localStorage
+     has a real, fairly small quota that the *regular* save absolutely
+     has to keep fitting in. */
+  var SNAPSHOTS_KEY = 'claude_workspace_snapshots_v1';
+  var SNAPSHOT_INTERVAL_MS = 10 * 60 * 1000;
+  var SNAPSHOT_LIMIT = 6;
+  var lastSnapshotTakenAt = Date.now();
+
+  function loadSnapshots() {
+    try {
+      var raw = localStorage.getItem(SNAPSHOTS_KEY);
+      return raw ? JSON.parse(raw) : [];
+    } catch (err) { return []; }
+  }
+
+  function maybeTakeAutosaveSnapshot(json) {
+    var now = Date.now();
+    if (now - lastSnapshotTakenAt < SNAPSHOT_INTERVAL_MS) return;
+    lastSnapshotTakenAt = now;
+    var list = loadSnapshots();
+    list.push({ t: now, json: json });
+    if (list.length > SNAPSHOT_LIMIT) list = list.slice(list.length - SNAPSHOT_LIMIT);
+    try {
+      localStorage.setItem(SNAPSHOTS_KEY, JSON.stringify(list));
+    } catch (err) {
+      /* Quota trouble — drop the oldest snapshot and try once more. A
+         failed autosave snapshot must never risk the regular save. */
+      try {
+        list.shift();
+        localStorage.setItem(SNAPSHOTS_KEY, JSON.stringify(list));
+      } catch (err2) {}
+    }
+  }
+
+  function relativeTimeLabel(ts) {
+    var diffSec = Math.round((Date.now() - ts) / 1000);
+    if (diffSec < 60) return 'Just now';
+    var diffMin = Math.round(diffSec / 60);
+    if (diffMin < 60) return diffMin + ' minute' + (diffMin === 1 ? '' : 's') + ' ago';
+    var diffHr = Math.round(diffMin / 60);
+    if (diffHr < 24) return diffHr + ' hour' + (diffHr === 1 ? '' : 's') + ' ago';
+    var diffDay = Math.round(diffHr / 24);
+    return diffDay + ' day' + (diffDay === 1 ? '' : 's') + ' ago';
+  }
+
+  function renderSnapshotsList() {
+    var list = loadSnapshots();
+    var container = document.getElementById('snapshotsList');
+    var divider = document.getElementById('snapshotsDivider');
+    var label = document.getElementById('snapshotsLabel');
+    container.innerHTML = '';
+    var hasAny = list.length > 0;
+    divider.style.display = hasAny ? 'block' : 'none';
+    label.style.display = hasAny ? 'block' : 'none';
+    /* Most recent first. */
+    list.slice().reverse().forEach(function(entry) {
+      var btn = document.createElement('button');
+      btn.className = 'add-menu-item';
+      btn.textContent = relativeTimeLabel(entry.t);
+      btn.addEventListener('click', function() {
+        moreMenu.classList.remove('open');
+        var ok = window.confirm(
+          'Restore the workspace as it looked ' + relativeTimeLabel(entry.t).toLowerCase() +
+          '? This replaces everything currently here (you can still undo it with Ctrl+Z right after).'
+        );
+        if (!ok) return;
+        var state;
+        try { state = JSON.parse(entry.json); } catch (err) { return; }
+        /* Deliberately NOT wrapped in withStateRestoreGuard — restoring a
+           snapshot is a real, undoable user action (like import), so this
+           should register a normal undo checkpoint. saveWorkspace() runs
+           synchronously right after, which starts its debounce timer
+           before any recreated instance's ResizeObserver can fire its
+           own (harmless but unrelated) first callback. */
+        clearWorkspaceUI();
+        applyState(state);
+        renderSubjectsList();
+        renderSubjectCanvas();
+        document.getElementById('hint').style.display = 'none';
+        saveWorkspace();
+      });
+      container.appendChild(btn);
+    });
   }
 
   function clearWorkspaceUI() {
@@ -6851,11 +7130,17 @@
       var state = snapshot.val();
       if (!state) return; /* room just created, nothing written yet */
       applyingRemote = true;
-      clearWorkspaceUI();
-      applyState(state);
-      renderSubjectsList();
-      renderSubjectCanvas();
-      document.getElementById('hint').style.display = 'none';
+      withStateRestoreGuard(function() {
+        clearWorkspaceUI();
+        applyState(state);
+        renderSubjectsList();
+        renderSubjectCanvas();
+        document.getElementById('hint').style.display = 'none';
+      });
+      /* Someone else's edit, not a local action — don't let it become an
+         undo step, but do move the checkpoint forward so the next LOCAL
+         edit's undo entry is "before my edit", not "before their edit". */
+      noteUndoCheckpoint(JSON.stringify(state));
       applyingRemote = false;
     }, function(err) {
       setStatus(shareStatusMine, 'Connection error: ' + err.message, 'error');
@@ -6985,10 +7270,19 @@
     }
   });
 
-  var restored = loadWorkspace();
-  renderSubjectsList();
-  renderSubjectCanvas();
-  renderTimetable();
+  var restored;
+  withStateRestoreGuard(function() {
+    restored = loadWorkspace();
+    renderSubjectsList();
+    renderSubjectCanvas();
+    renderTimetable();
+  });
+  /* Baseline checkpoint so the very first local edit has something to
+     undo back to. For a fresh install this gets set again (to the same
+     thing) a moment later when the starter note's saveWorkspace() call
+     debounces through — harmless, just redundant. */
+  noteUndoCheckpoint(JSON.stringify(collectState()));
+  updateUndoRedoButtons();
 
   /* Everyone who opens this link joins the same shared room automatically,
      so changes sync across devices with zero setup. A saved room from an
@@ -7019,8 +7313,11 @@
     var starterNote = starterIsMobile
       ? { x: 20, y: 220, w: 120, h: 100, html: '', color: colors[1] }
       : { x: 320, y: 300, html: '', color: colors[1] };
-    createNote(starterNote, layer);
-    document.getElementById('hint').style.display = 'none';
+    withStateRestoreGuard(function() {
+      createNote(starterNote, layer);
+      document.getElementById('hint').style.display = 'none';
+    });
+    noteUndoCheckpoint(JSON.stringify(collectState()));
     saveWorkspace();
   } else {
     document.getElementById('hint').style.display = 'none';

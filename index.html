@@ -385,6 +385,71 @@
     background: rgba(var(--ink-rgb), 0.14);
   }
 
+  .search-panel {
+    width: 280px;
+    max-width: min(320px, calc(100vw - 32px));
+  }
+
+  .search-input {
+    width: 100%;
+    padding: 9px 12px;
+    border-radius: 9px;
+    border: 0.5px solid rgba(var(--ink-rgb), 0.18);
+    background: rgba(var(--ink-rgb), 0.08);
+    color: var(--ink-solid);
+    font-family: -apple-system, "SF Pro Text", sans-serif;
+    font-size: 13.5px;
+    outline: none;
+    margin-bottom: 4px;
+  }
+
+  .search-input::placeholder {
+    color: rgba(var(--ink-rgb), 0.4);
+  }
+
+  .search-result-item {
+    display: block;
+    width: 100%;
+    white-space: normal;
+    line-height: 1.4;
+    font-size: 12.5px;
+    font-weight: 500;
+  }
+
+  .search-result-kind {
+    display: inline-block;
+    font-size: 9.5px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: rgba(var(--ink-rgb), 0.5);
+    margin-right: 6px;
+  }
+
+  .search-result-item b {
+    color: var(--ink-solid);
+    background: rgba(255, 199, 89, 0.35);
+    border-radius: 3px;
+    padding: 0 1px;
+  }
+
+  .search-empty {
+    padding: 10px 12px;
+    font-size: 12.5px;
+    color: rgba(var(--ink-rgb), 0.45);
+  }
+
+  /* A brief pulse so a jumped-to search result is easy to spot the
+     instant the canvas finishes animating there. */
+  @keyframes searchHighlightPulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(255, 199, 89, 0); }
+    25% { box-shadow: 0 0 0 6px rgba(255, 199, 89, 0.55); }
+  }
+
+  .search-highlight {
+    animation: searchHighlightPulse 0.8s ease-out 2;
+  }
+
   .live-dot.on {
     display: block;
   }
@@ -3044,6 +3109,13 @@
     <button class="tb-btn" id="undoBtn" title="Undo (Ctrl+Z)" aria-label="Undo" disabled>&#8630;</button>
     <button class="tb-btn" id="redoBtn" title="Redo (Ctrl+Shift+Z)" aria-label="Redo" disabled>&#8631;</button>
     <button class="tb-btn" id="zoomFitBtn" title="Zoom to fit / recenter" aria-label="Zoom to fit / recenter">&#8982;</button>
+    <div class="add-menu-wrap" id="searchWrap">
+      <button class="tb-btn" id="searchBtn" title="Search notes, tables, timetable" aria-label="Search">&#128269;</button>
+      <div class="add-menu search-panel" id="searchPanel">
+        <input type="text" id="searchInput" class="search-input" placeholder="Search notes, tables, timetable&hellip;">
+        <div id="searchResults"></div>
+      </div>
+    </div>
     <button class="tb-btn" id="removeWorkspaceBg" title="Remove workspace background" aria-label="Remove workspace background" style="display:none;">&#8635;</button>
     <div class="add-menu-wrap" id="moreMenuWrap">
       <button class="tb-btn" id="moreMenuBtn" title="More options" aria-label="More options">&#8942;</button>
@@ -5034,6 +5106,7 @@
     e.stopPropagation();
     var wasOpen = addMenu.classList.contains('open');
     moreMenu.classList.remove('open');
+    document.getElementById('searchPanel').classList.remove('open');
     addMenu.classList.toggle('open', !wasOpen);
   });
 
@@ -5043,6 +5116,7 @@
     e.stopPropagation();
     var wasOpen = moreMenu.classList.contains('open');
     addMenu.classList.remove('open');
+    document.getElementById('searchPanel').classList.remove('open');
     if (!wasOpen) renderSnapshotsList();
     moreMenu.classList.toggle('open', !wasOpen);
   });
@@ -5892,6 +5966,182 @@
   document.getElementById('undoBtn').addEventListener('click', function() { performUndo(); });
   document.getElementById('redoBtn').addEventListener('click', function() { performRedo(); });
   document.getElementById('zoomFitBtn').addEventListener('click', function() { zoomToFitCanvas(); });
+
+  /* ---------- Search ----------
+     Searches everything text-bearing — notes, tables, text lines,
+     timetable cells, subject quick notes — and jumps to whichever result
+     you pick: canvas instances get centered and briefly highlighted;
+     timetable/subject results switch tabs (and open the Subject Notes
+     panel) first. */
+  var searchWrap = document.getElementById('searchWrap');
+  var searchBtn = document.getElementById('searchBtn');
+  var searchPanel = document.getElementById('searchPanel');
+  var searchInput = document.getElementById('searchInput');
+  var searchResultsEl = document.getElementById('searchResults');
+
+  function stripTagsForSearch(html) {
+    var scratch = document.createElement('div');
+    scratch.innerHTML = html || '';
+    return scratch.textContent || '';
+  }
+
+  function escapeHtmlForSearch(s) {
+    return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  }
+
+  function makeSearchSnippet(text, query) {
+    text = text.replace(/\s+/g, ' ').trim();
+    var idx = text.toLowerCase().indexOf(query);
+    if (idx === -1) return escapeHtmlForSearch(text.slice(0, 60));
+    var start = Math.max(0, idx - 18);
+    var end = Math.min(text.length, idx + query.length + 34);
+    var snippet = (start > 0 ? '…' : '') + text.slice(start, end) + (end < text.length ? '…' : '');
+    var esc = escapeHtmlForSearch(snippet);
+    var reIdx = esc.toLowerCase().indexOf(query.toLowerCase());
+    if (reIdx !== -1) {
+      esc = esc.slice(0, reIdx) + '<b>' + esc.slice(reIdx, reIdx + query.length) + '</b>' + esc.slice(reIdx + query.length);
+    }
+    return esc;
+  }
+
+  function highlightAfterJump(el) {
+    el.classList.remove('search-highlight');
+    void el.offsetWidth; /* restart the animation if it's already mid-pulse */
+    el.classList.add('search-highlight');
+    setTimeout(function() { el.classList.remove('search-highlight'); }, 1700);
+  }
+
+  function jumpToCanvasEl(el) {
+    var boardBtn = document.querySelector('.subswitch-btn[data-sub="board"]');
+    if (boardBtn && !boardBtn.classList.contains('active')) boardBtn.click();
+
+    var vpW = canvasViewport.clientWidth;
+    var vpH = canvasViewport.clientHeight;
+    var targetZoom = Math.max(CANVAS_ZOOM_MIN, Math.min(CANVAS_ZOOM_MAX, canvasZoom < 0.5 ? 1 : canvasZoom));
+    var centerX = el.offsetLeft + el.offsetWidth / 2;
+    var centerY = el.offsetTop + el.offsetHeight / 2;
+    canvasZoom = targetZoom;
+    canvasPanX = vpW / 2 - centerX * targetZoom;
+    canvasPanY = vpH / 2 - centerY * targetZoom;
+    layer.style.transition = 'transform 0.35s cubic-bezier(0.2, 0.8, 0.2, 1)';
+    applyCanvasTransform();
+    canvasSaveViewDebounced();
+    setTimeout(function() { layer.style.transition = ''; }, 380);
+    setTimeout(function() { highlightAfterJump(el); }, 200);
+  }
+
+  function jumpToTimetableCell(key) {
+    var ttBtn = document.querySelector('.subswitch-btn[data-sub="timetable"]');
+    if (ttBtn && !ttBtn.classList.contains('active')) ttBtn.click();
+    setTimeout(function() {
+      var cellEl = ttCellEls[key];
+      if (!cellEl) return;
+      cellEl.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' });
+      setTimeout(function() { highlightAfterJump(cellEl); }, 250);
+    }, 50);
+  }
+
+  function jumpToSubject(id) {
+    var ttBtn = document.querySelector('.subswitch-btn[data-sub="timetable"]');
+    if (ttBtn && !ttBtn.classList.contains('active')) ttBtn.click();
+    setSubjectsCollapseOpen(true);
+    switchToSubject(id);
+    setTimeout(function() {
+      if (notebookWrap) highlightAfterJump(notebookWrap);
+    }, 250);
+  }
+
+  function runSearch(rawQuery) {
+    var query = rawQuery.trim().toLowerCase();
+    searchResultsEl.innerHTML = '';
+    if (!query) return;
+
+    var matches = [];
+
+    layer.querySelectorAll('.note:not(.sticky-canvas-card):not(.table-card)').forEach(function(n) {
+      var body = n.querySelector('.note-text');
+      var text = body ? body.textContent : '';
+      if (text.toLowerCase().indexOf(query) !== -1) {
+        matches.push({ kind: 'Note', snippet: makeSearchSnippet(text, query), action: function() { jumpToCanvasEl(n); } });
+      }
+    });
+
+    layer.querySelectorAll('.table-card').forEach(function(n) {
+      var cells = n.querySelectorAll('.table-grid td');
+      var hitText = null;
+      Array.prototype.some.call(cells, function(td) {
+        var t = td.textContent;
+        if (t && t.toLowerCase().indexOf(query) !== -1) { hitText = t; return true; }
+        return false;
+      });
+      if (hitText !== null) {
+        matches.push({ kind: 'Table', snippet: makeSearchSnippet(hitText, query), action: function() { jumpToCanvasEl(n); } });
+      }
+    });
+
+    layer.querySelectorAll('.text-line-wrap').forEach(function(wrap) {
+      var el = wrap.querySelector('.text-line');
+      var text = el ? el.textContent : '';
+      if (text.toLowerCase().indexOf(query) !== -1) {
+        matches.push({ kind: 'Text Line', snippet: makeSearchSnippet(text, query), action: function() { jumpToCanvasEl(wrap); } });
+      }
+    });
+
+    Object.keys(timetable.cells || {}).forEach(function(key) {
+      var cell = timetable.cells[key];
+      if (!cell) return;
+      var combined = [stripTagsForSearch(cell.subject), cell.room, cell.teacher].filter(Boolean).join(' · ');
+      if (combined.toLowerCase().indexOf(query) !== -1) {
+        matches.push({ kind: 'Timetable', snippet: makeSearchSnippet(combined, query), action: function() { jumpToTimetableCell(key); } });
+      }
+    });
+
+    subjects.forEach(function(s) {
+      var combined = s.name + ' ' + stripTagsForSearch(subjectQuickNotes[s.id] || '');
+      if (combined.toLowerCase().indexOf(query) !== -1) {
+        matches.push({ kind: 'Subject', snippet: makeSearchSnippet(combined, query), action: function() { jumpToSubject(s.id); } });
+      }
+    });
+
+    if (!matches.length) {
+      var empty = document.createElement('div');
+      empty.className = 'search-empty';
+      empty.textContent = 'No matches';
+      searchResultsEl.appendChild(empty);
+      return;
+    }
+
+    matches.slice(0, 30).forEach(function(m) {
+      var item = document.createElement('button');
+      item.className = 'add-menu-item search-result-item';
+      item.innerHTML = '<span class="search-result-kind">' + m.kind + '</span>' + m.snippet;
+      item.addEventListener('click', function() {
+        searchPanel.classList.remove('open');
+        m.action();
+      });
+      searchResultsEl.appendChild(item);
+    });
+  }
+
+  searchBtn.addEventListener('click', function(e) {
+    e.stopPropagation();
+    var wasOpen = searchPanel.classList.contains('open');
+    addMenu.classList.remove('open');
+    moreMenu.classList.remove('open');
+    searchPanel.classList.toggle('open', !wasOpen);
+    if (!wasOpen) {
+      searchInput.value = '';
+      searchResultsEl.innerHTML = '';
+      setTimeout(function() { searchInput.focus(); }, 50);
+    }
+  });
+
+  searchInput.addEventListener('input', function() { runSearch(searchInput.value); });
+  searchInput.addEventListener('pointerdown', function(e) { e.stopPropagation(); });
+
+  document.addEventListener('pointerdown', function(e) {
+    if (!e.target.closest('#searchWrap')) searchPanel.classList.remove('open');
+  });
 
   function showOverlay() { dropOverlay.classList.add('show'); }
   function hideOverlay() { dropOverlay.classList.remove('show'); dragCounter = 0; }

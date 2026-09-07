@@ -439,6 +439,50 @@
     color: rgba(var(--ink-rgb), 0.45);
   }
 
+  .theme-customize-panel {
+    display: none;
+    flex-direction: column;
+    gap: 8px;
+    padding: 8px 10px 4px;
+  }
+
+  .theme-customize-panel.open {
+    display: flex;
+  }
+
+  .theme-customize-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+  }
+
+  .theme-customize-row label {
+    font-size: 12px;
+    font-weight: 600;
+    color: rgba(var(--ink-rgb), 0.75);
+  }
+
+  .theme-customize-row input[type="color"] {
+    width: 28px;
+    height: 22px;
+    padding: 0;
+    border: 0.5px solid rgba(var(--ink-rgb), 0.25);
+    border-radius: 5px;
+    background: none;
+    cursor: pointer;
+  }
+
+  .theme-customize-blobs {
+    display: flex;
+    gap: 4px;
+  }
+
+  .theme-customize-blobs input[type="color"] {
+    width: 20px;
+    height: 20px;
+  }
+
   /* A brief pulse so a jumped-to search result is easy to spot the
      instant the canvas finishes animating there. */
   @keyframes searchHighlightPulse {
@@ -3129,6 +3173,27 @@
           <button class="theme-swatch" data-theme-id="solid-ocean" title="Solid Ocean" aria-label="Solid Ocean theme" style="background: #0c1c2e;"></button>
           <button class="theme-swatch" data-theme-id="solid-blush" title="Solid Blush" aria-label="Solid Blush theme" style="background: #fbeef0;"></button>
         </div>
+        <button class="add-menu-item" id="customizeThemeBtn">Customize Colors&hellip;</button>
+        <div class="theme-customize-panel" id="themeCustomizePanel">
+          <div class="theme-customize-row">
+            <label for="customBgColor">Background</label>
+            <input type="color" id="customBgColor">
+          </div>
+          <div class="theme-customize-row">
+            <label for="customTextColor">Text</label>
+            <input type="color" id="customTextColor">
+          </div>
+          <div class="theme-customize-row">
+            <label>Gradient accents</label>
+            <div class="theme-customize-blobs">
+              <input type="color" id="customBlob1" title="Accent 1">
+              <input type="color" id="customBlob2" title="Accent 2">
+              <input type="color" id="customBlob3" title="Accent 3">
+              <input type="color" id="customBlob4" title="Accent 4">
+            </div>
+          </div>
+          <button class="add-menu-item" id="resetThemeCustomBtn">Reset to Theme Default</button>
+        </div>
         <div class="add-menu-divider"></div>
         <button class="add-menu-item" id="exportWorkspaceBtn">Export Workspace&hellip;</button>
         <button class="add-menu-item" id="importWorkspaceBtn">Import Workspace&hellip;</button>
@@ -5138,6 +5203,102 @@
   var THEME_KEY = 'claude_workspace_theme_v1';
   var themeSwatchRow = document.getElementById('themeSwatchRow');
 
+  /* ---------- Theme color customization ----------
+     Lets someone tweak the handful of tokens that actually carry a
+     theme's identity (background, text, the four gradient accents)
+     without needing a whole new preset — stored separately from which
+     preset is active, and layered back on top of it every time
+     applyTheme() runs (picking a different built-in theme never
+     silently discards a customization; only the explicit reset does). */
+  var CUSTOM_COLORS_KEY = 'claude_workspace_custom_colors_v1';
+
+  function hexToRgbTriplet(hex) {
+    hex = hex.replace('#', '');
+    var r = parseInt(hex.substring(0, 2), 16);
+    var g = parseInt(hex.substring(2, 4), 16);
+    var b = parseInt(hex.substring(4, 6), 16);
+    return r + ', ' + g + ', ' + b;
+  }
+
+  function loadCustomColors() {
+    try {
+      var raw = localStorage.getItem(CUSTOM_COLORS_KEY);
+      return raw ? JSON.parse(raw) : {};
+    } catch (err) { return {}; }
+  }
+
+  function saveCustomColors(obj) {
+    try { localStorage.setItem(CUSTOM_COLORS_KEY, JSON.stringify(obj)); } catch (err) {}
+  }
+
+  function applyCustomColorOverrides() {
+    var overrides = loadCustomColors();
+    var rootStyle = document.documentElement.style;
+    if (overrides.bg) rootStyle.setProperty('--page-bg', overrides.bg);
+    else rootStyle.removeProperty('--page-bg');
+    if (overrides.text) {
+      rootStyle.setProperty('--ink-solid', overrides.text);
+      rootStyle.setProperty('--ink-rgb', hexToRgbTriplet(overrides.text));
+    } else {
+      rootStyle.removeProperty('--ink-solid');
+      rootStyle.removeProperty('--ink-rgb');
+    }
+    ['blob1', 'blob2', 'blob3', 'blob4'].forEach(function(key) {
+      if (overrides[key]) rootStyle.setProperty('--' + key, overrides[key]);
+      else rootStyle.removeProperty('--' + key);
+    });
+  }
+
+  function setCustomColor(key, value) {
+    var overrides = loadCustomColors();
+    overrides[key] = value;
+    saveCustomColors(overrides);
+    applyCustomColorOverrides();
+  }
+
+  function computedColorHex(varName) {
+    var val = getComputedStyle(document.documentElement).getPropertyValue(varName).trim();
+    return val || '#000000';
+  }
+
+  function populateCustomizeInputs() {
+    document.getElementById('customBgColor').value = computedColorHex('--page-bg');
+    document.getElementById('customTextColor').value = computedColorHex('--ink-solid');
+    document.getElementById('customBlob1').value = computedColorHex('--blob1');
+    document.getElementById('customBlob2').value = computedColorHex('--blob2');
+    document.getElementById('customBlob3').value = computedColorHex('--blob3');
+    document.getElementById('customBlob4').value = computedColorHex('--blob4');
+  }
+
+  document.getElementById('customBgColor').addEventListener('input', function(e) { setCustomColor('bg', e.target.value); });
+  document.getElementById('customTextColor').addEventListener('input', function(e) { setCustomColor('text', e.target.value); });
+  document.getElementById('customBlob1').addEventListener('input', function(e) { setCustomColor('blob1', e.target.value); });
+  document.getElementById('customBlob2').addEventListener('input', function(e) { setCustomColor('blob2', e.target.value); });
+  document.getElementById('customBlob3').addEventListener('input', function(e) { setCustomColor('blob3', e.target.value); });
+  document.getElementById('customBlob4').addEventListener('input', function(e) { setCustomColor('blob4', e.target.value); });
+
+  document.getElementById('customizeThemeBtn').addEventListener('click', function(e) {
+    e.stopPropagation();
+    var panel = document.getElementById('themeCustomizePanel');
+    var wasOpen = panel.classList.contains('open');
+    if (!wasOpen) populateCustomizeInputs();
+    panel.classList.toggle('open', !wasOpen);
+  });
+
+  document.getElementById('themeCustomizePanel').addEventListener('pointerdown', function(e) { e.stopPropagation(); });
+
+  document.getElementById('resetThemeCustomBtn').addEventListener('click', function(e) {
+    e.stopPropagation();
+    saveCustomColors({});
+    applyCustomColorOverrides();
+    populateCustomizeInputs();
+  });
+
+  /* Apply any customization saved from a previous session immediately
+     (the flash-prevention <script> right after </style> only restores
+     the base theme attribute, not these). */
+  applyCustomColorOverrides();
+
   function applyTheme(themeId, persist) {
     if (themeId) {
       document.documentElement.setAttribute('data-theme', themeId);
@@ -5150,6 +5311,11 @@
     if (persist) {
       try { localStorage.setItem(THEME_KEY, themeId); } catch (err) {}
     }
+    /* Any manually customized colors apply on top of whichever preset is
+       now active, so picking a different theme never silently discards
+       them — "Reset to Theme Default" in the customize panel is the only
+       thing that does. */
+    applyCustomColorOverrides();
   }
 
   themeSwatchRow.addEventListener('click', function(e) {

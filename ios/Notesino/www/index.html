@@ -435,6 +435,107 @@
     background: rgba(var(--ink-rgb), 0.14);
   }
 
+  .board-switcher-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    height: 38px;
+    padding: 0 14px;
+    border-radius: 999px;
+    background: rgba(var(--ink-rgb), 0.12);
+    border: 0.5px solid rgba(var(--ink-rgb), 0.18);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    color: var(--ink-solid);
+    cursor: pointer;
+    max-width: 160px;
+  }
+
+  .board-switcher-name {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-family: "Poppins", -apple-system, sans-serif;
+    font-weight: 600;
+    font-size: 13px;
+  }
+
+  .board-switcher-menu {
+    left: 0;
+    right: auto;
+    min-width: 220px;
+  }
+
+  .board-list {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    max-height: 240px;
+    overflow-y: auto;
+  }
+
+  .board-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 9px 10px;
+    border-radius: 10px;
+    cursor: pointer;
+    color: rgba(var(--ink-rgb), 0.8);
+    font-size: 13.5px;
+  }
+
+  .board-item:hover {
+    background: rgba(var(--ink-rgb), 0.08);
+  }
+
+  .board-item.active {
+    background: rgba(var(--ink-rgb), 0.16);
+    color: var(--ink-solid);
+  }
+
+  .board-item .board-item-name {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-family: "Poppins", -apple-system, sans-serif;
+    font-weight: 600;
+    background: none;
+    border: none;
+    color: inherit;
+    font-size: inherit;
+    text-align: left;
+    cursor: pointer;
+    padding: 0;
+  }
+
+  .board-item .board-item-rename,
+  .board-item .board-item-del {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: rgba(0,0,0,0.2);
+    border: none;
+    color: rgba(var(--ink-rgb), 0.7);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    flex-shrink: 0;
+  }
+
+  .board-item:hover .board-item-rename,
+  .board-item:hover .board-item-del {
+    opacity: 1;
+  }
+
+  body.touch-device .board-item .board-item-rename,
+  body.touch-device .board-item .board-item-del {
+    opacity: 1;
+  }
+
   .search-panel {
     width: 280px;
     max-width: min(320px, calc(100vw - 32px));
@@ -4157,6 +4258,17 @@
   <h1 class="app-title">Notesino</h1>
 
   <div class="toolbar" id="shareToolbar" style="left:calc(24px + env(safe-area-inset-left, 0px)); right:auto;">
+    <div class="add-menu-wrap" id="boardSwitcherWrap">
+      <button class="board-switcher-btn" id="boardSwitcherBtn" title="Switch board" aria-label="Switch board" aria-haspopup="true" aria-expanded="false">
+        <span class="board-switcher-name" id="boardSwitcherName">Board</span>
+        <svg class="tb-icon" viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+      </button>
+      <div class="add-menu board-switcher-menu" id="boardSwitcherMenu">
+        <div class="board-list" id="boardList"></div>
+        <div class="add-menu-divider"></div>
+        <button class="add-menu-item" id="newBoardBtn">+ New Board</button>
+      </div>
+    </div>
     <button class="tb-btn" id="shareBtn" title="Collaborate live" aria-label="Collaborate live">
       <svg class="tb-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
       <span class="live-dot" id="liveDot"></span>
@@ -4404,6 +4516,17 @@
       <div class="subject-modal-actions">
         <button class="subject-modal-btn cancel" id="subjectModalCancel">Cancel</button>
         <button class="subject-modal-btn create" id="subjectModalCreate">Create</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="subject-modal-overlay" id="boardModalOverlay">
+    <div class="subject-modal" role="dialog" aria-modal="true" aria-labelledby="boardModalTitle">
+      <div class="subject-modal-title" id="boardModalTitle">New Board</div>
+      <input type="text" class="subject-modal-input" id="boardModalInput" placeholder="Board name" maxlength="40">
+      <div class="subject-modal-actions">
+        <button class="subject-modal-btn cancel" id="boardModalCancel">Cancel</button>
+        <button class="subject-modal-btn create" id="boardModalCreate">Create</button>
       </div>
     </div>
   </div>
@@ -6738,6 +6861,7 @@
     if (e.target.closest('.add-menu-wrap')) return;
     addMenu.classList.remove('open');
     moreMenu.classList.remove('open');
+    boardSwitcherMenu.classList.remove('open');
   });
 
   /* ---------- Theme ----------
@@ -7000,9 +7124,11 @@
       addMenu.classList.remove('open');
       moreMenu.classList.remove('open');
       searchPanel.classList.remove('open');
+      boardSwitcherMenu.classList.remove('open');
       shortcutsModalOverlay.classList.remove('show');
       document.getElementById('subjectModalOverlay').classList.remove('show');
       document.getElementById('shareModalOverlay').classList.remove('show');
+      document.getElementById('boardModalOverlay').classList.remove('show');
       closeConnectionPicker();
       if (activeTextLineWrap) deselectAllTextLines();
       document.querySelectorAll('.table-card.selected').forEach(function(t) { t.classList.remove('selected'); });
@@ -10215,6 +10341,239 @@
     return applyState(state);
   }
 
+  /* ---------- Multiple named boards ----------
+     Each board is a full, independent workspace (its own notes, tables,
+     subjects, timetable, connections -- everything collectState() covers).
+     Rather than restructure collectState()/applyState()/saveWorkspace() to
+     be board-aware, the ACTIVE board's data always simply IS whatever
+     lives at STORAGE_KEY, exactly as before this feature existed --
+     autosave, undo, snapshots, export/import and room sync all keep
+     working completely unchanged. Switching boards just swaps what's
+     sitting at STORAGE_KEY: the outgoing board's current state is frozen
+     into its own claude_workspace_board_<id>_v1 slot, and the incoming
+     board's frozen state (or an empty one, for a board that's brand new)
+     is copied into STORAGE_KEY and loaded the same way a page load would. */
+  var boardSwitcherBtn = document.getElementById('boardSwitcherBtn');
+  var boardSwitcherName = document.getElementById('boardSwitcherName');
+  var boardSwitcherMenu = document.getElementById('boardSwitcherMenu');
+  var boardList = document.getElementById('boardList');
+  var newBoardBtn = document.getElementById('newBoardBtn');
+  var boardModalOverlay = document.getElementById('boardModalOverlay');
+  var boardModalTitle = document.getElementById('boardModalTitle');
+  var boardModalInput = document.getElementById('boardModalInput');
+  var boardModalCancel = document.getElementById('boardModalCancel');
+  var boardModalCreate = document.getElementById('boardModalCreate');
+
+  var BOARDS_KEY = 'claude_workspace_boards_v1';
+  var boardsManifest = null; // { boards: [{id, name}], activeBoardId }
+
+  function boardStorageKey(id) { return 'claude_workspace_board_' + id + '_v1'; }
+
+  function loadBoardsManifest() {
+    var raw;
+    try { raw = localStorage.getItem(BOARDS_KEY); } catch (err) { raw = null; }
+    var manifest = null;
+    if (raw) {
+      try { manifest = JSON.parse(raw); } catch (err) { manifest = null; }
+    }
+    if (!manifest || !Array.isArray(manifest.boards) || !manifest.boards.length) {
+      /* First run, or an older version with no boards yet -- whatever is
+         already sitting at STORAGE_KEY (if anything) becomes "My Board"
+         in place, with nothing moved or rewritten. */
+      manifest = { boards: [{ id: 'default', name: 'My Board' }], activeBoardId: 'default' };
+    }
+    if (!manifest.activeBoardId || !manifest.boards.some(function(b) { return b.id === manifest.activeBoardId; })) {
+      manifest.activeBoardId = manifest.boards[0].id;
+    }
+    return manifest;
+  }
+
+  function saveBoardsManifest() {
+    try { localStorage.setItem(BOARDS_KEY, JSON.stringify(boardsManifest)); } catch (err) {}
+  }
+
+  function activeBoard() {
+    return boardsManifest.boards.filter(function(b) { return b.id === boardsManifest.activeBoardId; })[0] || boardsManifest.boards[0];
+  }
+
+  function renderBoardSwitcher() {
+    var current = activeBoard();
+    boardSwitcherName.textContent = current ? current.name : 'Board';
+    boardList.innerHTML = '';
+    boardsManifest.boards.forEach(function(b) {
+      var item = document.createElement('div');
+      item.className = 'board-item' + (b.id === boardsManifest.activeBoardId ? ' active' : '');
+      item.setAttribute('role', 'group');
+      item.setAttribute('aria-label', b.name);
+
+      var name = document.createElement('button');
+      name.className = 'board-item-name';
+      name.textContent = b.name;
+      item.appendChild(name);
+
+      var renameBtn = document.createElement('button');
+      renameBtn.className = 'board-item-rename';
+      renameBtn.setAttribute('aria-label', 'Rename ' + b.name);
+      renameBtn.title = 'Rename';
+      renameBtn.innerHTML = '<svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>';
+      renameBtn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        openBoardModal('rename', b.id);
+      });
+      item.appendChild(renameBtn);
+
+      var delBtn = document.createElement('button');
+      delBtn.className = 'board-item-del';
+      delBtn.setAttribute('aria-label', 'Delete ' + b.name);
+      delBtn.title = 'Delete';
+      delBtn.textContent = '×';
+      delBtn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        deleteBoard(b.id);
+      });
+      item.appendChild(delBtn);
+
+      name.addEventListener('click', function() {
+        if (b.id !== boardsManifest.activeBoardId) switchToBoard(b.id);
+        boardSwitcherMenu.classList.remove('open');
+      });
+
+      boardList.appendChild(item);
+    });
+  }
+
+  function switchToBoard(id) {
+    if (id === boardsManifest.activeBoardId) return;
+    /* Freeze the outgoing board's current state into its own slot first. */
+    flushSaveWorkspace();
+    var outgoing = localStorage.getItem(STORAGE_KEY);
+    if (outgoing) {
+      try { localStorage.setItem(boardStorageKey(boardsManifest.activeBoardId), outgoing); } catch (err) {}
+    }
+
+    var incomingRaw = null;
+    try { incomingRaw = localStorage.getItem(boardStorageKey(id)); } catch (err) {}
+    var incomingState = {};
+    if (incomingRaw) {
+      try { incomingState = JSON.parse(incomingRaw) || {}; } catch (err) { incomingState = {}; }
+    }
+
+    withStateRestoreGuard(function() {
+      clearWorkspaceUI();
+      applyState(incomingState);
+      renderSubjectsList();
+      renderSubjectCanvas();
+      renderTimetable();
+    });
+
+    boardsManifest.activeBoardId = id;
+    saveBoardsManifest();
+    renderBoardSwitcher();
+    saveWorkspaceNow();
+    document.getElementById('hint').style.display = 'none';
+  }
+
+  var boardModalMode = 'create'; // 'create' | 'rename'
+  var boardModalTargetId = null;
+
+  function openBoardModal(mode, targetId) {
+    boardModalMode = mode;
+    boardModalTargetId = targetId || null;
+    boardModalTitle.textContent = mode === 'rename' ? 'Rename Board' : 'New Board';
+    boardModalCreate.textContent = mode === 'rename' ? 'Rename' : 'Create';
+    boardModalInput.value = mode === 'rename'
+      ? (boardsManifest.boards.filter(function(b) { return b.id === targetId; })[0] || {}).name || ''
+      : '';
+    boardModalOverlay.classList.add('show');
+    setTimeout(function() { boardModalInput.focus(); boardModalInput.select(); }, 50);
+  }
+
+  function closeBoardModal() {
+    boardModalOverlay.classList.remove('show');
+  }
+
+  function confirmBoardModal() {
+    var name = boardModalInput.value.trim();
+    if (!name) { boardModalInput.focus(); return; }
+    if (boardModalMode === 'rename') {
+      var b = boardsManifest.boards.filter(function(x) { return x.id === boardModalTargetId; })[0];
+      if (b) { b.name = name; saveBoardsManifest(); renderBoardSwitcher(); }
+    } else {
+      var id = 'board_' + Date.now() + '_' + Math.floor(Math.random() * 1000);
+      boardsManifest.boards.push({ id: id, name: name });
+      saveBoardsManifest();
+      renderBoardSwitcher();
+      switchToBoard(id);
+    }
+    closeBoardModal();
+  }
+
+  function deleteBoard(id) {
+    if (boardsManifest.boards.length <= 1) {
+      window.alert('You need at least one board -- create another before deleting this one.');
+      return;
+    }
+    var b = boardsManifest.boards.filter(function(x) { return x.id === id; })[0];
+    var ok = window.confirm('Delete "' + (b ? b.name : 'this board') + '"? This removes everything on it and can\'t be undone.');
+    if (!ok) return;
+
+    var wasActive = id === boardsManifest.activeBoardId;
+    boardsManifest.boards = boardsManifest.boards.filter(function(x) { return x.id !== id; });
+    try { localStorage.removeItem(boardStorageKey(id)); } catch (err) {}
+
+    if (wasActive) {
+      var next = boardsManifest.boards[0];
+      /* Nothing to freeze -- the board being deleted is going away, so
+         just load the next one straight in. */
+      boardsManifest.activeBoardId = next.id;
+      saveBoardsManifest();
+      var incomingRaw = null;
+      try { incomingRaw = localStorage.getItem(boardStorageKey(next.id)); } catch (err) {}
+      var incomingState = {};
+      if (incomingRaw) {
+        try { incomingState = JSON.parse(incomingRaw) || {}; } catch (err) { incomingState = {}; }
+      }
+      withStateRestoreGuard(function() {
+        clearWorkspaceUI();
+        applyState(incomingState);
+        renderSubjectsList();
+        renderSubjectCanvas();
+        renderTimetable();
+      });
+      saveWorkspaceNow();
+    } else {
+      saveBoardsManifest();
+    }
+    renderBoardSwitcher();
+  }
+
+  function initBoards() {
+    boardsManifest = loadBoardsManifest();
+    saveBoardsManifest();
+    renderBoardSwitcher();
+
+    boardSwitcherBtn.addEventListener('click', function(e) {
+      e.stopPropagation();
+      var wasOpen = boardSwitcherMenu.classList.contains('open');
+      addMenu.classList.remove('open');
+      moreMenu.classList.remove('open');
+      boardSwitcherMenu.classList.toggle('open', !wasOpen);
+      boardSwitcherBtn.setAttribute('aria-expanded', String(!wasOpen));
+    });
+    newBoardBtn.addEventListener('click', function() {
+      boardSwitcherMenu.classList.remove('open');
+      openBoardModal('create');
+    });
+    boardModalCancel.addEventListener('click', closeBoardModal);
+    boardModalCreate.addEventListener('click', confirmBoardModal);
+    boardModalOverlay.addEventListener('click', function(e) {
+      if (e.target === boardModalOverlay) closeBoardModal();
+    });
+    boardModalInput.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') { e.preventDefault(); confirmBoardModal(); }
+    });
+  }
+
   /* ---------- Real-time collaboration via Firebase Realtime Database ----------
      HOW THIS WORKS:
      - This needs a real Firebase project (free Spark plan is enough). Create one at
@@ -10466,6 +10825,7 @@
     renderSubjectCanvas();
     renderTimetable();
   });
+  initBoards();
   /* Baseline checkpoint so the very first local edit has something to
      undo back to. For a fresh install this gets set again (to the same
      thing) a moment later when the starter note's saveWorkspace() call

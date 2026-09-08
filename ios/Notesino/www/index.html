@@ -20,8 +20,8 @@
   /* Firebase is loaded here as an ES module and attached to window so the
      main (non-module) script block later in the page can use it. */
   import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js';
-  import { getDatabase, ref, set, update, onValue, off, get } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-database.js';
-  window.__firebase = { initializeApp, getDatabase, ref, set, update, onValue, off, get };
+  import { getDatabase, ref, set, update, onValue, off, get, remove, onDisconnect } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-database.js';
+  window.__firebase = { initializeApp, getDatabase, ref, set, update, onValue, off, get, remove, onDisconnect };
 </script>
 <script>
   /* Registered as early as possible (but after load, so it never competes
@@ -1549,6 +1549,69 @@
 
   .share-status.error {
     color: #ff9a9a;
+  }
+
+  .presence-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin-top: 12px;
+    min-height: 22px;
+  }
+
+  .presence-avatar {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 9.5px;
+    font-weight: 700;
+    color: #fff;
+    font-family: "Poppins", -apple-system, sans-serif;
+    border: 1.5px solid rgba(var(--panel-rgb), 0.9);
+    flex-shrink: 0;
+  }
+
+  .presence-count {
+    font-size: 11px;
+    color: rgba(var(--ink-rgb), 0.5);
+    margin-left: 2px;
+  }
+
+  /* ---------- Remote cursors (live collaboration presence) ---------- */
+  .remote-cursor {
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 900;
+    pointer-events: none;
+    transition: transform 0.08s linear;
+    will-change: transform;
+  }
+
+  .remote-cursor-dot {
+    width: 14px;
+    height: 14px;
+    border-radius: 50% 50% 50% 0;
+    transform: rotate(-45deg);
+    box-shadow: 0 1px 4px rgba(0,0,0,0.35);
+  }
+
+  .remote-cursor-label {
+    position: absolute;
+    top: 16px;
+    left: 10px;
+    white-space: nowrap;
+    padding: 2px 7px;
+    border-radius: 6px;
+    font-size: 10.5px;
+    font-weight: 600;
+    font-family: "Poppins", -apple-system, sans-serif;
+    color: #fff;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.3);
   }
 
   .share-status.ok {
@@ -4569,6 +4632,7 @@
           <button class="share-mini-btn" id="copyShareCode" title="Copy code">Copy</button>
         </div>
         <div class="share-status ok" id="shareStatusMine">Connected. Everyone in this room sees your changes live.</div>
+        <div class="presence-row" id="presenceRow" aria-live="polite"></div>
         <button class="share-mini-btn" id="leaveRoomBtn" style="width:100%; padding:10px; margin-top:14px;">Leave room</button>
       </div>
 
@@ -10651,6 +10715,7 @@
   var enterShareCodeInput = document.getElementById('enterShareCode');
   var pullShareCodeBtn = document.getElementById('pullShareCode');
   var shareStatusTheirs = document.getElementById('shareStatusTheirs');
+  var presenceRow = document.getElementById('presenceRow');
 
   function setStatus(el, text, kind) {
     el.textContent = text;
@@ -10720,11 +10785,13 @@
     showRoomView(true);
     setStatus(shareStatusMine, isNew ? 'Room created. Share this code \u2014 you\'re live.' : 'Connected. Everyone in this room sees your changes live.', 'ok');
     startListening(code);
+    startPresence(code);
     if (isNew) pushToRoomIfActive(collectState());
   }
 
   function leaveRoom() {
     stopListening();
+    stopPresence();
     currentRoomCode = null;
     try {
       localStorage.removeItem(ROOM_CODE_KEY);
@@ -10733,6 +10800,153 @@
     showRoomView(false);
     setStatus(shareStatusTheirs, 'Joining replaces everything in your current workspace with the room\'s live data.', '');
   }
+
+  /* ---------- Live collaboration presence ----------
+     While a room is active, each client writes a small presence record
+     (name, color, live cursor position in canvas-world coordinates) to
+     rooms/<code>/presence/<clientId>, with onDisconnect().remove() so a
+     closed tab or dropped connection cleans itself up automatically \u2014
+     no explicit "goodbye" message needed. Everyone else in the room gets
+     a live-updating colored cursor + name label on the canvas, plus a
+     small avatar row in the Share panel. Cursor writes are throttled so a
+     fast mouse doesn't flood the database with updates. */
+  var CLIENT_ID_KEY = 'claude_workspace_client_id_v1';
+  var CLIENT_NAME_KEY = 'claude_workspace_client_name_v1';
+  var CLIENT_COLOR_KEY = 'claude_workspace_client_color_v1';
+  var PRESENCE_COLORS = ['#ff6b6b', '#ffa94d', '#ffd43b', '#69db7c', '#38d9a9', '#4dabf7', '#748ffc', '#da77f2', '#f783ac'];
+  var CURSOR_BROADCAST_MS = 120;
+
+  function getOrCreateClientIdentity() {
+    var id, name, color;
+    try { id = localStorage.getItem(CLIENT_ID_KEY); } catch (err) {}
+    if (!id) {
+      id = 'c_' + Date.now() + '_' + Math.floor(Math.random() * 100000);
+      try { localStorage.setItem(CLIENT_ID_KEY, id); } catch (err) {}
+    }
+    try { name = localStorage.getItem(CLIENT_NAME_KEY); } catch (err) {}
+    if (!name) {
+      name = 'Guest ' + Math.floor(1000 + Math.random() * 9000);
+      try { localStorage.setItem(CLIENT_NAME_KEY, name); } catch (err) {}
+    }
+    try { color = localStorage.getItem(CLIENT_COLOR_KEY); } catch (err) {}
+    if (!color) {
+      color = PRESENCE_COLORS[Math.floor(Math.random() * PRESENCE_COLORS.length)];
+      try { localStorage.setItem(CLIENT_COLOR_KEY, color); } catch (err) {}
+    }
+    return { id: id, name: name, color: color };
+  }
+
+  var localIdentity = getOrCreateClientIdentity();
+  var presenceRef = null;
+  var presenceListRef = null;
+  var remoteCursorEls = {};
+  var lastCursorBroadcast = 0;
+
+  function updatePresenceRow(presenceObj) {
+    if (!presenceRow) return;
+    presenceRow.innerHTML = '';
+    var ids = Object.keys(presenceObj || {});
+    ids.forEach(function(id) {
+      var p = presenceObj[id];
+      if (!p) return;
+      var av = document.createElement('div');
+      av.className = 'presence-avatar';
+      av.style.background = p.color || '#6a7cff';
+      av.textContent = (p.name || '?').trim().slice(0, 1).toUpperCase();
+      av.title = p.name + (id === localIdentity.id ? ' (you)' : '');
+      presenceRow.appendChild(av);
+    });
+    var otherCount = ids.filter(function(id) { return id !== localIdentity.id; }).length;
+    var countLabel = document.createElement('span');
+    countLabel.className = 'presence-count';
+    countLabel.textContent = otherCount === 0 ? 'Just you here'
+      : (otherCount === 1 ? '1 other person here' : otherCount + ' other people here');
+    presenceRow.appendChild(countLabel);
+  }
+
+  function ensureRemoteCursorEl(id) {
+    var el = remoteCursorEls[id];
+    if (el) return el;
+    el = document.createElement('div');
+    el.className = 'remote-cursor';
+    var dot = document.createElement('div');
+    dot.className = 'remote-cursor-dot';
+    var label = document.createElement('div');
+    label.className = 'remote-cursor-label';
+    el.appendChild(dot);
+    el.appendChild(label);
+    layer.appendChild(el);
+    remoteCursorEls[id] = el;
+    return el;
+  }
+
+  function clearRemoteCursors() {
+    Object.keys(remoteCursorEls).forEach(function(id) { remoteCursorEls[id].remove(); });
+    remoteCursorEls = {};
+  }
+
+  function renderRemoteCursors(presenceObj) {
+    var seen = {};
+    Object.keys(presenceObj || {}).forEach(function(id) {
+      if (id === localIdentity.id) return; /* never render our own cursor back at us */
+      var p = presenceObj[id];
+      if (!p || typeof p.x !== 'number' || typeof p.y !== 'number') return;
+      seen[id] = true;
+      var el = ensureRemoteCursorEl(id);
+      el.style.transform = 'translate3d(' + p.x + 'px, ' + p.y + 'px, 0)';
+      var dot = el.querySelector('.remote-cursor-dot');
+      var label = el.querySelector('.remote-cursor-label');
+      dot.style.background = p.color || '#6a7cff';
+      label.style.background = p.color || '#6a7cff';
+      if (label.textContent !== p.name) label.textContent = p.name || 'Guest';
+    });
+    Object.keys(remoteCursorEls).forEach(function(id) {
+      if (!seen[id]) { remoteCursorEls[id].remove(); delete remoteCursorEls[id]; }
+    });
+  }
+
+  function startPresence(code) {
+    var db = initFirebaseIfNeeded();
+    if (!db) return;
+    presenceRef = window.__firebase.ref(db, 'rooms/' + code + '/presence/' + localIdentity.id);
+    window.__firebase.set(presenceRef, { name: localIdentity.name, color: localIdentity.color, x: 0, y: 0, ts: Date.now() });
+    window.__firebase.onDisconnect(presenceRef).remove();
+
+    presenceListRef = window.__firebase.ref(db, 'rooms/' + code + '/presence');
+    window.__firebase.onValue(presenceListRef, function(snapshot) {
+      var presenceObj = snapshot.val() || {};
+      renderRemoteCursors(presenceObj);
+      updatePresenceRow(presenceObj);
+    });
+  }
+
+  function stopPresence() {
+    if (presenceRef && window.__firebase) {
+      window.__firebase.remove(presenceRef).catch(function() {});
+    }
+    if (presenceListRef && window.__firebase) {
+      window.__firebase.off(presenceListRef);
+    }
+    presenceRef = null;
+    presenceListRef = null;
+    clearRemoteCursors();
+    if (presenceRow) presenceRow.innerHTML = '';
+  }
+
+  function broadcastCursor(clientX, clientY) {
+    if (!presenceRef || !window.__firebase) return;
+    var now = Date.now();
+    if (now - lastCursorBroadcast < CURSOR_BROADCAST_MS) return;
+    lastCursorBroadcast = now;
+    var rect = canvasViewport.getBoundingClientRect();
+    var worldX = (clientX - rect.left - canvasPanX) / canvasZoom;
+    var worldY = (clientY - rect.top - canvasPanY) / canvasZoom;
+    window.__firebase.update(presenceRef, { x: worldX, y: worldY, ts: now });
+  }
+
+  canvasViewport.addEventListener('pointermove', function(e) {
+    if (e.pointerType === 'mouse') broadcastCursor(e.clientX, e.clientY);
+  });
 
   shareBtn.addEventListener('click', function() {
     shareModalOverlay.classList.add('show');

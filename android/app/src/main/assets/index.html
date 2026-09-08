@@ -3156,6 +3156,24 @@
      A percentage-based inset:0 here would inherit that same 0x0 size and
      silently fail to paint any SVG content, so this overlay gets an
      explicit large fixed box instead, anchored at the same (0,0) origin. */
+  /* Two independent layers, not one: connections-svg (the persisted
+     lines) sits at a LOW z-index -- just above the canvas, well below
+     every note/card's own z-index (topZ starts at 10, see below) -- so
+     any instance dragged over a line visually covers it, like a wire
+     running behind the cards on a corkboard. .link-overlay (the connect
+     dots + the live drag-preview line) stays at a high z-index so dots
+     remain reachable/clickable no matter what's underneath them. */
+  .connections-svg {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100000px;
+    height: 100000px;
+    overflow: visible;
+    pointer-events: none;
+    z-index: 5;
+  }
+
   .link-overlay {
     position: absolute;
     top: 0;
@@ -3166,7 +3184,7 @@
     z-index: 500;
   }
 
-  .connections-svg {
+  .drag-preview-svg {
     position: absolute;
     top: 0;
     left: 0;
@@ -3197,6 +3215,31 @@
     stroke: #ff9bc7;
     stroke-width: 2.8;
     filter: drop-shadow(0 0 8px rgba(255, 123, 176, 0.65));
+  }
+
+  /* The live line drawn from the source dot to the pointer while a
+     connection drag is in progress -- marching-ants dash animation so
+     it visibly reads as "being dragged", distinct from a settled
+     connection's static sagging line. */
+  .link-drag-path {
+    fill: none;
+    stroke: #ff9bc7;
+    stroke-width: 2.4;
+    stroke-linecap: round;
+    stroke-dasharray: 9 7;
+    filter: drop-shadow(0 0 6px rgba(255, 123, 176, 0.6));
+    animation: linkDragMarch 0.5s linear infinite;
+    display: none;
+  }
+
+  @keyframes linkDragMarch {
+    to { stroke-dashoffset: -32; }
+  }
+
+  /* A dot the drag is currently hovering over as a valid drop target. */
+  .connect-dot.link-target-hover {
+    transform: scale(1.35);
+    box-shadow: 0 0 0 4px rgba(255, 123, 176, 0.55), 0 2px 14px rgba(0, 0, 0, 0.5);
   }
 
   .connect-dot {
@@ -8112,15 +8155,34 @@
   var linkAnimT = 0;
   var linkLoopRunning = false;
   var activeLink = null; // in-progress drag from a dot, if any
+  var linkHoverDot = null; // the other dot currently under the pointer during a drag, if any
+  /* A plain click on a dot (press+release with no real movement) must
+     NOT create a connection to whatever happens to be under the cursor
+     at that exact pixel -- only an actual hold-and-drag past this many
+     CSS px counts as a deliberate "connect these two" gesture. */
+  var LINK_DRAG_THRESHOLD = 6;
 
   function makeLinkLayer(root) {
-    var overlay = document.createElement('div');
-    overlay.className = 'link-overlay';
+    /* svg (persisted lines) is appended directly to root as its own
+       sibling, not nested inside overlay -- it needs an independent,
+       LOW z-index (see .connections-svg) so notes/cards can visually
+       cover it, while overlay (dots + the live drag-preview line) stays
+       at a high z-index as a separate stacking layer above everything. */
     var svg = document.createElementNS(SVG_NS, 'svg');
     svg.setAttribute('class', 'connections-svg');
-    overlay.appendChild(svg);
+    root.appendChild(svg);
+
+    var overlay = document.createElement('div');
+    overlay.className = 'link-overlay';
+    var dragSvg = document.createElementNS(SVG_NS, 'svg');
+    dragSvg.setAttribute('class', 'drag-preview-svg');
+    var dragPath = document.createElementNS(SVG_NS, 'path');
+    dragPath.setAttribute('class', 'link-drag-path');
+    dragSvg.appendChild(dragPath);
+    overlay.appendChild(dragSvg);
     root.appendChild(overlay);
-    return { root: root, overlay: overlay, svg: svg, list: [], dotOwners: {}, pathEls: {} };
+
+    return { root: root, overlay: overlay, svg: svg, dragPath: dragPath, list: [], dotOwners: {}, pathEls: {} };
   }
 
   var canvasLinkLayer = makeLinkLayer(layer);
@@ -8175,6 +8237,21 @@
       pair.visible.setAttribute('d', d);
       pair.hit.setAttribute('d', d);
     });
+
+    /* The live line following the pointer while a connection is being
+       dragged out from a dot -- drawn fresh every frame from the
+       source dot's (possibly still-moving) corner to wherever the
+       pointer currently is. */
+    if (activeLink && activeLink.linkLayer === linkLayer) {
+      var fromOwner = linkLayer.dotOwners[activeLink.fromId];
+      if (fromOwner) {
+        var dragD = sagPath(cornerPoint(fromOwner.el), { x: activeLink.x, y: activeLink.y }, 0);
+        linkLayer.dragPath.setAttribute('d', dragD);
+        linkLayer.dragPath.style.display = 'block';
+      }
+    } else {
+      linkLayer.dragPath.style.display = 'none';
+    }
   }
 
   function anyLinkActivity() {
@@ -8284,7 +8361,10 @@
       linkLayer: linkLayer,
       dotEl: dotEl,
       x: e.clientX - rootRect.left + linkLayer.root.scrollLeft,
-      y: e.clientY - rootRect.top + linkLayer.root.scrollTop
+      y: e.clientY - rootRect.top + linkLayer.root.scrollTop,
+      startClientX: e.clientX,
+      startClientY: e.clientY,
+      moved: false
     };
 
     window.addEventListener('pointermove', onLinkPointerMove);
@@ -8292,11 +8372,36 @@
     ensureLinkLoop();
   }
 
+  function clearLinkHoverDot() {
+    if (linkHoverDot) {
+      linkHoverDot.classList.remove('link-target-hover');
+      linkHoverDot = null;
+    }
+  }
+
   function onLinkPointerMove(e) {
     if (!activeLink) return;
     var rootRect = activeLink.linkLayer.root.getBoundingClientRect();
     activeLink.x = e.clientX - rootRect.left + activeLink.linkLayer.root.scrollLeft;
     activeLink.y = e.clientY - rootRect.top + activeLink.linkLayer.root.scrollTop;
+
+    if (!activeLink.moved) {
+      var dx = e.clientX - activeLink.startClientX, dy = e.clientY - activeLink.startClientY;
+      if (Math.hypot(dx, dy) > LINK_DRAG_THRESHOLD) activeLink.moved = true;
+    }
+
+    /* Highlight whichever other dot the pointer is currently over, so
+       it's obvious where releasing the button will connect to. */
+    var hoverEl = document.elementFromPoint(e.clientX, e.clientY);
+    var hoverDot = hoverEl && hoverEl.closest && hoverEl.closest('.connect-dot');
+    if (hoverDot === activeLink.dotEl) hoverDot = null;
+    if (hoverDot !== linkHoverDot) {
+      clearLinkHoverDot();
+      if (hoverDot) {
+        hoverDot.classList.add('link-target-hover');
+        linkHoverDot = hoverDot;
+      }
+    }
   }
 
   function onLinkPointerUp(e) {
@@ -8306,7 +8411,14 @@
     window.removeEventListener('pointerup', onLinkPointerUp);
     link.dotEl.classList.remove('linking');
     document.body.classList.remove('linking-active');
+    link.linkLayer.dragPath.style.display = 'none';
+    clearLinkHoverDot();
     activeLink = null;
+
+    /* A press+release with no real drag away from the dot is a click,
+       not a connect gesture -- bail out before it can wire up two
+       instances the user only meant to tap near. */
+    if (!link.moved) return;
 
     var targetDot = document.elementFromPoint(e.clientX, e.clientY);
     targetDot = targetDot && targetDot.closest('.connect-dot');

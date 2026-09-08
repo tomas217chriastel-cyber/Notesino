@@ -3268,6 +3268,144 @@
     box-shadow: 0 0 0 4px rgba(255, 123, 176, 0.55), 0 2px 14px rgba(0, 0, 0, 0.5);
   }
 
+  /* The small picker offered right after a connection is dragged into
+     place -- fixed-positioned near the drop point, independent of the
+     canvas's own pan/zoom (it's gone again in a few seconds either way,
+     so it doesn't need to track anything). */
+  .link-type-picker {
+    position: fixed;
+    z-index: 1000;
+    width: 220px;
+    padding: 12px;
+    border-radius: 14px;
+    background: rgba(var(--panel-rgb), 0.98);
+    border: 0.5px solid rgba(var(--ink-rgb), 0.18);
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.35);
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .link-type-picker-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: rgba(var(--ink-rgb), 0.65);
+  }
+
+  .link-type-preset-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .link-type-chip {
+    padding: 5px 10px;
+    border-radius: 999px;
+    border: 0.5px solid rgba(var(--ink-rgb), 0.25);
+    background: rgba(var(--ink-rgb), 0.08);
+    color: var(--ink-solid);
+    font-size: 11.5px;
+    cursor: pointer;
+    position: relative;
+  }
+
+  .link-type-chip[style*="--chip-color"] {
+    padding-left: 18px;
+  }
+
+  .link-type-chip[style*="--chip-color"]::before {
+    content: '';
+    position: absolute;
+    left: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--chip-color);
+  }
+
+  .link-type-chip:hover {
+    background: rgba(var(--ink-rgb), 0.18);
+  }
+
+  .link-type-custom-row input {
+    width: 100%;
+    font-size: 12.5px;
+    border-radius: 8px;
+    border: 0.5px solid rgba(var(--ink-rgb), 0.25);
+    background: rgba(var(--ink-rgb), 0.06);
+    color: var(--ink-solid);
+    padding: 6px 9px;
+  }
+
+  .link-type-color-row {
+    display: flex;
+    gap: 6px;
+  }
+
+  .link-type-swatch {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    cursor: pointer;
+    border: 1.5px solid transparent;
+  }
+
+  .link-type-swatch.selected,
+  .link-type-swatch:hover {
+    border-color: rgba(var(--ink-rgb), 0.7);
+  }
+
+  .link-type-add-btn,
+  .link-type-skip-btn {
+    width: 100%;
+    text-align: center;
+    padding: 7px;
+    border-radius: 9px;
+    border: none;
+    font-size: 12.5px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+
+  .link-type-add-btn {
+    background: rgba(var(--emphasis-rgb), 0.9);
+    color: var(--emphasis-text);
+  }
+
+  .link-type-skip-btn {
+    background: rgba(var(--ink-rgb), 0.08);
+    color: rgba(var(--ink-rgb), 0.7);
+  }
+
+  .link-type-skip-btn:hover {
+    background: rgba(var(--ink-rgb), 0.15);
+  }
+
+  /* The little floating tag that follows the cursor while hovering a
+     labeled connection line. */
+  .link-hover-tag {
+    position: fixed;
+    z-index: 1000;
+    padding: 4px 9px;
+    border-radius: 999px;
+    background: rgba(20, 20, 26, 0.92);
+    color: #fff;
+    font-size: 11px;
+    font-weight: 600;
+    white-space: nowrap;
+    pointer-events: none;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4);
+    border: 1.5px solid var(--tag-color, rgba(255, 255, 255, 0.5));
+    opacity: 0;
+    transition: opacity 0.1s ease;
+  }
+
+  .link-hover-tag.visible {
+    opacity: 1;
+  }
+
   .connect-dot {
     position: absolute;
     width: 20px;
@@ -8355,15 +8493,175 @@
         rebuildLinkPaths(linkLayer);
         saveWorkspace();
       });
-
       var visible = document.createElementNS(SVG_NS, 'path');
       visible.setAttribute('class', 'link-path');
+      if (c.color) visible.style.stroke = c.color;
+
+      if (c.label) {
+        /* visible renders on top of hit (later in DOM, same geometry
+           for the exact centerline pixels), so it needs the same hover
+           listeners too -- otherwise hovering precisely on the thin
+           decorative stroke itself (rather than the wide invisible
+           corridor around it) would miss the tag entirely. */
+        [hit, visible].forEach(function(pathEl) {
+          pathEl.addEventListener('pointerenter', function(e) { showLinkHoverTag(c.label, c.color, e.clientX, e.clientY); });
+          pathEl.addEventListener('pointermove', function(e) { moveLinkHoverTag(e.clientX, e.clientY); });
+          pathEl.addEventListener('pointerleave', hideLinkHoverTag);
+        });
+      }
 
       linkLayer.svg.appendChild(hit);
       linkLayer.svg.appendChild(visible);
       linkLayer.pathEls[key] = { hit: hit, visible: visible };
     });
     ensureLinkLoop();
+  }
+
+  /* ---------- Connection labels/colors ----------
+     Offered once, right after a drag successfully lands on another dot
+     -- a small fixed-position picker near the drop point with a few
+     common relationship presets (each carrying its own default color),
+     a free-text label, and the same color palette used everywhere else
+     in the app for a manual override. Skipping leaves the connection
+     unlabeled with the default line color, same as before this existed. */
+  var CONNECTION_PRESETS = [
+    { label: 'Related to', color: null },
+    { label: 'Depends on', color: '#ffadad' },
+    { label: 'Blocks', color: '#ff6b6b' },
+    { label: 'Part of', color: '#a0e7e5' }
+  ];
+  var connectionPickerEl = null;
+  var linkHoverTagEl = null;
+
+  function closeConnectionPicker() {
+    if (connectionPickerEl) {
+      connectionPickerEl.remove();
+      connectionPickerEl = null;
+      document.removeEventListener('pointerdown', onConnectionPickerOutsideClick, true);
+    }
+  }
+
+  function onConnectionPickerOutsideClick(e) {
+    if (connectionPickerEl && !connectionPickerEl.contains(e.target)) closeConnectionPicker();
+  }
+
+  function openConnectionPicker(clientX, clientY, onChoose) {
+    closeConnectionPicker();
+
+    var panel = document.createElement('div');
+    panel.className = 'link-type-picker';
+    panel.addEventListener('pointerdown', function(e) { e.stopPropagation(); });
+
+    var labelEl = document.createElement('div');
+    labelEl.className = 'link-type-picker-label';
+    labelEl.textContent = 'Label this connection (optional)';
+    panel.appendChild(labelEl);
+
+    var presetRow = document.createElement('div');
+    presetRow.className = 'link-type-preset-row';
+    CONNECTION_PRESETS.forEach(function(preset) {
+      var chip = document.createElement('button');
+      chip.className = 'link-type-chip';
+      chip.textContent = preset.label;
+      if (preset.color) chip.style.setProperty('--chip-color', preset.color);
+      chip.addEventListener('click', function(e) {
+        e.stopPropagation();
+        onChoose(preset.label, preset.color);
+        closeConnectionPicker();
+      });
+      presetRow.appendChild(chip);
+    });
+    panel.appendChild(presetRow);
+
+    var customRow = document.createElement('div');
+    customRow.className = 'link-type-custom-row';
+    var input = document.createElement('input');
+    input.type = 'text';
+    input.placeholder = 'Custom label…';
+    input.maxLength = 30;
+    input.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') { e.preventDefault(); addBtn.click(); }
+    });
+    customRow.appendChild(input);
+    panel.appendChild(customRow);
+
+    var colorRow = document.createElement('div');
+    colorRow.className = 'link-type-color-row';
+    var chosenColor = null;
+    colors.forEach(function(c) {
+      var sw = document.createElement('button');
+      sw.className = 'link-type-swatch';
+      sw.style.background = c;
+      sw.addEventListener('click', function(e) {
+        e.stopPropagation();
+        chosenColor = c;
+        Array.prototype.forEach.call(colorRow.children, function(s) { s.classList.remove('selected'); });
+        sw.classList.add('selected');
+      });
+      colorRow.appendChild(sw);
+    });
+    panel.appendChild(colorRow);
+
+    var addBtn = document.createElement('button');
+    addBtn.className = 'link-type-add-btn';
+    addBtn.textContent = 'Add';
+    addBtn.addEventListener('click', function(e) {
+      e.stopPropagation();
+      onChoose(input.value.trim(), chosenColor);
+      closeConnectionPicker();
+    });
+    panel.appendChild(addBtn);
+
+    var skipBtn = document.createElement('button');
+    skipBtn.className = 'link-type-skip-btn';
+    skipBtn.textContent = 'Skip';
+    skipBtn.addEventListener('click', function(e) {
+      e.stopPropagation();
+      onChoose('', null);
+      closeConnectionPicker();
+    });
+    panel.appendChild(skipBtn);
+
+    document.body.appendChild(panel);
+    /* Keep the whole panel on-screen even when the drop point is near a
+       viewport edge (e.g. dropping near the right/bottom of the window). */
+    var pw = panel.offsetWidth, ph = panel.offsetHeight;
+    var left = Math.min(clientX, window.innerWidth - pw - 12);
+    var top = Math.min(clientY, window.innerHeight - ph - 12);
+    panel.style.left = Math.max(8, left) + 'px';
+    panel.style.top = Math.max(8, top) + 'px';
+
+    connectionPickerEl = panel;
+    setTimeout(function() { document.addEventListener('pointerdown', onConnectionPickerOutsideClick, true); }, 0);
+    input.focus();
+  }
+
+  function ensureLinkHoverTagEl() {
+    if (!linkHoverTagEl) {
+      linkHoverTagEl = document.createElement('div');
+      linkHoverTagEl.className = 'link-hover-tag';
+      document.body.appendChild(linkHoverTagEl);
+    }
+    return linkHoverTagEl;
+  }
+
+  function showLinkHoverTag(text, color, clientX, clientY) {
+    var el = ensureLinkHoverTagEl();
+    el.textContent = text;
+    el.style.setProperty('--tag-color', color || 'rgba(255, 255, 255, 0.5)');
+    el.style.left = (clientX + 14) + 'px';
+    el.style.top = (clientY - 12) + 'px';
+    el.classList.add('visible');
+  }
+
+  function moveLinkHoverTag(clientX, clientY) {
+    if (!linkHoverTagEl) return;
+    linkHoverTagEl.style.left = (clientX + 14) + 'px';
+    linkHoverTagEl.style.top = (clientY - 12) + 'px';
+  }
+
+  function hideLinkHoverTag() {
+    if (linkHoverTagEl) linkHoverTagEl.classList.remove('visible');
   }
 
   function resetLinkLayer(linkLayer) {
@@ -8488,10 +8786,12 @@
     var exists = link.linkLayer.list.some(function(c) { return connKey(c.a, c.b) === key; });
     if (exists) return;
 
-    link.linkLayer.list.push({ a: link.fromId, b: toId });
-    canvasConnections = link.linkLayer.list;
-    rebuildLinkPaths(link.linkLayer);
-    saveWorkspace();
+    openConnectionPicker(e.clientX, e.clientY, function(labelText, color) {
+      link.linkLayer.list.push({ a: link.fromId, b: toId, label: labelText || '', color: color || null });
+      canvasConnections = link.linkLayer.list;
+      rebuildLinkPaths(link.linkLayer);
+      saveWorkspace();
+    });
   }
 
   /* ---------- Timetable ----------

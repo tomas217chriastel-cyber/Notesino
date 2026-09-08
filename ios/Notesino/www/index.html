@@ -1200,6 +1200,71 @@
     letter-spacing: 0.02em;
   }
 
+  .shortcuts-modal {
+    max-width: 380px;
+  }
+
+  .shortcuts-section-label {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: rgba(var(--ink-rgb), 0.45);
+    margin: 14px 0 6px;
+  }
+
+  .shortcuts-section-label:first-of-type {
+    margin-top: 0;
+  }
+
+  .shortcuts-list {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .shortcuts-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    padding: 7px 0;
+    border-bottom: 0.5px solid rgba(var(--ink-rgb), 0.1);
+  }
+
+  .shortcuts-row:last-child {
+    border-bottom: none;
+  }
+
+  .shortcuts-desc {
+    font-size: 13px;
+    color: rgba(var(--ink-rgb), 0.8);
+  }
+
+  .shortcuts-keys {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    flex-shrink: 0;
+  }
+
+  .shortcuts-keys kbd {
+    font-family: "Poppins", -apple-system, sans-serif;
+    font-size: 11px;
+    font-weight: 600;
+    line-height: 1;
+    padding: 4px 7px;
+    border-radius: 6px;
+    background: rgba(var(--ink-rgb), 0.1);
+    border: 0.5px solid rgba(var(--ink-rgb), 0.22);
+    border-bottom-width: 2px;
+    color: var(--ink-solid);
+  }
+
+  .shortcuts-keys .shortcuts-plus {
+    font-size: 11px;
+    color: rgba(var(--ink-rgb), 0.4);
+  }
+
   .subject-modal-swatches {
     display: flex;
     flex-wrap: wrap;
@@ -3133,6 +3198,11 @@
     }
   }
 
+  /* Keyboard shortcuts only make sense with a keyboard attached. */
+  body.touch-device #shortcutsBtn {
+    display: none;
+  }
+
   /* Larger touch targets across the board on coarse-pointer (touch) devices,
      but stay smaller on narrow screens where space is tight */
   body.touch-device .tb-btn {
@@ -4098,11 +4168,11 @@
     <button class="tb-btn" id="redoBtn" title="Redo (Ctrl+Shift+Z)" aria-label="Redo" disabled>
       <svg class="tb-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 14 20 9 15 4"/><path d="M4 20v-7a4 4 0 0 1 4-4h12"/></svg>
     </button>
-    <button class="tb-btn" id="zoomFitBtn" title="Zoom to fit / recenter" aria-label="Zoom to fit / recenter">
+    <button class="tb-btn" id="zoomFitBtn" title="Zoom to fit / recenter (0)" aria-label="Zoom to fit / recenter">
       <svg class="tb-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3"/><path d="M21 8V5a2 2 0 0 0-2-2h-3"/><path d="M3 16v3a2 2 0 0 0 2 2h3"/><path d="M16 21h3a2 2 0 0 0 2-2v-3"/></svg>
     </button>
     <div class="add-menu-wrap" id="searchWrap">
-      <button class="tb-btn" id="searchBtn" title="Search notes, tables, timetable" aria-label="Search">
+      <button class="tb-btn" id="searchBtn" title="Search notes, tables, timetable (Ctrl+F)" aria-label="Search">
         <svg class="tb-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
       </button>
       <div class="add-menu search-panel" id="searchPanel">
@@ -4113,12 +4183,15 @@
     <button class="tb-btn" id="removeWorkspaceBg" title="Remove workspace background" aria-label="Remove workspace background" style="display:none;">
       <svg class="tb-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
     </button>
+    <button class="tb-btn" id="shortcutsBtn" title="Keyboard shortcuts (?)" aria-label="Keyboard shortcuts">
+      <svg class="tb-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9.2 9a2.8 2.8 0 0 1 5.4 1c0 1.8-2.4 2-2.6 3.5"/><line x1="12" y1="16.7" x2="12" y2="16.75"/></svg>
+    </button>
     <div class="add-menu-wrap" id="moreMenuWrap">
       <button class="tb-btn" id="moreMenuBtn" title="More options" aria-label="More options">
         <svg class="tb-icon" viewBox="0 0 24 24" width="18" height="18" fill="currentColor" stroke="none"><circle cx="12" cy="5" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="12" cy="19" r="1.6"/></svg>
       </button>
       <div class="add-menu" id="moreMenu">
-        <button class="add-menu-item" id="saveNowBtn">Save Now</button>
+        <button class="add-menu-item" id="saveNowBtn" title="Ctrl+S">Save Now</button>
         <div class="add-menu-divider"></div>
         <div class="theme-picker-label">Theme</div>
         <div class="theme-swatch-row" id="themeSwatchRow">
@@ -4314,6 +4387,19 @@
       <div class="subject-modal-actions">
         <button class="subject-modal-btn cancel" id="subjectModalCancel">Cancel</button>
         <button class="subject-modal-btn create" id="subjectModalCreate">Create</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="subject-modal-overlay" id="shortcutsModalOverlay">
+    <div class="subject-modal shortcuts-modal">
+      <div class="subject-modal-title">Keyboard Shortcuts</div>
+      <div class="shortcuts-section-label">Keyboard</div>
+      <div class="shortcuts-list" id="shortcutsListKeys"></div>
+      <div class="shortcuts-section-label">Mouse &amp; trackpad</div>
+      <div class="shortcuts-list" id="shortcutsListMouse"></div>
+      <div class="subject-modal-actions">
+        <button class="subject-modal-btn create" id="shortcutsModalClose">Close</button>
       </div>
     </div>
   </div>
@@ -6825,36 +6911,11 @@
      needs to delete a character, not the whole instance. Notes/sticky
      canvases/images/videos don't have a click-to-select state today, so
      there's nothing keyboard-deletable for those yet. */
+  var isMac = /Mac|iPod|iPhone|iPad/.test(navigator.platform);
+  var shortcutsModalOverlay = document.getElementById('shortcutsModalOverlay');
+  var shortcutsBtn = document.getElementById('shortcutsBtn');
+
   document.addEventListener('keydown', function(e) {
-    var isUndoKey = (e.ctrlKey || e.metaKey) && !e.shiftKey && e.key.toLowerCase() === 'z';
-    var isRedoKey = ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key.toLowerCase() === 'z') ||
-                    ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'y');
-    if (isUndoKey || isRedoKey) {
-      var editingNow = document.activeElement && (
-        document.activeElement.isContentEditable ||
-        document.activeElement.tagName === 'INPUT' ||
-        document.activeElement.tagName === 'TEXTAREA'
-      );
-      /* Inside a text field, Ctrl+Z/Y should undo/redo the last few
-         characters typed (the browser already does this natively) — only
-         intercept it as a whole-workspace undo everywhere else. */
-      if (editingNow) return;
-      e.preventDefault();
-      if (isUndoKey) performUndo(); else performRedo();
-      return;
-    }
-
-    if (e.key === 'Escape') {
-      addMenu.classList.remove('open');
-      moreMenu.classList.remove('open');
-      if (activeTextLineWrap) deselectAllTextLines();
-      document.querySelectorAll('.table-card.selected').forEach(function(t) { t.classList.remove('selected'); });
-      if (multiSelected.length) clearMultiSelection();
-      return;
-    }
-
-    if (e.key !== 'Delete' && e.key !== 'Backspace') return;
-
     var active = document.activeElement;
     var isEditingText = !!(active && (
       active.isContentEditable ||
@@ -6862,6 +6923,56 @@
       active.tagName === 'TEXTAREA' ||
       active.tagName === 'SELECT'
     ));
+
+    var isUndoKey = (e.ctrlKey || e.metaKey) && !e.shiftKey && e.key.toLowerCase() === 'z';
+    var isRedoKey = ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key.toLowerCase() === 'z') ||
+                    ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'y');
+    if (isUndoKey || isRedoKey) {
+      /* Inside a text field, Ctrl+Z/Y should undo/redo the last few
+         characters typed (the browser already does this natively) — only
+         intercept it as a whole-workspace undo everywhere else. */
+      if (isEditingText) return;
+      e.preventDefault();
+      if (isUndoKey) performUndo(); else performRedo();
+      return;
+    }
+
+    if ((e.ctrlKey || e.metaKey) && !e.shiftKey && e.key.toLowerCase() === 's') {
+      e.preventDefault();
+      saveNowBtn.click();
+      return;
+    }
+
+    if ((e.ctrlKey || e.metaKey) && !e.shiftKey && e.key.toLowerCase() === 'f') {
+      e.preventDefault();
+      searchBtn.click();
+      return;
+    }
+
+    if (e.key === 'Escape') {
+      addMenu.classList.remove('open');
+      moreMenu.classList.remove('open');
+      searchPanel.classList.remove('open');
+      shortcutsModalOverlay.classList.remove('show');
+      if (activeTextLineWrap) deselectAllTextLines();
+      document.querySelectorAll('.table-card.selected').forEach(function(t) { t.classList.remove('selected'); });
+      if (multiSelected.length) clearMultiSelection();
+      return;
+    }
+
+    if (!isEditingText && !e.ctrlKey && !e.metaKey && !e.altKey && e.key === '?') {
+      e.preventDefault();
+      openShortcutsModal();
+      return;
+    }
+
+    if (!isEditingText && !e.ctrlKey && !e.metaKey && !e.altKey && e.key === '0') {
+      e.preventDefault();
+      zoomToFitCanvas();
+      return;
+    }
+
+    if (e.key !== 'Delete' && e.key !== 'Backspace') return;
     if (isEditingText) return;
 
     if (multiSelected.length) {
@@ -6881,6 +6992,70 @@
       e.preventDefault();
       selectedTable.__deleteTable();
     }
+  });
+
+  /* ---------- Keyboard shortcuts help panel (desktop only) ---------- */
+  var SHORTCUT_GROUPS = {
+    keys: [
+      { keys: [isMac ? '⌘' : 'Ctrl', 'Z'], desc: 'Undo' },
+      { keys: [isMac ? '⌘' : 'Ctrl', 'Shift', 'Z'], desc: 'Redo' },
+      { keys: [isMac ? '⌘' : 'Ctrl', 'S'], desc: 'Save now' },
+      { keys: [isMac ? '⌘' : 'Ctrl', 'F'], desc: 'Search' },
+      { keys: ['Delete'], desc: 'Delete the selected item' },
+      { keys: ['0'], desc: 'Zoom to fit / recenter' },
+      { keys: ['Esc'], desc: 'Close a menu or panel, or deselect' },
+      { keys: ['?'], desc: 'Show this shortcuts panel' }
+    ],
+    mouse: [
+      { keys: ['Drag'], desc: 'Move a note, card, or connection line' },
+      { keys: ['Drag empty canvas'], desc: 'Pan the workspace' },
+      { keys: ['Scroll / pinch'], desc: 'Zoom in and out' },
+      { keys: ['Shift', 'Drag'], desc: 'Marquee-select multiple items' },
+      { keys: ['Hold', 'Drag from a dot'], desc: 'Draw a connection between two items' }
+    ]
+  };
+
+  function renderShortcutsList(el, items) {
+    el.innerHTML = '';
+    items.forEach(function(item) {
+      var row = document.createElement('div');
+      row.className = 'shortcuts-row';
+      var desc = document.createElement('div');
+      desc.className = 'shortcuts-desc';
+      desc.textContent = item.desc;
+      var keysWrap = document.createElement('div');
+      keysWrap.className = 'shortcuts-keys';
+      item.keys.forEach(function(k, i) {
+        if (i > 0) {
+          var plus = document.createElement('span');
+          plus.className = 'shortcuts-plus';
+          plus.textContent = '+';
+          keysWrap.appendChild(plus);
+        }
+        var kbd = document.createElement('kbd');
+        kbd.textContent = k;
+        keysWrap.appendChild(kbd);
+      });
+      row.appendChild(desc);
+      row.appendChild(keysWrap);
+      el.appendChild(row);
+    });
+  }
+  renderShortcutsList(document.getElementById('shortcutsListKeys'), SHORTCUT_GROUPS.keys);
+  renderShortcutsList(document.getElementById('shortcutsListMouse'), SHORTCUT_GROUPS.mouse);
+
+  function openShortcutsModal() {
+    addMenu.classList.remove('open');
+    moreMenu.classList.remove('open');
+    shortcutsModalOverlay.classList.add('show');
+  }
+  function closeShortcutsModal() {
+    shortcutsModalOverlay.classList.remove('show');
+  }
+  if (shortcutsBtn) shortcutsBtn.addEventListener('click', openShortcutsModal);
+  document.getElementById('shortcutsModalClose').addEventListener('click', closeShortcutsModal);
+  shortcutsModalOverlay.addEventListener('pointerdown', function(e) {
+    if (e.target === shortcutsModalOverlay) closeShortcutsModal();
   });
 
   document.getElementById('addNote').addEventListener('click', function() {

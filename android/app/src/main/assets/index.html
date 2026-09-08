@@ -293,6 +293,14 @@
     background: rgba(var(--ink-rgb), 0.2);
   }
 
+  /* Hand-drawn line icons (no emoji glyphs, whose color/style vary wildly
+     across platform fonts) -- currentColor picks up the button's own
+     .tb-btn color, so they already track the active theme for free. */
+  .tb-icon {
+    display: block;
+    opacity: 0.9;
+  }
+
   .tb-btn:active {
     transform: scale(0.92);
   }
@@ -364,6 +372,10 @@
 
   .add-menu-item:hover {
     background: rgba(var(--ink-rgb), 0.1);
+  }
+
+  .save-now-confirmed {
+    color: #6bd98a;
   }
 
   .theme-picker-label {
@@ -1546,6 +1558,27 @@
     background: #000;
   }
 
+  .free-video .fv-set-bg {
+    position: absolute;
+    bottom: 6px;
+    right: 6px;
+    padding: 3px 7px;
+    border-radius: 6px;
+    background: rgba(0,0,0,0.55);
+    border: none;
+    color: var(--ink-solid);
+    font-size: 9.5px;
+    cursor: pointer;
+    opacity: 0;
+    transition: opacity 0.15s ease;
+    z-index: 5;
+  }
+
+  .free-video:hover .fv-set-bg,
+  body.touch-device .fv-set-bg {
+    opacity: 1;
+  }
+
   /* Draggable voice-memo cards on the Notes canvas */
   .voice-memo {
     position: absolute;
@@ -1848,12 +1881,35 @@
     cursor: grabbing;
   }
 
+  /* A real, non-zero-size layer for the workspace background (image or
+     video) — .notes-layer itself is intentionally 0x0 (see below), so a
+     background painted on it would never actually be visible. Sits behind
+     .notes-layer and stays fixed to the viewport (doesn't pan/zoom with
+     the canvas), like a wallpaper. */
+  .workspace-bg-layer {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    overflow: hidden;
+    pointer-events: none;
+    background-size: cover;
+    background-position: center;
+  }
+
+  .workspace-bg-layer video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: none;
+  }
+
   .notes-layer {
     position: absolute;
     top: 0;
     left: 0;
     width: 0;
     height: 0;
+    z-index: 1;
     transform-origin: 0 0;
     backface-visibility: hidden;
   }
@@ -2675,6 +2731,23 @@
     border-radius: inherit;
   }
 
+  /* A moving background video for a note -- sits behind everything else
+     in the note (z-index:-1 relative to .note's own stacking context, so
+     it never needs the rest of the note's content to be repositioned)
+     while the same .has-bg-image overlay/text-shadow treatment above
+     keeps the text readable, exactly as it does over a still image. */
+  .note-bg-video {
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: inherit;
+    display: none;
+    pointer-events: none;
+  }
+
   .note-text {
     flex: 1;
     overflow-y: auto;
@@ -2695,6 +2768,7 @@
   .note-text.is-empty::before {
     content: attr(data-placeholder);
     color: rgba(var(--ink-rgb), 0.45);
+    font-size: 18px;
   }
 
   .note-text::-webkit-scrollbar {
@@ -2887,6 +2961,11 @@
       font-size: 15px;
     }
 
+    .tb-icon {
+      width: 15px;
+      height: 15px;
+    }
+
     .notes-subswitcher {
       top: calc(58px + env(safe-area-inset-top, 0px));
     }
@@ -2936,6 +3015,10 @@
       font-size: 11px;
       line-height: 1.35;
       padding: 1px 8px 6px;
+    }
+
+    .note-text.is-empty::before {
+      font-size: 11px;
     }
 
     .note-drag-handle {
@@ -3781,14 +3864,16 @@
 
   <div class="toolbar" id="shareToolbar" style="left:calc(24px + env(safe-area-inset-left, 0px)); right:auto;">
     <button class="tb-btn" id="shareBtn" title="Collaborate live" aria-label="Collaborate live">
-      &#128279;
+      <svg class="tb-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
       <span class="live-dot" id="liveDot"></span>
     </button>
   </div>
 
   <div class="toolbar" id="notesToolbar">
     <div class="add-menu-wrap" id="addMenuWrap">
-      <button class="tb-btn" id="addMenuBtn" title="Add" aria-label="Add">+</button>
+      <button class="tb-btn" id="addMenuBtn" title="Add" aria-label="Add">
+        <svg class="tb-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      </button>
       <div class="add-menu" id="addMenu">
         <button class="add-menu-item" id="addNote">Note</button>
         <button class="add-menu-item" id="addChecklist">Checklist</button>
@@ -3800,20 +3885,34 @@
         <button class="add-menu-item" id="addFileAttachment">Attach File</button>
       </div>
     </div>
-    <button class="tb-btn" id="undoBtn" title="Undo (Ctrl+Z)" aria-label="Undo" disabled>&#8630;</button>
-    <button class="tb-btn" id="redoBtn" title="Redo (Ctrl+Shift+Z)" aria-label="Redo" disabled>&#8631;</button>
-    <button class="tb-btn" id="zoomFitBtn" title="Zoom to fit / recenter" aria-label="Zoom to fit / recenter">&#8982;</button>
+    <button class="tb-btn" id="undoBtn" title="Undo (Ctrl+Z)" aria-label="Undo" disabled>
+      <svg class="tb-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 14 4 9 9 4"/><path d="M20 20v-7a4 4 0 0 0-4-4H4"/></svg>
+    </button>
+    <button class="tb-btn" id="redoBtn" title="Redo (Ctrl+Shift+Z)" aria-label="Redo" disabled>
+      <svg class="tb-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 14 20 9 15 4"/><path d="M4 20v-7a4 4 0 0 1 4-4h12"/></svg>
+    </button>
+    <button class="tb-btn" id="zoomFitBtn" title="Zoom to fit / recenter" aria-label="Zoom to fit / recenter">
+      <svg class="tb-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3"/><path d="M21 8V5a2 2 0 0 0-2-2h-3"/><path d="M3 16v3a2 2 0 0 0 2 2h3"/><path d="M16 21h3a2 2 0 0 0 2-2v-3"/></svg>
+    </button>
     <div class="add-menu-wrap" id="searchWrap">
-      <button class="tb-btn" id="searchBtn" title="Search notes, tables, timetable" aria-label="Search">&#128269;</button>
+      <button class="tb-btn" id="searchBtn" title="Search notes, tables, timetable" aria-label="Search">
+        <svg class="tb-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      </button>
       <div class="add-menu search-panel" id="searchPanel">
         <input type="text" id="searchInput" class="search-input" placeholder="Search notes, tables, timetable&hellip;">
         <div id="searchResults"></div>
       </div>
     </div>
-    <button class="tb-btn" id="removeWorkspaceBg" title="Remove workspace background" aria-label="Remove workspace background" style="display:none;">&#8635;</button>
+    <button class="tb-btn" id="removeWorkspaceBg" title="Remove workspace background" aria-label="Remove workspace background" style="display:none;">
+      <svg class="tb-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+    </button>
     <div class="add-menu-wrap" id="moreMenuWrap">
-      <button class="tb-btn" id="moreMenuBtn" title="More options" aria-label="More options">&#8942;</button>
+      <button class="tb-btn" id="moreMenuBtn" title="More options" aria-label="More options">
+        <svg class="tb-icon" viewBox="0 0 24 24" width="18" height="18" fill="currentColor" stroke="none"><circle cx="12" cy="5" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="12" cy="19" r="1.6"/></svg>
+      </button>
       <div class="add-menu" id="moreMenu">
+        <button class="add-menu-item" id="saveNowBtn">Save Now</button>
+        <div class="add-menu-divider"></div>
         <div class="theme-picker-label">Theme</div>
         <div class="theme-swatch-row" id="themeSwatchRow">
           <button class="theme-swatch" data-theme-id="" title="Dark Gradient" aria-label="Dark Gradient theme" style="background: radial-gradient(circle at 30% 30%, #6a7cff, #0a0a12 70%);"></button>
@@ -3862,6 +3961,9 @@
 
   <div class="notes-sub active" id="sub-board">
     <div class="canvas-viewport" id="canvasViewport">
+      <div class="workspace-bg-layer" id="workspaceBgLayer">
+        <video id="workspaceBgVideo" muted loop playsinline autoplay></video>
+      </div>
       <div class="notes-layer" id="notesLayer"></div>
     </div>
     <div class="hint" id="hint">Drag the handle to move &middot; click the dot for color &middot; hover for B / I / U &middot; Shift+drag to select several</div>
@@ -4684,16 +4786,16 @@
 
     var bgBtn = document.createElement('label');
     bgBtn.className = 'note-bg-btn';
-    bgBtn.title = 'Set note background image';
-    bgBtn.innerHTML = '&#128444;';
+    bgBtn.title = 'Set note background (image or video)';
+    bgBtn.innerHTML = '<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>';
     var bgFileInput = document.createElement('input');
     bgFileInput.type = 'file';
-    bgFileInput.accept = 'image/*';
+    bgFileInput.accept = 'image/*,video/*';
     bgBtn.appendChild(bgFileInput);
 
     var bgRemoveBtn = document.createElement('button');
     bgRemoveBtn.className = 'note-bg-btn note-bg-remove-btn';
-    bgRemoveBtn.title = 'Remove background image';
+    bgRemoveBtn.title = 'Remove background';
     bgRemoveBtn.innerHTML = '&#8635;';
     bgRemoveBtn.style.display = 'none';
 
@@ -4703,6 +4805,13 @@
     toolbar2.appendChild(bgBtn);
     toolbar2.appendChild(bgRemoveBtn);
 
+    var bgVideoEl = document.createElement('video');
+    bgVideoEl.className = 'note-bg-video';
+    bgVideoEl.muted = true;
+    bgVideoEl.loop = true;
+    bgVideoEl.playsInline = true;
+    bgVideoEl.autoplay = true;
+
     var body = document.createElement('div');
     body.className = 'note-text';
     body.contentEditable = 'true';
@@ -4710,6 +4819,7 @@
     body.innerHTML = (data && data.html) || '';
     body.classList.toggle('is-empty', !(body.textContent || '').trim());
 
+    note.appendChild(bgVideoEl);
     note.appendChild(head);
     note.appendChild(toolbar2);
     note.appendChild(body);
@@ -4732,7 +4842,13 @@
 
     setNoteColor(note, dot, color);
 
-    if (data && data.bg) {
+    if (data && data.bgVideo) {
+      bgVideoEl.src = data.bgVideo;
+      bgVideoEl.style.display = 'block';
+      bgVideoEl.play().catch(function() {});
+      note.classList.add('has-bg-image');
+      bgRemoveBtn.style.display = 'flex';
+    } else if (data && data.bg) {
       note.style.backgroundImage = 'url(' + data.bg + ')';
       note.classList.add('has-bg-image');
       bgRemoveBtn.style.display = 'flex';
@@ -4806,9 +4922,20 @@
     bgFileInput.addEventListener('change', function(e) {
       var file = e.target.files && e.target.files[0];
       if (!file) return;
+      var isVideo = file.type.indexOf('video/') === 0;
       var reader = new FileReader();
       reader.onload = function(ev) {
-        note.style.backgroundImage = 'url(' + ev.target.result + ')';
+        if (isVideo) {
+          note.style.backgroundImage = '';
+          bgVideoEl.src = ev.target.result;
+          bgVideoEl.style.display = 'block';
+          bgVideoEl.play().catch(function() {});
+        } else {
+          bgVideoEl.pause();
+          bgVideoEl.removeAttribute('src');
+          bgVideoEl.style.display = 'none';
+          note.style.backgroundImage = 'url(' + ev.target.result + ')';
+        }
         note.classList.add('has-bg-image');
         bgRemoveBtn.style.display = 'flex';
         saveWorkspace();
@@ -4820,6 +4947,9 @@
     bgRemoveBtn.addEventListener('click', function(e) {
       e.stopPropagation();
       note.style.backgroundImage = '';
+      bgVideoEl.pause();
+      bgVideoEl.removeAttribute('src');
+      bgVideoEl.style.display = 'none';
       note.classList.remove('has-bg-image');
       bgRemoveBtn.style.display = 'none';
       saveWorkspace();
@@ -4886,8 +5016,9 @@
       /* A ResizeObserver keeps its observed target (and everything its own
          callback closure captures) reachable even after it's removed from
          the DOM — plain removal doesn't undo .observe(), so every deleted
-         instance would otherwise leak its whole subtree forever. */
-      note.__cleanupListeners = function() { ro.disconnect(); };
+         instance would otherwise leak its whole subtree forever. Removing a
+         <video> from the DOM doesn't stop it playing on its own either. */
+      note.__cleanupListeners = function() { ro.disconnect(); bgVideoEl.pause(); };
     } else {
       note.addEventListener('pointerup', function() {
         updateNoteScale();
@@ -6380,6 +6511,19 @@
      (the same shape saved to localStorage and synced to a live room), so
      it round-trips through applyState() untouched — this is a real
      backup/restore/share-with-another-device path, not a new format. */
+  var saveNowBtn = document.getElementById('saveNowBtn');
+  var saveNowResetTimer = null;
+  saveNowBtn.addEventListener('click', function() {
+    saveWorkspaceNow();
+    clearTimeout(saveNowResetTimer);
+    saveNowBtn.textContent = 'Saved';
+    saveNowBtn.classList.add('save-now-confirmed');
+    saveNowResetTimer = setTimeout(function() {
+      saveNowBtn.textContent = 'Save Now';
+      saveNowBtn.classList.remove('save-now-confirmed');
+    }, 1300);
+  });
+
   document.getElementById('exportWorkspaceBtn').addEventListener('click', function() {
     moreMenu.classList.remove('open');
     var state = collectState();
@@ -7041,11 +7185,7 @@
     setBgBtn.addEventListener('pointerdown', function(e) { e.stopPropagation(); });
     setBgBtn.addEventListener('click', function(e) {
       e.stopPropagation();
-      document.getElementById('notesLayer').style.backgroundImage = 'url(' + data.src + ')';
-      document.getElementById('notesLayer').style.backgroundSize = 'cover';
-      document.getElementById('notesLayer').style.backgroundPosition = 'center';
-      workspaceBgSrc = data.src;
-      updateRemoveWorkspaceBgVisibility();
+      setWorkspaceBgImage(data.src);
       saveWorkspace();
     });
     fi.appendChild(setBgBtn);
@@ -7149,6 +7289,17 @@
     video.preload = 'metadata';
     vidClip.appendChild(video);
     fv.appendChild(vidClip);
+
+    var setBgBtn = document.createElement('button');
+    setBgBtn.className = 'fv-set-bg';
+    setBgBtn.textContent = 'Set as workspace bg';
+    setBgBtn.addEventListener('pointerdown', function(e) { e.stopPropagation(); });
+    setBgBtn.addEventListener('click', function(e) {
+      e.stopPropagation();
+      setWorkspaceBgVideo(data.src);
+      saveWorkspace();
+    });
+    fv.appendChild(setBgBtn);
 
     var fvResizeHandle = document.createElement('div');
     fvResizeHandle.className = 'resize-handle';
@@ -7593,21 +7744,55 @@
   var dropOverlay = document.getElementById('dropOverlay');
   var mediaFileInput = document.getElementById('mediaFileInput');
   var workspaceBgSrc = null;
+  var workspaceBgVideoSrc = null;
   var dragCounter = 0;
   var removeWorkspaceBgBtn = document.getElementById('removeWorkspaceBg');
+  var workspaceBgLayer = document.getElementById('workspaceBgLayer');
+  var workspaceBgVideoEl = document.getElementById('workspaceBgVideo');
   /* Everything is stored inline (data URLs, in localStorage/live-room
      sync) rather than uploaded anywhere, so there's no hard cap - just a
      friendly heads-up past a size where that storage tends to get iffy. */
   var MEDIA_WARN_BYTES = 20 * 1024 * 1024;
 
   function updateRemoveWorkspaceBgVisibility() {
-    removeWorkspaceBgBtn.style.display = workspaceBgSrc ? 'flex' : 'none';
+    removeWorkspaceBgBtn.style.display = (workspaceBgSrc || workspaceBgVideoSrc) ? 'flex' : 'none';
+  }
+
+  /* Image and video workspace backgrounds are mutually exclusive -- these
+     three helpers are the only places that touch workspaceBgSrc/
+     workspaceBgVideoSrc, so setting one always clears the other. */
+  function setWorkspaceBgImage(src) {
+    workspaceBgSrc = src;
+    workspaceBgVideoSrc = null;
+    workspaceBgLayer.style.backgroundImage = 'url(' + src + ')';
+    workspaceBgVideoEl.pause();
+    workspaceBgVideoEl.removeAttribute('src');
+    workspaceBgVideoEl.style.display = 'none';
+    updateRemoveWorkspaceBgVisibility();
+  }
+
+  function setWorkspaceBgVideo(src) {
+    workspaceBgVideoSrc = src;
+    workspaceBgSrc = null;
+    workspaceBgLayer.style.backgroundImage = '';
+    workspaceBgVideoEl.src = src;
+    workspaceBgVideoEl.style.display = 'block';
+    workspaceBgVideoEl.play().catch(function() {});
+    updateRemoveWorkspaceBgVisibility();
+  }
+
+  function clearWorkspaceBg() {
+    workspaceBgSrc = null;
+    workspaceBgVideoSrc = null;
+    workspaceBgLayer.style.backgroundImage = '';
+    workspaceBgVideoEl.pause();
+    workspaceBgVideoEl.removeAttribute('src');
+    workspaceBgVideoEl.style.display = 'none';
+    updateRemoveWorkspaceBgVisibility();
   }
 
   removeWorkspaceBgBtn.addEventListener('click', function() {
-    document.getElementById('notesLayer').style.backgroundImage = '';
-    workspaceBgSrc = null;
-    updateRemoveWorkspaceBgVisibility();
+    clearWorkspaceBg();
     saveWorkspace();
   });
 
@@ -8879,6 +9064,8 @@
       var b = n.querySelector('.note-text');
       var bgImg = n.style.backgroundImage;
       var bgMatch = bgImg && bgImg.match(/url\((['"]?)(.*?)\1\)/);
+      var bgVideoEl = n.querySelector('.note-bg-video');
+      var bgVideoSrc = (bgVideoEl && bgVideoEl.src && bgVideoEl.src.indexOf('data:') === 0) ? bgVideoEl.src : null;
       return {
         x: parseFloat(n.style.left) || 0,
         y: parseFloat(n.style.top) || 0,
@@ -8887,6 +9074,7 @@
         html: b ? b.innerHTML : '',
         color: n.querySelector('.note-dot').style.background,
         bg: bgMatch ? bgMatch[2] : null,
+        bgVideo: bgVideoSrc,
         linkId: n.dataset.linkId
       };
     });
@@ -9028,12 +9216,26 @@
       voiceMemos: voiceMemos,
       fileAttachments: fileAttachments,
       workspaceBg: workspaceBgSrc,
+      workspaceBgVideo: workspaceBgVideoSrc,
       subjects: subjectsOut,
       activeSubjectId: activeSubjectId,
       connections: canvasConnections,
       timetable: timetable,
       termSettings: termSettings
     };
+  }
+
+  function flushSaveWorkspace() {
+    saveTimer = null;
+    var state = collectState();
+    var json = JSON.stringify(state);
+    noteUndoCheckpoint(json);
+    try {
+      localStorage.setItem(STORAGE_KEY, json);
+    } catch (err) {}
+    pushToRoomIfActive(state);
+    pushTimetableToNative();
+    maybeTakeAutosaveSnapshot(json);
   }
 
   function saveWorkspace() {
@@ -9047,18 +9249,17 @@
       updateUndoRedoButtons();
     }
     clearTimeout(saveTimer);
-    saveTimer = setTimeout(function() {
-      saveTimer = null;
-      var state = collectState();
-      var json = JSON.stringify(state);
-      noteUndoCheckpoint(json);
-      try {
-        localStorage.setItem(STORAGE_KEY, json);
-      } catch (err) {}
-      pushToRoomIfActive(state);
-      pushTimetableToNative();
-      maybeTakeAutosaveSnapshot(json);
-    }, 200);
+    saveTimer = setTimeout(flushSaveWorkspace, 200);
+  }
+
+  /* Manual "Save Now" — writes immediately instead of waiting out the
+     200ms autosave debounce. Doesn't touch the undo stack itself (that
+     already happened, if anything changed, the moment saveWorkspace()
+     was first called for this burst); this only decides *when* the
+     write to localStorage happens. */
+  function saveWorkspaceNow() {
+    clearTimeout(saveTimer);
+    flushSaveWorkspace();
   }
 
   /* ---------- Autosave snapshots ----------
@@ -9167,26 +9368,22 @@
     deselectAllTextLines();
     resetLinkLayer(canvasLinkLayer);
     canvasConnections = [];
-    layer.style.backgroundImage = '';
     subjects = [];
     subjectQuickNotes = {};
     activeSubjectId = null;
-    workspaceBgSrc = null;
+    clearWorkspaceBg();
     timetable = defaultTimetable();
     termSettings = defaultTermSettings();
-    updateRemoveWorkspaceBgVisibility();
   }
 
   function applyState(state) {
     if (!state) return false;
 
-    if (state.workspaceBg) {
-      workspaceBgSrc = state.workspaceBg;
-      layer.style.backgroundImage = 'url(' + state.workspaceBg + ')';
-      layer.style.backgroundSize = 'cover';
-      layer.style.backgroundPosition = 'center';
+    if (state.workspaceBgVideo) {
+      setWorkspaceBgVideo(state.workspaceBgVideo);
+    } else if (state.workspaceBg) {
+      setWorkspaceBgImage(state.workspaceBg);
     }
-    updateRemoveWorkspaceBgVisibility();
 
     if (state.notes && state.notes.length) {
       state.notes.forEach(function(n) { createNote(n, layer); });

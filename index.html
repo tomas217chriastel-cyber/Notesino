@@ -2499,6 +2499,32 @@
     opacity: 1;
   }
 
+  /* Pin: locks drag/resize/delete on this note until unpinned. Stays
+     visible even without hovering once pinned, unlike the other
+     fade-in header buttons, so a locked note is recognizable at a
+     glance -- the whole point of pinning something is to trust it'll
+     stay put without having to keep checking. */
+  .pin-btn.pinned {
+    opacity: 1 !important;
+    background: rgba(var(--emphasis-rgb), 0.9);
+    color: var(--emphasis-text);
+  }
+
+  .note.pinned {
+    border-color: rgba(var(--emphasis-rgb), 0.7);
+  }
+
+  .note.pinned .note-drag-handle,
+  .note.pinned .resize-handle {
+    pointer-events: none;
+    opacity: 0 !important;
+  }
+
+  .note.pinned .note-close {
+    pointer-events: none;
+    opacity: 0.25 !important;
+  }
+
   /* Table-specific: font/size/color controls fade in on hover too, same
      as the formatting buttons, since they now share the header row. */
   .table-card .note-font-select,
@@ -4401,10 +4427,12 @@
 
   function deleteMultiSelection() {
     if (!multiSelected.length) return;
-    var toDelete = multiSelected.slice();
+    /* Pinned instances sit out bulk delete -- the whole point of pinning
+       something is to trust it survives exactly this kind of sweep. */
+    var toDelete = multiSelected.filter(function(el) { return !el.classList.contains('pinned'); });
     clearMultiSelection();
     toDelete.forEach(deleteInstanceQuietly);
-    saveWorkspace();
+    if (toDelete.length) saveWorkspace();
   }
 
   function applyColorToMultiSelection(color) {
@@ -4769,6 +4797,13 @@
     underlineBtn.setAttribute('aria-label', 'Underline');
     underlineBtn.title = 'Underline';
 
+    var pinBtn = document.createElement('button');
+    pinBtn.className = 'fmt-btn pin-btn';
+    pinBtn.innerHTML = '<svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5A2.5 2.5 0 1 1 12 6.5a2.5 2.5 0 0 1 0 5z"/></svg>';
+    pinBtn.title = 'Pin (lock position, size, and delete)';
+    pinBtn.setAttribute('aria-label', 'Pin this note in place');
+    pinBtn.setAttribute('aria-pressed', 'false');
+
     var closeBtn = document.createElement('button');
     closeBtn.className = 'note-close';
     closeBtn.innerHTML = '&times;';
@@ -4777,6 +4812,7 @@
     headRight.appendChild(boldBtn);
     headRight.appendChild(italicBtn);
     headRight.appendChild(underlineBtn);
+    headRight.appendChild(pinBtn);
     headRight.appendChild(closeBtn);
 
     head.appendChild(dotWrap);
@@ -4897,6 +4933,13 @@
       bgRemoveBtn.style.display = 'flex';
     }
 
+    if (data && data.pinned) {
+      note.classList.add('pinned');
+      pinBtn.classList.add('pinned');
+      pinBtn.setAttribute('aria-pressed', 'true');
+      pinBtn.title = 'Unpin';
+    }
+
     /* Track the user's last selection inside this note's text, so clicking a
        toolbar control (which steals focus) still applies to the text they picked. */
     var savedRange = null;
@@ -5008,8 +5051,19 @@
     italicBtn.addEventListener('pointerdown', function(e) { e.preventDefault(); e.stopPropagation(); applyFormat('italic'); });
     underlineBtn.addEventListener('pointerdown', function(e) { e.preventDefault(); e.stopPropagation(); applyFormat('underline'); });
 
+    pinBtn.addEventListener('pointerdown', function(e) { e.stopPropagation(); });
+    pinBtn.addEventListener('click', function(e) {
+      e.stopPropagation();
+      var nowPinned = note.classList.toggle('pinned');
+      pinBtn.classList.toggle('pinned', nowPinned);
+      pinBtn.setAttribute('aria-pressed', nowPinned ? 'true' : 'false');
+      pinBtn.title = nowPinned ? 'Unpin' : 'Pin (lock position, size, and delete)';
+      saveWorkspace();
+    });
+
     closeBtn.addEventListener('click', function(e) {
       e.stopPropagation();
+      if (note.classList.contains('pinned')) return;
       purgeConnectionsFor(note.dataset.linkId);
       if (note.__cleanupListeners) note.__cleanupListeners();
       note.remove();
@@ -6336,7 +6390,7 @@
       noteStartLeft = parseFloat(note.style.left) || 0;
       noteStartTop = parseFloat(note.style.top) || 0;
       if (inZoomCanvas && multiSelected.length > 1 && multiSelected.indexOf(note) !== -1) {
-        groupMembers = multiSelected.filter(function(el) { return el !== note; }).map(function(el) {
+        groupMembers = multiSelected.filter(function(el) { return el !== note && !el.classList.contains('pinned'); }).map(function(el) {
           return { el: el, startLeft: parseFloat(el.style.left) || 0, startTop: parseFloat(el.style.top) || 0 };
         });
       }
@@ -9187,6 +9241,7 @@
         color: n.querySelector('.note-dot').style.background,
         bg: bgMatch ? bgMatch[2] : null,
         bgVideo: bgVideoSrc,
+        pinned: n.classList.contains('pinned'),
         linkId: n.dataset.linkId
       };
     });

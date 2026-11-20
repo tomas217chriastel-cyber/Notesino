@@ -61,52 +61,67 @@
   }
 
   /* ---------- Theme tokens ----------
-     One semantic surface language (page background, glass "ink" tint used
-     for every translucent panel/border, panel/select solid fills, blob
-     gradient colors, and an inverted-emphasis chip pair for primary
-     buttons/active tabs) that every themed color in the app is expressed
-     through, so a theme is just a different set of values for these same
-     handful of variables. :root holds the Dark Gradient defaults (the
-     original look); every other theme overrides only what differs. */
+     One semantic surface language (page background, "ink" tint used for
+     every panel/border/text, solid panel/select fills, blob gradient
+     colors, and an --accent pair used for primary buttons, active tabs,
+     focus rings and the connection web) that every themed color in the
+     app is expressed through, so a theme is just a different set of
+     values for these same handful of variables. Surfaces are solid, not
+     frosted glass — depth comes from layered shadow + a crisp hairline
+     border, not blur, so the app reads as one deliberate system rather
+     than a stack of translucent panes. :root holds the default theme;
+     every other theme overrides only what differs. */
   :root {
-    --page-bg: #0a0a12;
+    --page-bg: #0b0c14;
     --ink-rgb: 255, 255, 255;
     --ink-solid: #ffffff;
-    --select-bg: #1c1c24;
-    --panel-rgb: 30, 30, 38;
-    --emphasis-rgb: 255, 255, 255;
-    --emphasis-text: #16161c;
-    --blob1: #6a7cff;
-    --blob2: #ff7bb0;
-    --blob3: #5be3c9;
-    --blob4: #a78bfa;
-    --blob-opacity: 0.55;
+    --select-bg: #1c1d28;
+    --panel-rgb: 26, 27, 36;
+    --accent-rgb: 93, 76, 237;
+    --accent-solid: #5d4ced;
+    --accent-text: #ffffff;
+    --emphasis-rgb: 93, 76, 237;
+    --emphasis-text: #ffffff;
+    --blob1: #7c6dff;
+    --blob2: #ff6fa5;
+    --blob3: #3fd8c2;
+    --blob4: #9b6bff;
+    --blob-opacity: 0.4;
+    --card-shadow: 0 10px 30px rgba(0, 0, 0, 0.35), 0 1px 0 rgba(255, 255, 255, 0.04) inset;
   }
 
   :root[data-theme="light-gradient"] {
-    --page-bg: #f3f0ff;
+    --page-bg: #f5f3ff;
     --ink-rgb: 28, 26, 38;
     --ink-solid: #1c1a26;
     --select-bg: #ffffff;
     --panel-rgb: 255, 255, 255;
-    --emphasis-rgb: 28, 26, 38;
+    --accent-rgb: 101, 84, 230;
+    --accent-solid: #6554e6;
+    --accent-text: #ffffff;
+    --emphasis-rgb: 101, 84, 230;
     --emphasis-text: #ffffff;
-    --blob1: #b9c2ff;
-    --blob2: #ffc7e0;
+    --blob1: #c3b8ff;
+    --blob2: #ffc2dd;
     --blob3: #b6f0e6;
     --blob4: #d8c8ff;
-    --blob-opacity: 0.65;
+    --blob-opacity: 0.5;
+    --card-shadow: 0 10px 28px rgba(60, 50, 110, 0.14), 0 1px 0 rgba(255, 255, 255, 0.6) inset;
   }
 
   :root[data-theme="solid-charcoal"] {
-    --page-bg: #15151d;
+    --page-bg: #16171f;
     --ink-rgb: 255, 255, 255;
     --ink-solid: #ffffff;
-    --select-bg: #1c1c24;
-    --panel-rgb: 30, 30, 38;
-    --emphasis-rgb: 255, 255, 255;
-    --emphasis-text: #16161c;
+    --select-bg: #1e1f29;
+    --panel-rgb: 28, 29, 38;
+    --accent-rgb: 56, 211, 183;
+    --accent-solid: #38d3b7;
+    --accent-text: #0a1512;
+    --emphasis-rgb: 56, 211, 183;
+    --emphasis-text: #0a1512;
     --blob-opacity: 0;
+    --card-shadow: 0 10px 28px rgba(0, 0, 0, 0.4);
   }
 
   :root[data-theme="solid-cream"] {
@@ -115,9 +130,13 @@
     --ink-solid: #1e1a14;
     --select-bg: #ffffff;
     --panel-rgb: 255, 255, 255;
-    --emphasis-rgb: 30, 26, 20;
+    --accent-rgb: 181, 84, 31;
+    --accent-solid: #b5541f;
+    --accent-text: #ffffff;
+    --emphasis-rgb: 181, 84, 31;
     --emphasis-text: #ffffff;
     --blob-opacity: 0;
+    --card-shadow: 0 10px 26px rgba(90, 65, 30, 0.14);
   }
 
   :root[data-theme="solid-ocean"] {
@@ -125,10 +144,14 @@
     --ink-rgb: 255, 255, 255;
     --ink-solid: #ffffff;
     --select-bg: #14263c;
-    --panel-rgb: 20, 34, 50;
-    --emphasis-rgb: 255, 255, 255;
-    --emphasis-text: #0c1c2e;
+    --panel-rgb: 18, 32, 48;
+    --accent-rgb: 71, 180, 255;
+    --accent-solid: #47b4ff;
+    --accent-text: #06141f;
+    --emphasis-rgb: 71, 180, 255;
+    --emphasis-text: #06141f;
     --blob-opacity: 0;
+    --card-shadow: 0 10px 28px rgba(0, 0, 0, 0.4);
   }
 
   :root[data-theme="solid-blush"] {
@@ -137,9 +160,13 @@
     --ink-solid: #2e181c;
     --select-bg: #ffffff;
     --panel-rgb: 255, 255, 255;
-    --emphasis-rgb: 46, 24, 28;
+    --accent-rgb: 194, 58, 94;
+    --accent-solid: #c23a5e;
+    --accent-text: #ffffff;
+    --emphasis-rgb: 194, 58, 94;
     --emphasis-text: #ffffff;
     --blob-opacity: 0;
+    --card-shadow: 0 10px 26px rgba(120, 40, 60, 0.14);
   }
 
   html, body {
@@ -242,8 +269,8 @@
   .veil {
     position: absolute;
     inset: 0;
-    backdrop-filter: blur(60px);
-    background: rgba(var(--panel-rgb), 0.15);
+    backdrop-filter: blur(20px);
+    background: rgba(var(--panel-rgb), 0.12);
   }
 
   /* Main content layer */
@@ -292,10 +319,10 @@
   .tb-btn {
     width: 38px;
     height: 38px;
-    border-radius: 50%;
-    background: rgba(var(--ink-rgb), 0.12);
-    border: 0.5px solid rgba(var(--ink-rgb), 0.18);
-    backdrop-filter: blur(20px);
+    border-radius: 13px;
+    background: rgba(var(--panel-rgb), 0.92);
+    border: 1px solid rgba(var(--ink-rgb), 0.1);
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.18);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -303,11 +330,13 @@
     color: var(--ink-solid);
     font-size: 18px;
     position: relative;
-    transition: background 0.15s ease, transform 0.1s ease;
+    transition: background 0.15s ease, transform 0.18s cubic-bezier(.34,1.56,.64,1), box-shadow 0.15s ease;
   }
 
   .tb-btn:hover {
-    background: rgba(var(--ink-rgb), 0.2);
+    background: rgba(var(--accent-rgb), 0.14);
+    transform: translateY(-2px) rotate(-4deg);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.22);
   }
 
   /* Hand-drawn line icons (no emoji glyphs, whose color/style vary wildly
@@ -316,10 +345,56 @@
   .tb-icon {
     display: block;
     opacity: 0.9;
+    transition: opacity 0.15s ease;
+  }
+
+  .tb-btn:hover .tb-icon {
+    opacity: 1;
   }
 
   .tb-btn:active {
-    transform: scale(0.92);
+    transform: scale(0.92) rotate(0deg);
+  }
+
+  /* A small name label that pops up above any [data-tip] element on
+     hover/focus -- used across the toolbar so every icon-only control
+     identifies itself, instead of relying on the slow native title
+     tooltip. Pure CSS: the label text lives in the data-tip attribute. */
+  [data-tip] {
+    position: relative;
+  }
+
+  [data-tip]::after {
+    content: attr(data-tip);
+    position: absolute;
+    bottom: calc(100% + 10px);
+    left: 50%;
+    transform: translateX(-50%) translateY(4px) scale(0.92);
+    white-space: nowrap;
+    background: var(--ink-solid);
+    color: var(--page-bg);
+    font-family: "Poppins", -apple-system, sans-serif;
+    font-weight: 600;
+    font-size: 11px;
+    letter-spacing: 0.01em;
+    padding: 5px 9px;
+    border-radius: 7px;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.12s ease, transform 0.12s cubic-bezier(.34,1.56,.64,1);
+    z-index: 50;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+  }
+
+  [data-tip]:hover::after,
+  [data-tip]:focus-visible::after {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0) scale(1);
+    transition-delay: 0.25s;
+  }
+
+  body.touch-device [data-tip]::after {
+    display: none;
   }
 
   .tb-btn:disabled {
@@ -357,16 +432,22 @@
     max-width: min(240px, calc(100vw - 32px));
     padding: 6px;
     gap: 2px;
-    border-radius: 14px;
-    background: rgba(var(--panel-rgb), 0.92);
-    backdrop-filter: blur(20px);
-    border: 0.5px solid rgba(var(--ink-rgb), 0.18);
-    box-shadow: 0 8px 24px rgba(0,0,0,0.35);
+    border-radius: 16px;
+    background: rgba(var(--panel-rgb), 0.98);
+    border: 1px solid rgba(var(--ink-rgb), 0.1);
+    box-shadow: var(--card-shadow), 0 8px 28px rgba(0, 0, 0, 0.3);
     z-index: 50;
+    transform-origin: top right;
   }
 
   .add-menu.open {
     display: flex;
+    animation: menu-pop 0.16s cubic-bezier(.2,.9,.3,1.3) both;
+  }
+
+  @keyframes menu-pop {
+    from { opacity: 0; transform: scale(0.92) translateY(-6px); }
+    to { opacity: 1; transform: scale(1) translateY(0); }
   }
 
   .add-menu-item {
@@ -388,7 +469,8 @@
   }
 
   .add-menu-item:hover {
-    background: rgba(var(--ink-rgb), 0.1);
+    background: rgba(var(--accent-rgb), 0.14);
+    color: var(--accent-solid);
   }
 
   .save-now-confirmed {
@@ -441,14 +523,20 @@
     gap: 6px;
     height: 38px;
     padding: 0 14px;
-    border-radius: 999px;
-    background: rgba(var(--ink-rgb), 0.12);
-    border: 0.5px solid rgba(var(--ink-rgb), 0.18);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
+    border-radius: 13px;
+    background: rgba(var(--panel-rgb), 0.92);
+    border: 1px solid rgba(var(--ink-rgb), 0.1);
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.18);
     color: var(--ink-solid);
     cursor: pointer;
     max-width: 160px;
+    transition: transform 0.18s cubic-bezier(.34,1.56,.64,1), box-shadow 0.15s ease, background 0.15s ease;
+  }
+
+  .board-switcher-btn:hover {
+    background: rgba(var(--accent-rgb), 0.14);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.22);
   }
 
   .board-switcher-name {
@@ -660,15 +748,15 @@
     gap: 10px;
     padding: 8px 10px 8px 14px;
     border-radius: 999px;
-    background: rgba(var(--panel-rgb), 0.92);
-    backdrop-filter: blur(20px);
-    border: 0.5px solid rgba(var(--ink-rgb), 0.18);
-    box-shadow: 0 12px 32px rgba(0,0,0,0.35);
+    background: rgba(var(--panel-rgb), 0.98);
+    border: 1px solid rgba(var(--ink-rgb), 0.1);
+    box-shadow: var(--card-shadow), 0 12px 32px rgba(0, 0, 0, 0.3);
     z-index: 60;
   }
 
   .multi-select-bar.open {
     display: flex;
+    animation: menu-pop 0.16s cubic-bezier(.2,.9,.3,1.3) both;
   }
 
   .multi-select-count {
@@ -746,9 +834,9 @@
     gap: 4px;
     padding: 4px;
     border-radius: 999px;
-    background: rgba(var(--ink-rgb), 0.1);
-    border: 0.5px solid rgba(var(--ink-rgb), 0.18);
-    backdrop-filter: blur(24px);
+    background: rgba(var(--panel-rgb), 0.92);
+    border: 1px solid rgba(var(--ink-rgb), 0.1);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
     z-index: 10;
   }
 
@@ -759,14 +847,19 @@
     background: transparent;
     color: rgba(var(--ink-rgb), 0.6);
     font-size: 13.5px;
-    font-weight: 500;
+    font-weight: 600;
     cursor: pointer;
-    transition: background 0.2s ease, color 0.2s ease;
+    transition: background 0.2s ease, color 0.2s ease, transform 0.15s cubic-bezier(.34,1.56,.64,1);
+  }
+
+  .subswitch-btn:hover {
+    background: rgba(var(--accent-rgb), 0.12);
+    transform: translateY(-1px);
   }
 
   .subswitch-btn.active {
-    background: rgba(var(--emphasis-rgb), 0.85);
-    color: var(--emphasis-text);
+    background: rgb(var(--accent-rgb));
+    color: var(--accent-text);
   }
 
   .subswitch-btn:not(.active):hover {
@@ -781,6 +874,38 @@
 
   .notes-sub.active {
     display: block;
+  }
+
+  /* Timetable and Reminders used to be full-screen tabs you switched
+     between; now they're big cards living directly on the same
+     pannable/zoomable board as every note, so the whole app reads as one
+     continuous workspace -- the subswitcher pill just pans/zooms the view
+     to frame whichever one you pick, it doesn't hide anything else. */
+  #sub-timetable,
+  #sub-reminders {
+    position: absolute;
+    inset: auto;
+    display: flex !important;
+    flex-direction: column;
+    border-radius: 22px;
+    background: rgba(var(--panel-rgb), 0.97);
+    border: 1px solid rgba(var(--ink-rgb), 0.1);
+    box-shadow: var(--card-shadow), 0 20px 50px rgba(0, 0, 0, 0.3);
+    overflow: hidden;
+  }
+
+  #sub-timetable {
+    left: 40px;
+    top: 560px;
+    width: 1500px;
+    height: 860px;
+  }
+
+  #sub-reminders {
+    left: 1620px;
+    top: 560px;
+    width: 820px;
+    height: 860px;
   }
 
   /* Subject Notes (nested inside the Timetable tab as a collapsible section) */
@@ -1264,19 +1389,24 @@
 
   .subject-modal-overlay.show {
     display: flex;
+    animation: overlay-fade 0.15s ease both;
+  }
+
+  @keyframes overlay-fade {
+    from { background: rgba(0, 0, 0, 0); }
+    to { background: rgba(0, 0, 0, 0.55); }
   }
 
   .subject-modal {
     width: 90%;
     max-width: 320px;
     border-radius: 20px;
-    background: rgba(var(--panel-rgb), 0.92);
-    backdrop-filter: blur(28px) saturate(150%);
-    -webkit-backdrop-filter: blur(28px) saturate(150%);
-    border: 0.5px solid rgba(var(--ink-rgb), 0.18);
-    box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+    background: rgba(var(--panel-rgb), 0.98);
+    border: 1px solid rgba(var(--ink-rgb), 0.1);
+    box-shadow: var(--card-shadow), 0 24px 60px rgba(0, 0, 0, 0.45);
     padding: 22px 20px 18px;
     color: var(--ink-solid);
+    animation: menu-pop 0.18s cubic-bezier(.2,.9,.3,1.3) both;
   }
 
   .subject-modal-title {
@@ -1642,24 +1772,38 @@
     right: -12px;
     width: 22px;
     height: 22px;
+    border-radius: 50%;
+    background: rgba(var(--panel-rgb), 0.98);
+    border: 1px solid rgba(var(--ink-rgb), 0.14);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
     cursor: nwse-resize;
     z-index: 5;
     display: block;
     opacity: 0;
-    transition: opacity 0.15s ease;
+    transform: scale(0.8);
+    transition: opacity 0.15s ease, transform 0.15s cubic-bezier(.34,1.56,.64,1), background 0.15s ease;
     touch-action: none;
   }
 
   .resize-handle::after {
     content: '';
     position: absolute;
-    top: 6px;
-    left: 6px;
-    width: 9px;
-    height: 9px;
-    border-right: 2px solid rgba(var(--ink-rgb), 0.55);
-    border-bottom: 2px solid rgba(var(--ink-rgb), 0.55);
+    top: 7px;
+    left: 7px;
+    width: 8px;
+    height: 8px;
+    border-right: 2px solid rgba(var(--ink-rgb), 0.65);
+    border-bottom: 2px solid rgba(var(--ink-rgb), 0.65);
     border-radius: 0 0 2px 0;
+  }
+
+  .resize-handle:hover {
+    background: rgb(var(--accent-rgb));
+    transform: scale(1.1);
+  }
+
+  .resize-handle:hover::after {
+    border-color: var(--accent-text);
   }
 
   .note:hover .resize-handle,
@@ -1667,6 +1811,13 @@
   .free-video:hover .resize-handle,
   body.touch-device .resize-handle {
     opacity: 1;
+    transform: scale(1);
+  }
+
+  .note:hover .resize-handle:hover,
+  .free-image:hover .resize-handle:hover,
+  .free-video:hover .resize-handle:hover {
+    transform: scale(1.1);
   }
 
   .free-image img {
@@ -2165,28 +2316,40 @@
     width: 220px;
     min-height: 180px;
     border-radius: 16px;
-    background: rgba(var(--ink-rgb), 0.14);
-    border: 1.5px solid rgba(var(--ink-rgb), 0.55);
-    backdrop-filter: blur(24px) saturate(140%);
-    -webkit-backdrop-filter: blur(24px) saturate(140%);
-    box-shadow: 0 8px 32px rgba(0,0,0,0.18), 0 1px 2px rgba(0,0,0,0.08);
+    background: rgba(var(--panel-rgb), 0.97);
+    border: 1px solid rgba(var(--ink-rgb), 0.1);
+    box-shadow: var(--card-shadow);
     display: flex;
     flex-direction: column;
-    transition: box-shadow 0.2s ease;
+    transition: box-shadow 0.2s ease, transform 0.2s cubic-bezier(.2,.8,.3,1.2);
     background-size: cover;
     background-position: center;
     overflow: visible;
     min-width: 160px;
   }
 
+  .note::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 5px;
+    border-radius: 16px 0 0 16px;
+    background: var(--note-accent, transparent);
+    pointer-events: none;
+  }
+
   .note:hover {
-    box-shadow: 0 12px 40px rgba(0,0,0,0.24), 0 2px 4px rgba(0,0,0,0.1);
+    box-shadow: var(--card-shadow), 0 16px 36px rgba(0, 0, 0, 0.22);
+    transform: translateY(-2px);
   }
 
   .note.dragging {
-    box-shadow: 0 20px 48px rgba(0,0,0,0.3);
+    box-shadow: 0 24px 50px rgba(0, 0, 0, 0.32);
     z-index: 100;
     transition: none;
+    transform: none;
   }
 
   /* A quick materialize animation for instances created via the add menu
@@ -2223,26 +2386,31 @@
     justify-content: center;
     cursor: grab;
     touch-action: none;
-    border-top: 0.5px solid rgba(var(--ink-rgb), 0.12);
-    background: rgba(0,0,0,0.06);
+    border-top: 1px solid rgba(var(--ink-rgb), 0.08);
+    background: rgba(var(--ink-rgb), 0.03);
     transition: background 0.15s ease;
   }
 
   .note-drag-handle:hover {
-    background: rgba(0,0,0,0.14);
+    background: rgba(var(--accent-rgb), 0.12);
   }
 
   .note.dragging .note-drag-handle {
     cursor: grabbing;
-    background: rgba(0,0,0,0.2);
+    background: rgba(var(--accent-rgb), 0.18);
   }
 
   .note-drag-grip {
-    width: 32px;
+    width: 28px;
     height: 3px;
     border-radius: 3px;
-    background: rgba(var(--ink-rgb), 0.4);
+    background: rgba(var(--ink-rgb), 0.3);
     pointer-events: none;
+    transition: background 0.15s ease;
+  }
+
+  .note-drag-handle:hover .note-drag-grip {
+    background: rgb(var(--accent-rgb));
   }
 
   /* Sticky Canvas card */
@@ -2541,21 +2709,31 @@
     right: -6px;
     width: 22px;
     height: 22px;
+    border-radius: 50%;
+    background: rgba(var(--panel-rgb), 0.98);
+    border: 1px solid rgba(var(--ink-rgb), 0.14);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
     cursor: nwse-resize;
     touch-action: none;
     display: none;
+    transition: transform 0.15s cubic-bezier(.34,1.56,.64,1), background 0.15s ease;
     z-index: 2;
+  }
+
+  .text-line-resize:hover {
+    background: rgb(var(--accent-rgb));
+    transform: scale(1.1);
   }
 
   .text-line-resize::after {
     content: '';
     position: absolute;
-    bottom: 5px;
-    right: 5px;
-    width: 9px;
-    height: 9px;
-    border-right: 2px solid rgba(var(--ink-rgb), 0.55);
-    border-bottom: 2px solid rgba(var(--ink-rgb), 0.55);
+    top: 7px;
+    left: 7px;
+    width: 8px;
+    height: 8px;
+    border-right: 2px solid rgba(var(--ink-rgb), 0.65);
+    border-bottom: 2px solid rgba(var(--ink-rgb), 0.65);
     border-radius: 0 0 2px 0;
   }
 
@@ -2571,11 +2749,9 @@
     gap: 4px;
     padding: 5px 6px;
     border-radius: 10px;
-    background: rgba(var(--panel-rgb), 0.55);
-    backdrop-filter: blur(16px) saturate(160%);
-    -webkit-backdrop-filter: blur(16px) saturate(160%);
-    border: 0.5px solid rgba(var(--ink-rgb), 0.2);
-    box-shadow: 0 6px 18px rgba(0,0,0,0.3);
+    background: rgba(var(--panel-rgb), 0.98);
+    border: 1px solid rgba(var(--ink-rgb), 0.1);
+    box-shadow: var(--card-shadow), 0 6px 18px rgba(0, 0, 0, 0.25);
     z-index: 70;
   }
 
@@ -2661,15 +2837,15 @@
     gap: 6px;
     padding: 8px;
     border-radius: 12px;
-    background: rgba(var(--panel-rgb), 0.75);
-    backdrop-filter: blur(20px);
-    border: 0.5px solid rgba(var(--ink-rgb), 0.18);
-    box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+    background: rgba(var(--panel-rgb), 0.98);
+    border: 1px solid rgba(var(--ink-rgb), 0.1);
+    box-shadow: var(--card-shadow), 0 8px 24px rgba(0, 0, 0, 0.3);
     z-index: 50;
   }
 
   .swatches.open {
     display: flex;
+    animation: menu-pop 0.14s cubic-bezier(.2,.9,.3,1.3) both;
   }
 
   .swatch {
@@ -3664,8 +3840,8 @@
     margin-left: -10px;
     margin-top: -10px;
     border-radius: 50%;
-    background: #ffffff;
-    color: #16161c;
+    background: var(--ink-solid);
+    color: var(--page-bg);
     font-size: 14px;
     font-weight: 800;
     line-height: 1;
@@ -3673,17 +3849,29 @@
     align-items: center;
     justify-content: center;
     cursor: crosshair;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4), 0 0 0 2px rgba(var(--ink-rgb), 0.4);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4), 0 0 0 2px rgba(var(--accent-rgb), 0.5);
     pointer-events: auto;
     touch-action: none;
     user-select: none;
-    transition: transform 0.15s ease, box-shadow 0.15s ease;
+    transition: box-shadow 0.15s ease;
+    animation: dot-breathe 3.2s ease-in-out infinite;
+  }
+
+  @keyframes dot-breathe {
+    0%, 100% { box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4), 0 0 0 2px rgba(var(--accent-rgb), 0.5); }
+    50% { box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4), 0 0 0 4px rgba(var(--accent-rgb), 0.22); }
+  }
+
+  @keyframes dot-wobble {
+    0%, 100% { transform: scale(1.25) rotate(0deg); }
+    25% { transform: scale(1.25) rotate(-12deg); }
+    75% { transform: scale(1.25) rotate(12deg); }
   }
 
   .connect-dot:hover,
   .connect-dot.linking {
-    transform: scale(1.2);
-    box-shadow: 0 2px 14px rgba(var(--ink-rgb), 0.8), 0 0 0 2px rgba(var(--ink-rgb), 0.95);
+    animation: dot-wobble 0.45s ease-in-out;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5), 0 0 0 3px rgb(var(--accent-rgb));
   }
 
   /* The dot itself stays small so it doesn't crowd tiny instances, but a
@@ -3712,12 +3900,8 @@
   }
 
   /* Reminders: quick natural-language notes -> calendar events
-     (Google Calendar, which Notion Calendar shows and notifies for) */
-  #sub-reminders.active {
-    display: flex;
-    flex-direction: column;
-    padding-top: 138px;
-  }
+     (Google Calendar, which Notion Calendar shows and notifies for) --
+     now a card living on the shared board, see #sub-reminders below. */
 
   .rm-wrap {
     flex: 1;
@@ -3900,12 +4084,8 @@
     .rm-item-actions { width: 100%; justify-content: flex-end; }
   }
 
-  /* Timetable */
-  #sub-timetable.active {
-    display: flex;
-    flex-direction: column;
-    padding-top: 138px;
-  }
+  /* Timetable -- now a card living on the shared board, see #sub-timetable
+     positioning below. */
 
   .tt-wrap {
     flex: 1;
@@ -4263,8 +4443,8 @@
     position: absolute;
     top: 22px;
     right: 4px;
-    background: rgba(var(--panel-rgb), 0.95);
-    border: 0.5px solid rgba(var(--ink-rgb), 0.18);
+    background: rgba(var(--panel-rgb), 0.98);
+    border: 1px solid rgba(var(--ink-rgb), 0.1);
     border-radius: 10px;
     padding: 6px;
     display: none;
@@ -4272,7 +4452,7 @@
     gap: 5px;
     width: 92px;
     z-index: 20;
-    backdrop-filter: blur(20px);
+    box-shadow: var(--card-shadow);
   }
 
   .tt-swatches.open {
@@ -4521,7 +4701,7 @@
         <button class="add-menu-item" id="newBoardBtn">+ New Board</button>
       </div>
     </div>
-    <button class="tb-btn" id="shareBtn" title="Collaborate live" aria-label="Collaborate live">
+    <button class="tb-btn" id="shareBtn" title="Collaborate live" aria-label="Collaborate live" data-tip="Collaborate">
       <svg class="tb-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
       <span class="live-dot" id="liveDot"></span>
     </button>
@@ -4529,7 +4709,7 @@
 
   <div class="toolbar" id="notesToolbar">
     <div class="add-menu-wrap" id="addMenuWrap">
-      <button class="tb-btn" id="addMenuBtn" title="Add" aria-label="Add">
+      <button class="tb-btn" id="addMenuBtn" title="Add" aria-label="Add" data-tip="Add">
         <svg class="tb-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
       </button>
       <div class="add-menu" id="addMenu">
@@ -4543,17 +4723,17 @@
         <button class="add-menu-item" id="addFileAttachment">Attach File</button>
       </div>
     </div>
-    <button class="tb-btn" id="undoBtn" title="Undo (Ctrl+Z)" aria-label="Undo" disabled>
+    <button class="tb-btn" id="undoBtn" title="Undo (Ctrl+Z)" aria-label="Undo" data-tip="Undo" disabled>
       <svg class="tb-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 14 4 9 9 4"/><path d="M20 20v-7a4 4 0 0 0-4-4H4"/></svg>
     </button>
-    <button class="tb-btn" id="redoBtn" title="Redo (Ctrl+Shift+Z)" aria-label="Redo" disabled>
+    <button class="tb-btn" id="redoBtn" title="Redo (Ctrl+Shift+Z)" aria-label="Redo" data-tip="Redo" disabled>
       <svg class="tb-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 14 20 9 15 4"/><path d="M4 20v-7a4 4 0 0 1 4-4h12"/></svg>
     </button>
-    <button class="tb-btn" id="zoomFitBtn" title="Zoom to fit / recenter (0)" aria-label="Zoom to fit / recenter">
+    <button class="tb-btn" id="zoomFitBtn" title="Zoom to fit / recenter (0)" aria-label="Zoom to fit / recenter" data-tip="Zoom to fit">
       <svg class="tb-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3"/><path d="M21 8V5a2 2 0 0 0-2-2h-3"/><path d="M3 16v3a2 2 0 0 0 2 2h3"/><path d="M16 21h3a2 2 0 0 0 2-2v-3"/></svg>
     </button>
     <div class="add-menu-wrap" id="searchWrap">
-      <button class="tb-btn" id="searchBtn" title="Search notes, tables, timetable (Ctrl+F)" aria-label="Search">
+      <button class="tb-btn" id="searchBtn" title="Search notes, tables, timetable (Ctrl+F)" aria-label="Search" data-tip="Search">
         <svg class="tb-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
       </button>
       <div class="add-menu search-panel" id="searchPanel">
@@ -4561,14 +4741,14 @@
         <div id="searchResults"></div>
       </div>
     </div>
-    <button class="tb-btn" id="removeWorkspaceBg" title="Remove workspace background" aria-label="Remove workspace background" style="display:none;">
+    <button class="tb-btn" id="removeWorkspaceBg" title="Remove workspace background" aria-label="Remove workspace background" data-tip="Remove background" style="display:none;">
       <svg class="tb-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
     </button>
-    <button class="tb-btn" id="shortcutsBtn" title="Keyboard shortcuts (?)" aria-label="Keyboard shortcuts">
+    <button class="tb-btn" id="shortcutsBtn" title="Keyboard shortcuts (?)" aria-label="Keyboard shortcuts" data-tip="Shortcuts">
       <svg class="tb-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9.2 9a2.8 2.8 0 0 1 5.4 1c0 1.8-2.4 2-2.6 3.5"/><line x1="12" y1="16.7" x2="12" y2="16.75"/></svg>
     </button>
     <div class="add-menu-wrap" id="moreMenuWrap">
-      <button class="tb-btn" id="moreMenuBtn" title="More options" aria-label="More options">
+      <button class="tb-btn" id="moreMenuBtn" title="More options" aria-label="More options" data-tip="More">
         <svg class="tb-icon" viewBox="0 0 24 24" width="18" height="18" fill="currentColor" stroke="none"><circle cx="12" cy="5" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="12" cy="19" r="1.6"/></svg>
       </button>
       <div class="add-menu" id="moreMenu">
@@ -4885,7 +5065,12 @@
   var isTouchDevice = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0) || window.matchMedia('(pointer: coarse)').matches;
   if (isTouchDevice) document.body.classList.add('touch-device');
 
-  /* ---------- Notes sub-switcher: Notes board / Subject Notes / Canvas ---------- */
+  /* ---------- Notes sub-switcher: now a "jump to" nav across one shared
+     board, not a hard tab switch. Timetable and Reminders are reparented
+     onto the same pannable/zoomable #notesLayer as every note (CSS gives
+     them a fixed size/position there, see #sub-timetable/#sub-reminders),
+     so moving between sections is just panning around one continuous
+     workspace instead of swapping out separate full-screen views. ---------- */
   var subSwitchBtns = document.querySelectorAll('.subswitch-btn');
   var notesSubs = {
     board: document.getElementById('sub-board'),
@@ -4893,24 +5078,49 @@
     reminders: document.getElementById('sub-reminders')
   };
   var notesToolbar = document.getElementById('notesToolbar');
-  var activeNotesSub = 'board';
 
-  function updateToolbarVisibility() {
-    notesToolbar.style.display = activeNotesSub === 'board' ? 'flex' : 'none';
+  (function moveSectionsOntoBoard() {
+    var canvasLayerEl = document.getElementById('notesLayer');
+    canvasLayerEl.appendChild(notesSubs.timetable);
+    canvasLayerEl.appendChild(notesSubs.reminders);
+  })();
+
+  var SECTION_RECTS = {
+    board: { x: 0, y: 0, w: 900, h: 560 },
+    timetable: { x: 40, y: 560, w: 1500, h: 860 },
+    reminders: { x: 1620, y: 560, w: 820, h: 860 }
+  };
+
+  function panZoomToSection(key) {
+    var r = SECTION_RECTS[key];
+    if (!r) return;
+    var vpW = canvasViewport.clientWidth;
+    var vpH = canvasViewport.clientHeight;
+    /* Reserve room for the floating title + subswitcher pill at the top so
+       a freshly-panned-to card's own header never lands underneath them. */
+    var TOP_CHROME = 150;
+    var PADDING = 50;
+    var boxW = Math.max(1, r.w + PADDING * 2);
+    var boxH = Math.max(1, r.h + PADDING * 2);
+    var newZoom = Math.max(CANVAS_ZOOM_MIN, Math.min(CANVAS_ZOOM_MAX, Math.min(vpW / boxW, (vpH - TOP_CHROME) / boxH, 1)));
+    var centerX = r.x + r.w / 2;
+    var centerY = r.y + r.h / 2;
+    canvasZoom = newZoom;
+    canvasPanX = vpW / 2 - centerX * newZoom;
+    canvasPanY = TOP_CHROME + (vpH - TOP_CHROME) / 2 - centerY * newZoom;
+    layer.style.transition = 'transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1)';
+    applyCanvasTransform();
+    canvasSaveViewDebounced();
+    setTimeout(function() { layer.style.transition = ''; }, 420);
   }
 
   subSwitchBtns.forEach(function(btn) {
     btn.addEventListener('click', function() {
       subSwitchBtns.forEach(function(b) { b.classList.remove('active'); });
       btn.classList.add('active');
-      activeNotesSub = btn.getAttribute('data-sub');
-      Object.keys(notesSubs).forEach(function(key) {
-        notesSubs[key].classList.toggle('active', key === activeNotesSub);
-      });
-      updateToolbarVisibility();
+      panZoomToSection(btn.getAttribute('data-sub'));
     });
   });
-  updateToolbarVisibility();
 
   /* ---------- Notes ---------- */
   var colors = ['#ffd6a5', '#a0e7e5', '#ffadad', '#caffbf', '#bdb2ff', '#fdffb6'];
@@ -5356,7 +5566,7 @@
 
   function setNoteColor(note, dot, color) {
     dot.style.background = color;
-    note.style.borderColor = color;
+    note.style.setProperty('--note-accent', color);
   }
 
   function createNote(data, targetLayer) {
@@ -6823,14 +7033,17 @@
     });
 
     /* Resizing is a pure font-scale control (via --tl-scale): drag the
-       corner further from the text's own top-left to grow it, closer to
-       shrink it \u2014 the same "distance from a fixed anchor" convention as
-       resizing a text box in any slide/design tool. The wrap always
-       auto-fits whatever size the (scaled) text ends up being, so there's
-       no separate box-dimension to fight with the font size over, and no
-       way for the two to drift out of sync. */
+       corner away from the text to grow it, back toward it to shrink --
+       a plain linear delta from the drag's own start point (like every
+       other instance's resize), not a ratio of distance-from-anchor (that
+       older formula made the same pixel movement produce wildly different
+       scale changes depending on where the drag started, which is what
+       made it feel unpredictable). The wrap always auto-fits whatever
+       size the (scaled) text ends up being, so there's no separate
+       box-dimension to fight with the font size over, and no way for the
+       two to drift out of sync. */
     (function() {
-      var anchorX = 0, anchorY = 0, startDist = 1, startScale = 1, resizing = false;
+      var startX = 0, startY = 0, startScale = 1, resizing = false;
       resizeHandle.style.touchAction = 'none';
 
       resizeHandle.addEventListener('pointerdown', function(e) {
@@ -6842,10 +7055,8 @@
         wrap.classList.remove('tl-manual-size');
         wrap.style.width = '';
         wrap.style.height = '';
-        var rect = wrap.getBoundingClientRect();
-        anchorX = rect.left;
-        anchorY = rect.top;
-        startDist = Math.hypot(e.clientX - anchorX, e.clientY - anchorY) || 1;
+        startX = e.clientX;
+        startY = e.clientY;
         startScale = parseFloat(getComputedStyle(wrap).getPropertyValue('--tl-scale')) || 1;
         wrap.style.zIndex = ++topZ;
         resizeHandle.setPointerCapture(e.pointerId);
@@ -6855,8 +7066,10 @@
 
       resizeHandle.addEventListener('pointermove', function(e) {
         if (!resizing) return;
-        var dist = Math.hypot(e.clientX - anchorX, e.clientY - anchorY);
-        var newScale = Math.max(0.5, Math.min(6, startScale * (dist / startDist)));
+        var dx = e.clientX - startX;
+        var dy = e.clientY - startY;
+        if (typeof canvasZoom === 'number' && canvasZoom) { dx /= canvasZoom; dy /= canvasZoom; }
+        var newScale = Math.max(0.5, Math.min(6, startScale + (dx + dy) / 2 / 120));
         wrap.style.setProperty('--tl-scale', newScale);
         positionTlToolbar(wrap);
         syncDotFor(wrap);
@@ -8772,9 +8985,6 @@
   }
 
   function jumpToCanvasEl(el) {
-    var boardBtn = document.querySelector('.subswitch-btn[data-sub="board"]');
-    if (boardBtn && !boardBtn.classList.contains('active')) boardBtn.click();
-
     var vpW = canvasViewport.clientWidth;
     var vpH = canvasViewport.clientHeight;
     var targetZoom = Math.max(CANVAS_ZOOM_MIN, Math.min(CANVAS_ZOOM_MAX, canvasZoom < 0.5 ? 1 : canvasZoom));
@@ -9373,6 +9583,7 @@
     dot.className = 'connect-dot';
     dot.textContent = '+';
     dot.title = 'Drag to connect this to another instance';
+    dot.setAttribute('data-tip', 'Drag to connect');
     dot.addEventListener('pointerdown', function(e) { startLinking(e, id, linkLayer, dot); });
     linkLayer.overlay.appendChild(dot);
     linkLayer.dotOwners[id] = { el: el, dot: dot };

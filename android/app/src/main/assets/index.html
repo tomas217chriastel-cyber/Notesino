@@ -3711,6 +3711,195 @@
     cursor: crosshair;
   }
 
+  /* Reminders: quick natural-language notes -> calendar events
+     (Google Calendar, which Notion Calendar shows and notifies for) */
+  #sub-reminders.active {
+    display: flex;
+    flex-direction: column;
+    padding-top: 138px;
+  }
+
+  .rm-wrap {
+    flex: 1;
+    min-height: 0;
+    width: 100%;
+    max-width: 760px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    padding: 0 24px 24px;
+    gap: 12px;
+    box-sizing: border-box;
+  }
+
+  .rm-input-row {
+    display: flex;
+    gap: 8px;
+    flex-shrink: 0;
+  }
+
+  .rm-input {
+    flex: 1;
+    min-width: 0;
+    padding: 12px 16px;
+    border-radius: 14px;
+    border: 0.5px solid rgba(var(--ink-rgb), 0.25);
+    background: rgba(var(--ink-rgb), 0.08);
+    color: var(--ink-solid);
+    font: inherit;
+    font-size: 15px;
+    resize: none;
+    min-height: 46px;
+    max-height: 140px;
+    box-sizing: border-box;
+  }
+
+  .rm-input::placeholder { color: rgba(var(--ink-rgb), 0.5); }
+
+  .rm-input:focus {
+    outline: 2px solid rgba(var(--ink-rgb), 0.35);
+    outline-offset: 1px;
+  }
+
+  .rm-add-btn {
+    flex-shrink: 0;
+    padding: 0 18px;
+    border-radius: 14px;
+    border: none;
+    background: rgb(var(--emphasis-rgb));
+    color: var(--emphasis-text);
+    font-weight: 600;
+    font-size: 14px;
+    cursor: pointer;
+  }
+
+  .rm-add-btn:disabled { opacity: 0.4; cursor: default; }
+
+  .rm-hint {
+    font-size: 12.5px;
+    color: rgba(var(--ink-rgb), 0.6);
+    line-height: 1.5;
+    flex-shrink: 0;
+  }
+
+  .rm-preview {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    flex-shrink: 0;
+  }
+
+  .rm-preview:empty { display: none; }
+
+  .rm-chip {
+    font-size: 13px;
+    padding: 7px 12px;
+    border-radius: 10px;
+    background: rgba(74, 222, 128, 0.14);
+    border: 0.5px solid rgba(74, 222, 128, 0.4);
+    color: var(--ink-solid);
+  }
+
+  .rm-chip.bad {
+    background: rgba(255, 107, 107, 0.12);
+    border-color: rgba(255, 107, 107, 0.4);
+  }
+
+  .rm-chip b { font-weight: 600; }
+
+  .rm-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px;
+    flex-shrink: 0;
+  }
+
+  .rm-title {
+    color: rgba(var(--ink-rgb), 0.85);
+    font-family: "Poppins", -apple-system, sans-serif;
+    font-weight: 700;
+    font-size: 14px;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+  }
+
+  .rm-toolbar-actions { display: flex; gap: 6px; flex-wrap: wrap; }
+
+  .rm-list {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding-bottom: 8px;
+  }
+
+  .rm-empty {
+    padding: 28px 12px;
+    text-align: center;
+    color: rgba(var(--ink-rgb), 0.55);
+    font-size: 13.5px;
+    line-height: 1.6;
+  }
+
+  .rm-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 14px;
+    border-radius: 14px;
+    border: 0.5px solid rgba(var(--ink-rgb), 0.18);
+    background: rgba(var(--ink-rgb), 0.07);
+  }
+
+  .rm-item.past { opacity: 0.5; }
+
+  .rm-item-main { flex: 1; min-width: 0; }
+
+  .rm-item-title {
+    font-weight: 600;
+    font-size: 14.5px;
+    color: var(--ink-solid);
+    overflow-wrap: anywhere;
+  }
+
+  .rm-item-when {
+    font-size: 12.5px;
+    color: rgba(var(--ink-rgb), 0.7);
+    margin-top: 2px;
+  }
+
+  .rm-item-actions { display: flex; gap: 6px; flex-shrink: 0; align-items: center; }
+
+  .rm-cal-btn.sent {
+    background: rgba(74, 222, 128, 0.18);
+    border-color: rgba(74, 222, 128, 0.45);
+  }
+
+  .rm-del-btn {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    border: 0.5px solid rgba(var(--ink-rgb), 0.18);
+    background: transparent;
+    color: rgba(var(--ink-rgb), 0.7);
+    font-size: 16px;
+    line-height: 1;
+    cursor: pointer;
+  }
+
+  .rm-del-btn:hover { background: rgba(255, 107, 107, 0.2); color: var(--ink-solid); }
+
+  @media (max-width: 700px) {
+    #sub-reminders.active { padding-top: 100px; }
+    .rm-wrap { padding: 0 16px 16px; }
+    .rm-item { flex-wrap: wrap; }
+    .rm-item-actions { width: 100%; justify-content: flex-end; }
+  }
+
   /* Timetable */
   #sub-timetable.active {
     display: flex;
@@ -4429,6 +4618,7 @@
   <div class="notes-subswitcher" id="notesSubswitcher">
     <button class="subswitch-btn active" data-sub="board">Notes</button>
     <button class="subswitch-btn" data-sub="timetable">Timetable</button>
+    <button class="subswitch-btn" data-sub="reminders">Reminders</button>
   </div>
 
   <div class="notes-sub active" id="sub-board">
@@ -4560,6 +4750,31 @@
     </div>
   </div>
 
+  <div class="notes-sub" id="sub-reminders">
+    <div class="rm-wrap">
+      <div class="rm-input-row">
+        <textarea class="rm-input" id="rmInput" rows="1" aria-label="New reminder"
+          placeholder="gym at 7pm Monday, gym Thursday"></textarea>
+        <button class="rm-add-btn" id="rmAddBtn" disabled>Add</button>
+      </div>
+      <div class="rm-preview" id="rmPreview" aria-live="polite"></div>
+      <div class="rm-hint">
+        Write it the way you'd say it: <i>dentist tomorrow 14:30</i>, <i>gym every Monday and Thursday 7pm</i>,
+        <i>call mom in 2 hours</i> or <i>pay rent on 1.12.</i> Commas or new lines make separate reminders.
+        Then tap <b>Add to calendar</b>. It goes into your Google Calendar, which Notion Calendar
+        shows and sends notifications for.
+      </div>
+      <div class="rm-toolbar">
+        <div class="rm-title">Reminders</div>
+        <div class="rm-toolbar-actions">
+          <button class="tt-btn" id="rmNotifyBtn">Notify me in this app</button>
+          <button class="tt-btn" id="rmIcsBtn">Download all (.ics)</button>
+        </div>
+      </div>
+      <div class="rm-list" id="rmList"></div>
+    </div>
+  </div>
+
   <div class="drop-overlay" id="dropOverlay">
     <button class="drop-overlay-close" id="dropOverlayClose" aria-label="Close">&times;</button>
     <div class="drop-overlay-box">
@@ -4674,7 +4889,8 @@
   var subSwitchBtns = document.querySelectorAll('.subswitch-btn');
   var notesSubs = {
     board: document.getElementById('sub-board'),
-    timetable: document.getElementById('sub-timetable')
+    timetable: document.getElementById('sub-timetable'),
+    reminders: document.getElementById('sub-reminders')
   };
   var notesToolbar = document.getElementById('notesToolbar');
   var activeNotesSub = 'board';
@@ -11088,5 +11304,485 @@
 })();
 </script>
 
+<script>
+/* ---------- Reminders ----------
+   Type a reminder the way you'd say it ("gym at 7pm Monday, gym Thursday"),
+   it gets parsed into dated events, and each one can be sent to Google
+   Calendar via a prefilled "create event" link. Notion Calendar shows the
+   connected Google calendar and sends its notifications. Reminders are kept
+   per-device in localStorage, separate from the board/workspace state. */
+(function() {
+  var STORAGE_KEY = 'notesino-reminders-v1';
+  var DEFAULT_DURATION = 60;
+  var DAY_CODES = ['SU', 'MO', 'TU', 'WE', 'TH', 'FR', 'SA'];
+  var DAY_SHORT = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  var MONTH_SHORT = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  var DAY_WORDS = [
+    ['sunday', 'sundays', 'sun'],
+    ['monday', 'mondays', 'mon'],
+    ['tuesday', 'tuesdays', 'tues', 'tue'],
+    ['wednesday', 'wednesdays', 'wed'],
+    ['thursday', 'thursdays', 'thurs', 'thur', 'thu'],
+    ['friday', 'fridays', 'fri'],
+    ['saturday', 'saturdays', 'sat']
+  ];
+  var MONTH_WORDS = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'];
+  var MONTH_RE = '(jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|june?|july?|aug(?:ust)?|sep(?:t(?:ember)?)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)';
+
+  function pad(n) { return (n < 10 ? '0' : '') + n; }
+  function monthIndex(word) { return MONTH_WORDS.indexOf(word.slice(0, 3).toLowerCase()); }
+
+  function to24(h, m, ampm) {
+    h = parseInt(h, 10); m = m ? parseInt(m, 10) : 0;
+    if (ampm) {
+      var pm = /^p/i.test(ampm);
+      if (h === 12) h = pm ? 12 : 0; else if (pm) h += 12;
+    }
+    if (h > 23 || m > 59) return null;
+    return { h: h, m: m };
+  }
+
+  /* Parse one segment of text. Works on a lowercase copy and blanks out
+     every span it understands; whatever is left over becomes the title. */
+  function parseSegment(original, now, inherited) {
+    var text = ' ' + original + ' ';
+    var low = text.toLowerCase();
+    var r = { days: [], recur: null, date: null, time: null, end: null, duration: null, timeHint: null };
+
+    function take(re, fn) {
+      low = low.replace(re, function() {
+        var args = Array.prototype.slice.call(arguments);
+        var match = args[0];
+        var res = fn.apply(null, args);
+        if (res === false) return match;
+        return new Array(match.length + 1).join(' ');
+      });
+    }
+
+    // Recurrence keywords
+    take(/\b(every\s*day|everyday|daily|each\s+day)\b/g, function() { r.recur = 'DAILY'; });
+    take(/\b(?:every|each)\s+(?:week\s*day|work\s*day)s?\b|\bweekdays\b/g, function() { r.recur = 'WEEKLY'; r.days = r.days.concat([1, 2, 3, 4, 5]); });
+    take(/\b(?:every|each)\s+weekend\b|\bweekends\b/g, function() { r.recur = 'WEEKLY'; r.days = r.days.concat([6, 0]); });
+    take(/\b(?:every|each)\s+week\b|\bweekly\b/g, function() { r.recur = r.recur || 'WEEKLY'; });
+    take(/\b(?:every|each)\b/g, function() { r.recur = r.recur || 'WEEKLY'; });
+
+    // Relative: "in 2 hours", "in 30 min", "in 3 days"
+    take(/\bin\s+(\d+|an?|half an)\s*(hours?|hrs?|h|minutes?|mins?|m|days?|weeks?)\b/g, function(m, n, unit) {
+      var amount = /^\d/.test(n) ? parseInt(n, 10) : (n === 'half an' ? 0.5 : 1);
+      var d = new Date(now.getTime());
+      if (/^h/.test(unit)) d = new Date(now.getTime() + amount * 3600000);
+      else if (/^m/.test(unit)) d = new Date(now.getTime() + amount * 60000);
+      else if (/^d/.test(unit)) { d.setDate(d.getDate() + amount); r.date = d; return; }
+      else { d.setDate(d.getDate() + 7 * amount); r.date = d; return; }
+      r.date = d; r.time = { h: d.getHours(), m: d.getMinutes() };
+    });
+
+    // Durations: "for 2 hours", "for 90 min"
+    take(/\bfor\s+(\d+(?:[.,]\d+)?|an?|half an)\s*(hours?|hrs?|h|minutes?|mins?)\b/g, function(m, n, unit) {
+      var amount = /^\d/.test(n) ? parseFloat(n.replace(',', '.')) : (n === 'half an' ? 0.5 : 1);
+      r.duration = Math.round(/^h/.test(unit) ? amount * 60 : amount);
+    });
+
+    // Time ranges: "7-8pm", "18:00-19:30", "from 7pm to 9pm"
+    take(/\b(?:from\s+)?(\d{1,2})(?:[:.](\d{2}))?\s*(a\.?m\.?|p\.?m\.?)?\s*(?:-|–|to|until|till)\s*(\d{1,2})(?:[:.](\d{2}))?\s*(a\.?m\.?|p\.?m\.?)?(?=\W)/g,
+      function(m, h1, m1, ap1, h2, m2, ap2) {
+        if (!ap1 && !ap2 && !m1 && !m2) return false; // "5-6" is too ambiguous
+        var a = to24(h1, m1, ap1 || ap2), b = to24(h2, m2, ap2 || ap1);
+        if (!a || !b) return false;
+        // "11-1pm": first half is am if applying pm would put it after the end
+        if (!ap1 && ap2 && (a.h * 60 + a.m) > (b.h * 60 + b.m)) a = to24(h1, m1, ap2 === 'pm' ? 'am' : 'pm') || a;
+        r.time = a; r.end = b;
+      });
+
+    // Times with am/pm: "7pm", "7 p.m.", "7:30am"
+    take(/\b(?:at\s+)?(\d{1,2})(?:[:.](\d{2}))?\s*(a\.?m\.?|p\.?m\.?)(?=\W)/g, function(m, h, mm, ap) {
+      var t = to24(h, mm, ap); if (!t) return false; r.time = t;
+    });
+    // 24h times: "19:00", "at 7.30"
+    take(/\b(?:at\s+)?(\d{1,2}):(\d{2})\b/g, function(m, h, mm) {
+      var t = to24(h, mm); if (!t) return false; r.time = t;
+    });
+    take(/\bat\s+(\d{1,2})\.(\d{2})\b(?!\.)/g, function(m, h, mm) {
+      var t = to24(h, mm); if (!t) return false; r.time = t;
+    });
+    // Words
+    take(/\b(?:at\s+)?noon\b/g, function() { r.time = { h: 12, m: 0 }; });
+    take(/\b(?:at\s+)?midnight\b/g, function() { r.time = { h: 0, m: 0 }; });
+    take(/\btonight\b/g, function() { r.date = new Date(now.getTime()); r.timeHint = now.getHours() >= 20 ? { h: Math.min(23, now.getHours() + 1), m: 0 } : { h: 20, m: 0 }; });
+    take(/\b(?:in\s+the\s+|this\s+)?(morning|afternoon|evening|night)\b/g, function(m, w) {
+      r.timeHint = { morning: { h: 9, m: 0 }, afternoon: { h: 15, m: 0 }, evening: { h: 19, m: 0 }, night: { h: 21, m: 0 } }[w];
+    });
+
+    // Explicit dates: 2026-12-05, 5.12.2026, 5.12., 5/12, "dec 5", "5th of december"
+    take(/\b(\d{4})-(\d{1,2})-(\d{1,2})\b/g, function(m, y, mo, d) { r.date = new Date(+y, +mo - 1, +d); });
+    take(/\b(?:on\s+)?(\d{1,2})[./](\d{1,2})(?:[./](\d{2,4})|\.)?(?=\W)/g, function(m, d, mo, y) {
+      d = +d; mo = +mo;
+      if (mo < 1 || mo > 12 || d < 1 || d > 31) return false;
+      if (!y && !/[./]$/.test(m) && m.indexOf('/') === -1) return false; // bare "7.30" is a time, not a date
+      r.date = new Date(y ? (y.length === 2 ? 2000 + +y : +y) : now.getFullYear(), mo - 1, d);
+      if (!y && r.date < new Date(now.getFullYear(), now.getMonth(), now.getDate())) r.date.setFullYear(r.date.getFullYear() + 1);
+    });
+    take(new RegExp('\\b(?:on\\s+)?' + MONTH_RE + '\\.?\\s+(\\d{1,2})(?:st|nd|rd|th)?(?:,?\\s+(\\d{4}))?\\b', 'g'), function(m, mon, d, y) {
+      setMonthDate(mon, d, y);
+    });
+    take(new RegExp('\\b(?:on\\s+)?(?:the\\s+)?(\\d{1,2})(?:st|nd|rd|th)?\\s+(?:of\\s+)?' + MONTH_RE + '\\.?(?:,?\\s+(\\d{4}))?\\b', 'g'), function(m, d, mon, y) {
+      setMonthDate(mon, d, y);
+    });
+    function setMonthDate(mon, d, y) {
+      var dt = new Date(y ? +y : now.getFullYear(), monthIndex(mon), +d);
+      if (!y && dt < new Date(now.getFullYear(), now.getMonth(), now.getDate())) dt.setFullYear(dt.getFullYear() + 1);
+      r.date = dt;
+    }
+
+    take(/\b(?:the\s+)?day\s+after\s+tomorrow\b/g, function() { var d = new Date(now.getTime()); d.setDate(d.getDate() + 2); r.date = d; });
+    take(/\btomorrow\b|\btmrw?\b/g, function() { var d = new Date(now.getTime()); d.setDate(d.getDate() + 1); r.date = d; });
+    take(/\btoday\b/g, function() { r.date = new Date(now.getTime()); });
+
+    // Weekday names ("monday", "mondays", "mon", "next friday", "this sat")
+    DAY_WORDS.forEach(function(words, idx) {
+      take(new RegExp('\\b(?:(next|this|on)\\s+)?(' + words.join('|') + ')\\b', 'g'), function(m, prefix, w) {
+        if (/s$/.test(w) && w !== 'tues' && w !== 'thurs' && w.length > 4) r.recur = r.recur || 'WEEKLY';
+        if (r.days.indexOf(idx) === -1) r.days.push(idx);
+        if (prefix === 'next') r.nextWeek = true;
+      });
+    });
+
+    // Last resort bare hour: "at 7" (1-7 reads as pm, the usual meaning)
+    if (!r.time) {
+      take(/\bat\s+(\d{1,2})\b(?![.:\/]\d)/g, function(m, h) {
+        h = +h; if (h > 23) return false;
+        r.time = { h: (h >= 1 && h <= 7) ? h + 12 : h, m: 0 };
+      });
+    }
+
+    if (!r.time && r.timeHint) r.time = r.timeHint;
+    var hasSchedule = !!(r.time || r.date || r.days.length || r.recur);
+    if (!r.time && inherited && (r.days.length || r.date)) { r.time = inherited; r.inheritedTime = true; }
+
+    // Title = leftovers, minus filler words
+    var title = '';
+    for (var i = 0; i < low.length; i++) title += low[i] === ' ' && text[i] !== ' ' ? ' ' : text[i];
+    title = title
+      .replace(/\b(remind me (?:to|about|of)|remind me|reminders?(?: to)?|don'?t forget(?: to)?|i (?:have|need) to|i don'?t know)\b/gi, ' ')
+      .replace(/[,;:]+/g, ' ');
+    var words = title.split(/\s+/).filter(function(w) { return /[\w\u00C0-\u024F]/.test(w); });
+    var STOP = /^(at|on|and|then|also|from|by|the|this|next|to|in|for|of)$/i;
+    while (words.length && STOP.test(words[0])) words.shift();
+    while (words.length && STOP.test(words[words.length - 1])) words.pop();
+    title = words.join(' ').replace(/[.\-–]+$/, '').trim();
+    if (title) title = title.charAt(0).toUpperCase() + title.slice(1);
+
+    return { r: r, title: title, hasSchedule: hasSchedule };
+  }
+
+  function nextWeekday(now, dayIdx, time, forceNextWeek) {
+    var d = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    var diff = (dayIdx - d.getDay() + 7) % 7;
+    if (forceNextWeek && diff === 0) diff = 7;
+    d.setDate(d.getDate() + diff);
+    if (time) d.setHours(time.h, time.m, 0, 0);
+    if (diff === 0) {
+      var cutoff = time ? d.getTime() : d.getTime() + 86400000 - 1;
+      if (cutoff <= now.getTime()) d.setDate(d.getDate() + 7);
+    }
+    return d;
+  }
+
+  /* Turn a parsed segment into one or more reminder objects. */
+  function buildReminders(seg, now) {
+    var r = seg.r, title = seg.title || 'Reminder';
+    var allDay = !r.time;
+    var duration = r.duration || DEFAULT_DURATION;
+    if (r.time && r.end) {
+      duration = (r.end.h * 60 + r.end.m) - (r.time.h * 60 + r.time.m);
+      if (duration <= 0) duration += 24 * 60;
+    }
+    function make(start, rrule) {
+      if (!allDay) start.setHours(r.time.h, r.time.m, 0, 0); else start.setHours(0, 0, 0, 0);
+      return { id: 'r' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7), title: title, start: start.getTime(),
+        allDay: allDay, duration: duration, rrule: rrule || null, sent: false, created: Date.now() };
+    }
+
+    if (r.recur === 'DAILY') {
+      var s = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      if (r.date) s = new Date(r.date.getFullYear(), r.date.getMonth(), r.date.getDate());
+      if (!allDay) { s.setHours(r.time.h, r.time.m, 0, 0); if (s.getTime() <= now.getTime() && !r.date) s.setDate(s.getDate() + 1); }
+      return [make(s, 'FREQ=DAILY')];
+    }
+    if (r.recur === 'WEEKLY') {
+      var days = r.days.length ? r.days.slice() : [(r.date || now).getDay()];
+      // first occurrence = soonest of the listed weekdays
+      var first = null;
+      days.forEach(function(di) {
+        var c = nextWeekday(r.date || now, di, r.time, false);
+        if (!first || c < first) first = c;
+      });
+      var order = [1, 2, 3, 4, 5, 6, 0];
+      days.sort(function(a, b) { return order.indexOf(a) - order.indexOf(b); });
+      return [make(first, 'FREQ=WEEKLY;BYDAY=' + days.map(function(d) { return DAY_CODES[d]; }).join(','))];
+    }
+    if (r.days.length) {
+      return r.days.map(function(di) { return make(nextWeekday(now, di, r.time, r.nextWeek), null); });
+    }
+    if (r.date) return [make(new Date(r.date.getFullYear(), r.date.getMonth(), r.date.getDate()), null)];
+    // Only a time: today if it's still ahead, otherwise tomorrow
+    var t = new Date(now.getFullYear(), now.getMonth(), now.getDate(), r.time.h, r.time.m);
+    if (t.getTime() <= now.getTime()) t.setDate(t.getDate() + 1);
+    return [make(t, null)];
+  }
+
+  /* Public entry point: free text -> { reminders: [...], skipped: [...] } */
+  function parse(input, now) {
+    now = now || new Date();
+    var segments = String(input || '')
+      .split(/\n|;|,(?!\s*\d{4})|\bthen\b|\s+\+\s+/i)
+      .map(function(s) { return s.trim(); })
+      .filter(Boolean);
+    var out = { reminders: [], skipped: [] };
+    var lastTime = null, lastTitle = null;
+    segments.forEach(function(s) {
+      var seg = parseSegment(s, now, lastTime);
+      if (!seg.hasSchedule) {
+        // A bare word with no date ("gym") right before "Thursday" etc. is
+        // probably a title for the next piece; remember it instead of failing.
+        if (seg.title && seg.title.split(' ').length <= 4 && !/^i\b/i.test(seg.title)) lastTitle = seg.title;
+        else if (seg.title) out.skipped.push(s);
+        return;
+      }
+      if (!seg.title && lastTitle) seg.title = lastTitle;
+      if (seg.r.time && !seg.r.inheritedTime) lastTime = seg.r.time;
+      if (seg.title) lastTitle = seg.title;
+      out.reminders = out.reminders.concat(buildReminders(seg, now));
+    });
+    return out;
+  }
+
+  /* ---------- Formatting / calendar links ---------- */
+  function fmtStamp(d, allDay) {
+    var s = d.getFullYear() + pad(d.getMonth() + 1) + pad(d.getDate());
+    return allDay ? s : s + 'T' + pad(d.getHours()) + pad(d.getMinutes()) + '00';
+  }
+  function endOf(rem) {
+    var s = new Date(rem.start);
+    if (rem.allDay) { var e = new Date(s.getTime()); e.setDate(e.getDate() + 1); return e; }
+    return new Date(rem.start + rem.duration * 60000);
+  }
+  function localTz() {
+    try { return Intl.DateTimeFormat().resolvedOptions().timeZone || ''; } catch (e) { return ''; }
+  }
+  function recurText(rem) {
+    if (!rem.rrule) return '';
+    if (rem.rrule === 'FREQ=DAILY') return 'every day';
+    var m = /BYDAY=([A-Z,]+)/.exec(rem.rrule);
+    if (!m) return 'every week';
+    var codes = m[1].split(',');
+    if (codes.join(',') === 'MO,TU,WE,TH,FR') return 'every weekday';
+    return 'every ' + codes.map(function(c) { return DAY_SHORT[DAY_CODES.indexOf(c)]; }).join(', ');
+  }
+  function whenText(rem) {
+    var d = new Date(rem.start);
+    var s = DAY_SHORT[d.getDay()] + ' ' + d.getDate() + ' ' + MONTH_SHORT[d.getMonth()];
+    if (d.getFullYear() !== new Date().getFullYear()) s += ' ' + d.getFullYear();
+    if (!rem.allDay) {
+      var e = endOf(rem);
+      s += ' · ' + pad(d.getHours()) + ':' + pad(d.getMinutes()) + '–' + pad(e.getHours()) + ':' + pad(e.getMinutes());
+    } else s += ' · all day';
+    var rt = recurText(rem);
+    return rt ? (rt === 'every day' ? 'From ' : 'Starts ') + s + ' · ' + rt : s;
+  }
+  function googleUrl(rem) {
+    var params = [
+      'action=TEMPLATE',
+      'text=' + encodeURIComponent(rem.title),
+      'dates=' + fmtStamp(new Date(rem.start), rem.allDay) + '/' + fmtStamp(endOf(rem), rem.allDay),
+      'details=' + encodeURIComponent('Added from Notesino')
+    ];
+    var tz = localTz();
+    if (tz && !rem.allDay) params.push('ctz=' + encodeURIComponent(tz));
+    if (rem.rrule) params.push('recur=' + encodeURIComponent('RRULE:' + rem.rrule));
+    return 'https://calendar.google.com/calendar/render?' + params.join('&');
+  }
+  function icsEscape(s) { return String(s).replace(/\\/g, '\\\\').replace(/;/g, '\\;').replace(/,/g, '\\,').replace(/\n/g, '\\n'); }
+  function buildIcs(list) {
+    var now = new Date();
+    var stamp = now.getUTCFullYear() + pad(now.getUTCMonth() + 1) + pad(now.getUTCDate()) + 'T' + pad(now.getUTCHours()) + pad(now.getUTCMinutes()) + '00Z';
+    var tz = localTz();
+    var lines = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Notesino//Reminders//EN', 'CALSCALE:GREGORIAN'];
+    if (tz) lines.push('X-WR-TIMEZONE:' + tz);
+    list.forEach(function(rem) {
+      var s = new Date(rem.start), e = endOf(rem);
+      lines.push('BEGIN:VEVENT', 'UID:' + rem.id + '@notesino', 'DTSTAMP:' + stamp, 'SUMMARY:' + icsEscape(rem.title));
+      if (rem.allDay) lines.push('DTSTART;VALUE=DATE:' + fmtStamp(s, true), 'DTEND;VALUE=DATE:' + fmtStamp(e, true));
+      else if (tz) lines.push('DTSTART;TZID=' + tz + ':' + fmtStamp(s), 'DTEND;TZID=' + tz + ':' + fmtStamp(e));
+      else lines.push('DTSTART:' + fmtStamp(s), 'DTEND:' + fmtStamp(e));
+      if (rem.rrule) lines.push('RRULE:' + rem.rrule);
+      lines.push('BEGIN:VALARM', 'ACTION:DISPLAY', 'DESCRIPTION:' + icsEscape(rem.title),
+        'TRIGGER:' + (rem.allDay ? '-PT15H' : '-PT15M'), 'END:VALARM', 'END:VEVENT');
+    });
+    lines.push('END:VCALENDAR');
+    return lines.join('\r\n');
+  }
+
+  /* Next time this reminder happens at or after `from` (handles repeats). */
+  function nextOccurrence(rem, from) {
+    var start = new Date(rem.start);
+    if (!rem.rrule || start.getTime() >= from) return start.getTime();
+    var codes = rem.rrule === 'FREQ=DAILY' ? DAY_CODES : ((/BYDAY=([A-Z,]+)/.exec(rem.rrule) || [0, DAY_CODES[start.getDay()]])[1].split(','));
+    var d = new Date(from); d.setHours(start.getHours(), start.getMinutes(), 0, 0);
+    for (var i = 0; i < 9; i++) {
+      if (codes.indexOf(DAY_CODES[d.getDay()]) !== -1 && d.getTime() >= from) return d.getTime();
+      d.setDate(d.getDate() + 1);
+    }
+    return start.getTime();
+  }
+
+  window.NotesinoReminders = { parse: parse, googleUrl: googleUrl, buildIcs: buildIcs, whenText: whenText, nextOccurrence: nextOccurrence };
+
+  /* ---------- UI ---------- */
+  if (typeof document === 'undefined') return;
+  var input = document.getElementById('rmInput');
+  if (!input) return;
+  var addBtn = document.getElementById('rmAddBtn');
+  var preview = document.getElementById('rmPreview');
+  var listEl = document.getElementById('rmList');
+  var notifyBtn = document.getElementById('rmNotifyBtn');
+  var icsBtn = document.getElementById('rmIcsBtn');
+
+  var reminders = [];
+  try { reminders = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]') || []; } catch (e) { reminders = []; }
+  function save() { try { localStorage.setItem(STORAGE_KEY, JSON.stringify(reminders)); } catch (e) {} }
+
+  function el(tag, cls, text) {
+    var n = document.createElement(tag);
+    if (cls) n.className = cls;
+    if (text != null) n.textContent = text;
+    return n;
+  }
+
+  function openExternal(url) {
+    if (window.NotesinoNative && window.NotesinoNative.openExternal) {
+      try { window.NotesinoNative.openExternal(url); return; } catch (e) {}
+    }
+    // (no 'noopener' feature: with it window.open always returns null, so
+    // a blocked popup couldn't be told apart from a successful one)
+    var w = window.open(url, '_blank');
+    if (w) { try { w.opener = null; } catch (e) {} }
+    else window.location.href = url;
+  }
+
+  function autosize() { input.style.height = 'auto'; input.style.height = Math.min(input.scrollHeight, 140) + 'px'; }
+
+  function renderPreview() {
+    preview.textContent = '';
+    var val = input.value.trim();
+    if (!val) { addBtn.disabled = true; return; }
+    var res = parse(val);
+    addBtn.disabled = res.reminders.length === 0;
+    res.reminders.forEach(function(rem) {
+      var chip = el('div', 'rm-chip');
+      chip.appendChild(el('b', null, rem.title));
+      chip.appendChild(document.createTextNode(' — ' + whenText(rem)));
+      preview.appendChild(chip);
+    });
+    if (!res.reminders.length) {
+      preview.appendChild(el('div', 'rm-chip bad', 'Add a day or a time, e.g. "Monday 7pm" or "tomorrow".'));
+    }
+    res.skipped.forEach(function(s) {
+      preview.appendChild(el('div', 'rm-chip bad', 'Skipped "' + s + '" (no day or time).'));
+    });
+  }
+
+  function addFromInput() {
+    var res = parse(input.value);
+    if (!res.reminders.length) return;
+    reminders = reminders.concat(res.reminders);
+    save();
+    input.value = '';
+    autosize();
+    renderPreview();
+    renderList();
+  }
+
+  function renderList() {
+    listEl.textContent = '';
+    var now = Date.now();
+    var sorted = reminders.slice().sort(function(a, b) { return nextOccurrence(a, now) - nextOccurrence(b, now); });
+    if (!sorted.length) {
+      listEl.appendChild(el('div', 'rm-empty', 'No reminders yet. Type one above, e.g. "gym at 7pm Monday".'));
+      return;
+    }
+    sorted.forEach(function(rem) {
+      var past = !rem.rrule && endOf(rem).getTime() < now;
+      var item = el('div', 'rm-item' + (past ? ' past' : ''));
+      var main = el('div', 'rm-item-main');
+      main.appendChild(el('div', 'rm-item-title', rem.title));
+      main.appendChild(el('div', 'rm-item-when', whenText(rem)));
+      item.appendChild(main);
+      var actions = el('div', 'rm-item-actions');
+      var calBtn = el('button', 'tt-btn rm-cal-btn' + (rem.sent ? ' sent' : ''), rem.sent ? '✓ In calendar' : 'Add to calendar');
+      calBtn.title = rem.sent ? 'Already sent. Click to open it again.' : 'Open Google Calendar with this event filled in. Tap Save there.';
+      calBtn.addEventListener('click', function() {
+        openExternal(googleUrl(rem));
+        rem.sent = true; save(); renderList();
+      });
+      var del = el('button', 'rm-del-btn', '×');
+      del.setAttribute('aria-label', 'Delete reminder ' + rem.title);
+      del.addEventListener('click', function() {
+        reminders = reminders.filter(function(x) { return x.id !== rem.id; });
+        save(); renderList();
+      });
+      actions.appendChild(calBtn);
+      actions.appendChild(del);
+      item.appendChild(actions);
+      listEl.appendChild(item);
+    });
+  }
+
+  input.addEventListener('input', function() { autosize(); renderPreview(); });
+  input.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); addFromInput(); }
+  });
+  addBtn.addEventListener('click', addFromInput);
+
+  icsBtn.addEventListener('click', function() {
+    if (!reminders.length) return;
+    var blob = new Blob([buildIcs(reminders)], { type: 'text/calendar' });
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'notesino-reminders.ics';
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(function() { URL.revokeObjectURL(a.href); }, 2000);
+  });
+
+  /* Optional in-app notifications while Notesino is open (the calendar
+     handles real reminders; this is a backup). */
+  var notified = {};
+  function updateNotifyBtn() {
+    if (!('Notification' in window)) { notifyBtn.style.display = 'none'; return; }
+    notifyBtn.textContent = Notification.permission === 'granted' ? '🔔 In-app alerts on' : 'Notify me in this app';
+    notifyBtn.disabled = Notification.permission === 'granted';
+  }
+  notifyBtn.addEventListener('click', function() {
+    if (!('Notification' in window)) return;
+    Notification.requestPermission().then(updateNotifyBtn, updateNotifyBtn);
+  });
+  updateNotifyBtn();
+
+  setInterval(function() {
+    var now = Date.now();
+    if (!('Notification' in window) || Notification.permission !== 'granted') { renderList(); return; }
+    reminders.forEach(function(rem) {
+      var at = nextOccurrence(rem, now - 60000);
+      var key = rem.id + '@' + at;
+      if (at <= now && at > now - 60000 && !notified[key]) {
+        notified[key] = true;
+        try { new Notification(rem.title, { body: whenText(rem), tag: key }); } catch (e) {}
+      }
+    });
+  }, 30000);
+
+  renderList();
+})();
+</script>
 </body>
 </html>

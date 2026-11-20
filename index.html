@@ -824,46 +824,158 @@
     display: block;
   }
 
-  /* Notes sub-switcher (Canvas / Subject Notes) \u2014 now the app's only navigation */
-  .notes-subswitcher {
+  /* ---------- The web launcher ----------
+     The app's home screen: a dark starfield with three icon-nodes
+     (Notes / Timetable / Reminders) linked by faint constellation lines.
+     Deliberately NOT theme-reactive (always dark) -- it's a portal
+     screen, not themed content -- except the accent-colored pulse lines
+     and hover glow, which still pick up the user's chosen accent so it
+     doesn't feel disconnected from the rest of the app. */
+  .web-launcher {
     position: absolute;
-    top: 84px;
+    inset: 0;
+    display: none;
+    overflow: hidden;
+    background: radial-gradient(ellipse at 30% 20%, #0d0d1a 0%, #030308 55%, #000 100%);
+  }
+
+  .web-launcher.active {
+    display: block;
+  }
+
+  .web-glow {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(80px);
+    opacity: 0.32;
+  }
+
+  .web-glow.g1 { width: 34vw; height: 34vw; top: 8%; left: 6%; background: rgb(var(--accent-rgb)); }
+  .web-glow.g2 { width: 30vw; height: 30vw; bottom: 6%; right: 8%; background: #ff6fa5; }
+  .web-glow.g3 { width: 26vw; height: 26vw; top: 52%; left: 54%; background: #3fd8c2; }
+
+  .web-stars {
+    position: absolute;
+    inset: 0;
+  }
+
+  .web-star {
+    position: absolute;
+    border-radius: 50%;
+    background: #fff;
+    animation: web-twinkle 3.5s ease-in-out infinite;
+  }
+
+  @keyframes web-twinkle {
+    0%, 100% { opacity: 0.2; }
+    50% { opacity: 0.85; }
+  }
+
+  .web-lines {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+  }
+
+  .web-lines line {
+    stroke: rgba(255, 255, 255, 0.22);
+    stroke-width: 1.4;
+  }
+
+  .web-lines .pulse {
+    stroke: rgb(var(--accent-rgb));
+    stroke-width: 1.6;
+    stroke-opacity: 0.85;
+    fill: none;
+    stroke-dasharray: 6 10;
+    animation: web-dash 3s linear infinite;
+  }
+
+  @keyframes web-dash {
+    to { stroke-dashoffset: -160; }
+  }
+
+  .web-hub {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 14px;
+    height: 14px;
+    margin: -7px 0 0 -7px;
+    border-radius: 50%;
+    background: #fff;
+    box-shadow: 0 0 8px rgba(255, 255, 255, 0.8);
+    z-index: 1;
+  }
+
+  .web-launcher .app-title {
+    top: 40px;
+  }
+
+  .web-tagline {
+    position: absolute;
+    top: 134px;
     left: 50%;
     transform: translateX(-50%);
+    color: rgba(255, 255, 255, 0.4);
+    font-size: 12.5px;
+    letter-spacing: 0.03em;
+    z-index: 3;
+  }
+
+  .web-node {
+    position: absolute;
+    width: 104px;
+    height: 104px;
+    margin: -52px 0 0 -52px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 30%, rgba(255, 255, 255, 0.14), rgba(255, 255, 255, 0.04));
+    border: 1.5px solid rgba(255, 255, 255, 0.55);
+    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.05), 0 0 40px rgba(var(--accent-rgb), 0.3), 0 10px 30px rgba(0, 0, 0, 0.6);
+    color: #fff;
     display: flex;
-    gap: 4px;
-    padding: 4px;
-    border-radius: 999px;
-    background: rgba(var(--panel-rgb), 0.92);
-    border: 1px solid rgba(var(--ink-rgb), 0.1);
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
-    z-index: 10;
-  }
-
-  .subswitch-btn {
-    padding: 7px 18px;
-    border-radius: 999px;
-    border: none;
-    background: transparent;
-    color: rgba(var(--ink-rgb), 0.6);
-    font-size: 13.5px;
-    font-weight: 600;
+    align-items: center;
+    justify-content: center;
     cursor: pointer;
-    transition: background 0.2s ease, color 0.2s ease, transform 0.15s cubic-bezier(.34,1.56,.64,1);
+    transition: transform 0.25s cubic-bezier(.34,1.56,.64,1), box-shadow 0.25s ease, border-color 0.25s ease;
   }
 
-  .subswitch-btn:hover {
-    background: rgba(var(--accent-rgb), 0.12);
-    transform: translateY(-1px);
+  .web-node:hover,
+  .web-node:focus-visible {
+    transform: scale(1.08) rotate(-3deg);
+    border-color: #fff;
+    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.1), 0 0 60px rgba(var(--accent-rgb), 0.6), 0 14px 36px rgba(0, 0, 0, 0.7);
   }
 
-  .subswitch-btn.active {
-    background: rgb(var(--accent-rgb));
-    color: var(--accent-text);
+  .web-node:active {
+    transform: scale(0.97);
   }
 
-  .subswitch-btn:not(.active):hover {
-    color: rgba(var(--ink-rgb), 0.85);
+  .web-node-label {
+    position: absolute;
+    top: 112px;
+    left: 50%;
+    transform: translateX(-50%);
+    color: #fff;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.03em;
+    white-space: nowrap;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+  }
+
+  .web-node:hover .web-node-label,
+  .web-node:focus-visible .web-node-label {
+    opacity: 0.85;
+  }
+
+  .window-title-label {
+    color: var(--ink-solid);
+    font-weight: 700;
+    font-size: 15px;
+    padding: 0 4px;
   }
 
   .notes-sub {
@@ -876,36 +988,15 @@
     display: block;
   }
 
-  /* Timetable and Reminders used to be full-screen tabs you switched
-     between; now they're big cards living directly on the same
-     pannable/zoomable board as every note, so the whole app reads as one
-     continuous workspace -- the subswitcher pill just pans/zooms the view
-     to frame whichever one you pick, it doesn't hide anything else. */
-  #sub-timetable,
-  #sub-reminders {
-    position: absolute;
-    inset: auto;
-    display: flex !important;
+  /* Timetable and Reminders are full-screen windows opened from the web
+     launcher. Each gets its own internal top bar (the back button + title
+     live globally in #shareToolbar, see .window-title-label) so only the
+     content below needs flex-column sizing here. */
+  #sub-timetable.active,
+  #sub-reminders.active {
+    display: flex;
     flex-direction: column;
-    border-radius: 22px;
-    background: rgba(var(--panel-rgb), 0.97);
-    border: 1px solid rgba(var(--ink-rgb), 0.1);
-    box-shadow: var(--card-shadow), 0 20px 50px rgba(0, 0, 0, 0.3);
-    overflow: hidden;
-  }
-
-  #sub-timetable {
-    left: 40px;
-    top: 560px;
-    width: 1500px;
-    height: 860px;
-  }
-
-  #sub-reminders {
-    left: 1620px;
-    top: 560px;
-    width: 820px;
-    height: 860px;
+    padding-top: 90px;
   }
 
   /* Subject Notes (nested inside the Timetable tab as a collapsible section) */
@@ -3414,13 +3505,20 @@
       height: 15px;
     }
 
-    .notes-subswitcher {
-      top: calc(58px + env(safe-area-inset-top, 0px));
+    .web-node {
+      width: 76px;
+      height: 76px;
+      margin: -38px 0 0 -38px;
     }
 
-    .subswitch-btn {
-      padding: 4px 10px;
-      font-size: 10.5px;
+    .web-node svg {
+      width: 22px;
+      height: 22px;
+    }
+
+    .web-node-label {
+      top: 82px;
+      font-size: 11px;
     }
 
     .hint {
@@ -3901,7 +3999,7 @@
 
   /* Reminders: quick natural-language notes -> calendar events
      (Google Calendar, which Notion Calendar shows and notifies for) --
-     now a card living on the shared board, see #sub-reminders below. */
+     its own full-screen window, opened from the web launcher. */
 
   .rm-wrap {
     flex: 1;
@@ -4084,8 +4182,7 @@
     .rm-item-actions { width: 100%; justify-content: flex-end; }
   }
 
-  /* Timetable -- now a card living on the shared board, see #sub-timetable
-     positioning below. */
+  /* Timetable -- its own full-screen window, opened from the web launcher. */
 
   .tt-wrap {
     flex: 1;
@@ -4129,6 +4226,46 @@
   .tt-next-detail {
     font-size: 13px;
     color: rgba(var(--ink-rgb), 0.75);
+  }
+
+  .tt-week-toggle {
+    display: inline-flex;
+    gap: 4px;
+    padding: 4px;
+    border-radius: 999px;
+    background: rgba(var(--ink-rgb), 0.08);
+    width: fit-content;
+    flex-shrink: 0;
+  }
+
+  .tt-week-btn {
+    border: none;
+    background: transparent;
+    padding: 7px 18px;
+    border-radius: 999px;
+    font-size: 12.5px;
+    font-weight: 600;
+    color: rgba(var(--ink-rgb), 0.6);
+    cursor: pointer;
+    text-align: center;
+    transition: background 0.15s ease, color 0.15s ease;
+  }
+
+  .tt-week-btn.active {
+    background: rgb(var(--accent-rgb));
+    color: var(--accent-text);
+  }
+
+  .tt-week-tag {
+    display: block;
+    font-size: 9.5px;
+    font-weight: 500;
+    opacity: 0.75;
+    letter-spacing: 0.02em;
+  }
+
+  .tt-week-btn.active .tt-week-tag {
+    opacity: 1;
   }
 
   .tt-toolbar {
@@ -4437,6 +4574,14 @@
     cursor: pointer;
     padding: 0;
     z-index: 2;
+    opacity: 0;
+    transition: opacity 0.15s ease;
+  }
+
+  .tt-slot:hover .tt-dot,
+  .tt-slot:focus-within .tt-dot,
+  .tt-slot.tt-swatches-open .tt-dot {
+    opacity: 1;
   }
 
   .tt-swatches {
@@ -4496,6 +4641,14 @@
     text-transform: uppercase;
     letter-spacing: 0.03em;
     cursor: pointer;
+    opacity: 0;
+    transition: opacity 0.15s ease;
+  }
+
+  .tt-slot:hover .tt-free-btn,
+  .tt-slot:focus-within .tt-free-btn,
+  .tt-free-btn.active {
+    opacity: 1;
   }
 
   .tt-free-btn.active {
@@ -4530,25 +4683,22 @@
     outline: none;
     color: rgba(var(--ink-rgb), 0.9);
     font-size: 13px;
-    font-weight: 500;
+    font-weight: 600;
     min-height: 16px;
     margin-right: 16px;
+    display: inline-block;
+    padding: 2px 4px;
+    border-radius: 6px;
+    transition: background 0.15s ease, color 0.15s ease;
   }
 
   .tt-room,
   .tt-teacher {
     outline: none;
-    color: rgba(var(--ink-rgb), 0.6);
+    color: rgba(var(--ink-rgb), 0.55);
     font-size: 11px;
     min-height: 14px;
-    margin-top: 2px;
-  }
-
-  .tt-slot-colored .tt-subject,
-  .tt-slot-colored .tt-room,
-  .tt-slot-colored .tt-teacher {
-    color: #1a1a1a;
-    opacity: 0.85;
+    margin-top: 3px;
   }
 
   .tt-subject:empty:before,
@@ -4687,9 +4837,11 @@
 
 <div class="stage" role="main">
 
-  <h1 class="app-title">Notesino</h1>
-
   <div class="toolbar" id="shareToolbar" style="left:calc(24px + env(safe-area-inset-left, 0px)); right:auto;">
+    <button class="tb-btn" id="windowBackBtn" title="Back to the web" aria-label="Back to the web" data-tip="Back" style="display:none;">
+      <svg class="tb-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+    </button>
+    <div class="window-title-label" id="windowTitleLabel" style="display:none;"></div>
     <div class="add-menu-wrap" id="boardSwitcherWrap">
       <button class="board-switcher-btn" id="boardSwitcherBtn" title="Switch board" aria-label="Switch board" aria-haspopup="true" aria-expanded="false">
         <span class="board-switcher-name" id="boardSwitcherName">Board</span>
@@ -4795,13 +4947,37 @@
     <input type="file" id="importFileInput" accept="application/json,.json" style="display:none;">
   </div>
 
-  <div class="notes-subswitcher" id="notesSubswitcher">
-    <button class="subswitch-btn active" data-sub="board">Notes</button>
-    <button class="subswitch-btn" data-sub="timetable">Timetable</button>
-    <button class="subswitch-btn" data-sub="reminders">Reminders</button>
+  <div class="web-launcher active" id="webLauncher">
+    <div class="web-glow g1"></div>
+    <div class="web-glow g2"></div>
+    <div class="web-glow g3"></div>
+    <div class="web-stars" id="webStars"></div>
+    <svg class="web-lines" viewBox="0 0 100 100" preserveAspectRatio="none">
+      <line x1="50" y1="50" x2="30" y2="33.33" vector-effect="non-scaling-stroke" />
+      <line x1="50" y1="50" x2="70" y2="33.33" vector-effect="non-scaling-stroke" />
+      <line x1="50" y1="50" x2="50" y2="72.22" vector-effect="non-scaling-stroke" />
+      <path class="pulse" d="M30,33.33 Q50,42.22 70,33.33" vector-effect="non-scaling-stroke" />
+      <path class="pulse" d="M30,33.33 Q40,55.56 50,72.22" vector-effect="non-scaling-stroke" />
+      <path class="pulse" d="M70,33.33 Q60,55.56 50,72.22" vector-effect="non-scaling-stroke" />
+    </svg>
+    <div class="web-hub"></div>
+    <h1 class="app-title">Notesino</h1>
+    <div class="web-tagline">Pick a space to open</div>
+    <button class="web-node" data-sub="board" style="top:33.33%;left:30%;" title="Notes" data-tip="Notes">
+      <svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 4h12l4 4v12H4z"/><path d="M16 4v4h4"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="8" y1="16" x2="13" y2="16"/></svg>
+      <span class="web-node-label">Notes</span>
+    </button>
+    <button class="web-node" data-sub="timetable" style="top:33.33%;left:70%;" title="Timetable" data-tip="Timetable">
+      <svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="5" width="18" height="16" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="8" y1="3" x2="8" y2="7"/><line x1="16" y1="3" x2="16" y2="7"/></svg>
+      <span class="web-node-label">Timetable</span>
+    </button>
+    <button class="web-node" data-sub="reminders" style="top:72.22%;left:50%;" title="Reminders" data-tip="Reminders">
+      <svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2a6 6 0 0 0-6 6c0 5-2 6-2 7h16s-2-1-2-7a6 6 0 0 0-6-6Z"/><path d="M10 20a2 2 0 0 0 4 0"/></svg>
+      <span class="web-node-label">Reminders</span>
+    </button>
   </div>
 
-  <div class="notes-sub active" id="sub-board">
+  <div class="notes-sub" id="sub-board">
     <div class="canvas-viewport" id="canvasViewport">
       <div class="workspace-bg-layer" id="workspaceBgLayer">
         <video id="workspaceBgVideo" muted loop playsinline autoplay></video>
@@ -4839,6 +5015,10 @@
         <div class="tt-next-label" id="ttNextLabel">No timetable yet</div>
         <div class="tt-next-detail" id="ttNextDetail">Fill in the grid below to see your next lesson here.</div>
       </div>
+      <div class="tt-week-toggle" id="ttWeekToggle" style="display:none;">
+        <button class="tt-week-btn" data-week="A" id="ttWeekBtnA">Week A<span class="tt-week-tag" id="ttWeekTagA"></span></button>
+        <button class="tt-week-btn" data-week="B" id="ttWeekBtnB">Week B<span class="tt-week-tag" id="ttWeekTagB"></span></button>
+      </div>
       <div class="tt-toolbar">
         <div class="tt-title">Weekly Timetable</div>
         <div class="tt-fmt-group">
@@ -4855,6 +5035,15 @@
             <button class="tt-btn" id="ttCalendarBtn">Calendar&hellip;</button>
             <div class="tt-calendar-panel" id="ttCalendarPanel">
               <div class="tt-calendar-row">
+                <label for="ttRotationToggle">Alternating Week A/B</label>
+                <input type="checkbox" id="ttRotationToggle">
+              </div>
+              <div class="tt-calendar-row" id="ttAnchorRow" style="display:none;">
+                <label for="ttAnchorDateInput">A date in Week A</label>
+                <input type="date" id="ttAnchorDateInput">
+              </div>
+              <div class="tt-calendar-divider"></div>
+              <div class="tt-calendar-row">
                 <label for="termStartInput">Term start</label>
                 <input type="date" id="termStartInput">
               </div>
@@ -4866,7 +5055,7 @@
               <div class="tt-calendar-label">Term exceptions (no classes)</div>
               <div id="termExceptionsList"></div>
               <div class="tt-calendar-add-row">
-                <input type="date" id="termExceptionDateInput">
+                <input type="date" id="termExceptionDateInput" aria-label="Exception date">
                 <input type="text" id="termExceptionLabelInput" placeholder="Label (optional)">
                 <button class="tt-calendar-add-btn" id="termExceptionAddBtn" aria-label="Add exception">+</button>
               </div>
@@ -5065,62 +5254,74 @@
   var isTouchDevice = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0) || window.matchMedia('(pointer: coarse)').matches;
   if (isTouchDevice) document.body.classList.add('touch-device');
 
-  /* ---------- Notes sub-switcher: now a "jump to" nav across one shared
-     board, not a hard tab switch. Timetable and Reminders are reparented
-     onto the same pannable/zoomable #notesLayer as every note (CSS gives
-     them a fixed size/position there, see #sub-timetable/#sub-reminders),
-     so moving between sections is just panning around one continuous
-     workspace instead of swapping out separate full-screen views. ---------- */
-  var subSwitchBtns = document.querySelectorAll('.subswitch-btn');
+  /* ---------- The web launcher ----------
+     Home screen: a dark starfield with three icon-nodes. Clicking one
+     opens that section as a full-screen "window"; the back button
+     returns to the web. Nothing is destroyed when a window closes --
+     all state keeps living in the same place it always has (localStorage
+     / collectState()), so reopening a section just reveals the same DOM
+     with the same content, same as it was left. */
+  var webLauncherEl = document.getElementById('webLauncher');
+  var windowBackBtn = document.getElementById('windowBackBtn');
+  var windowTitleLabel = document.getElementById('windowTitleLabel');
   var notesSubs = {
     board: document.getElementById('sub-board'),
     timetable: document.getElementById('sub-timetable'),
     reminders: document.getElementById('sub-reminders')
   };
   var notesToolbar = document.getElementById('notesToolbar');
+  var SECTION_TITLES = { board: 'Notes', timetable: 'Timetable', reminders: 'Reminders' };
+  var openSection = null;
 
-  (function moveSectionsOntoBoard() {
-    var canvasLayerEl = document.getElementById('notesLayer');
-    canvasLayerEl.appendChild(notesSubs.timetable);
-    canvasLayerEl.appendChild(notesSubs.reminders);
-  })();
-
-  var SECTION_RECTS = {
-    board: { x: 0, y: 0, w: 900, h: 560 },
-    timetable: { x: 40, y: 560, w: 1500, h: 860 },
-    reminders: { x: 1620, y: 560, w: 820, h: 860 }
-  };
-
-  function panZoomToSection(key) {
-    var r = SECTION_RECTS[key];
-    if (!r) return;
-    var vpW = canvasViewport.clientWidth;
-    var vpH = canvasViewport.clientHeight;
-    /* Reserve room for the floating title + subswitcher pill at the top so
-       a freshly-panned-to card's own header never lands underneath them. */
-    var TOP_CHROME = 150;
-    var PADDING = 50;
-    var boxW = Math.max(1, r.w + PADDING * 2);
-    var boxH = Math.max(1, r.h + PADDING * 2);
-    var newZoom = Math.max(CANVAS_ZOOM_MIN, Math.min(CANVAS_ZOOM_MAX, Math.min(vpW / boxW, (vpH - TOP_CHROME) / boxH, 1)));
-    var centerX = r.x + r.w / 2;
-    var centerY = r.y + r.h / 2;
-    canvasZoom = newZoom;
-    canvasPanX = vpW / 2 - centerX * newZoom;
-    canvasPanY = TOP_CHROME + (vpH - TOP_CHROME) / 2 - centerY * newZoom;
-    layer.style.transition = 'transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1)';
-    applyCanvasTransform();
-    canvasSaveViewDebounced();
-    setTimeout(function() { layer.style.transition = ''; }, 420);
+  function updateChromeForSection(key) {
+    windowBackBtn.style.display = key ? 'flex' : 'none';
+    windowTitleLabel.style.display = key ? 'block' : 'none';
+    windowTitleLabel.textContent = key ? SECTION_TITLES[key] : '';
+    notesToolbar.style.display = key === 'board' ? 'flex' : 'none';
   }
 
-  subSwitchBtns.forEach(function(btn) {
-    btn.addEventListener('click', function() {
-      subSwitchBtns.forEach(function(b) { b.classList.remove('active'); });
-      btn.classList.add('active');
-      panZoomToSection(btn.getAttribute('data-sub'));
+  function openSectionWindow(key) {
+    if (!notesSubs[key]) return;
+    openSection = key;
+    webLauncherEl.classList.remove('active');
+    Object.keys(notesSubs).forEach(function(k) {
+      notesSubs[k].classList.toggle('active', k === key);
     });
+    updateChromeForSection(key);
+    if (key === 'timetable') {
+      ttViewWeek = currentRealWeekLetter();
+      refreshWeekToggleUI();
+      renderTimetable();
+    }
+  }
+
+  function closeSectionWindow() {
+    openSection = null;
+    webLauncherEl.classList.add('active');
+    Object.keys(notesSubs).forEach(function(k) { notesSubs[k].classList.remove('active'); });
+    updateChromeForSection(null);
+  }
+
+  document.querySelectorAll('.web-node').forEach(function(btn) {
+    btn.addEventListener('click', function() { openSectionWindow(btn.getAttribute('data-sub')); });
   });
+  windowBackBtn.addEventListener('click', closeSectionWindow);
+  updateChromeForSection(null);
+
+  (function spawnWebStars() {
+    var starsEl = document.getElementById('webStars');
+    for (var i = 0; i < 40; i++) {
+      var s = document.createElement('div');
+      s.className = 'web-star';
+      var size = Math.random() * 2 + 1;
+      s.style.width = size + 'px';
+      s.style.height = size + 'px';
+      s.style.top = (Math.random() * 100) + '%';
+      s.style.left = (Math.random() * 100) + '%';
+      s.style.animationDelay = (Math.random() * 3) + 's';
+      starsEl.appendChild(s);
+    }
+  })();
 
   /* ---------- Notes ---------- */
   var colors = ['#ffd6a5', '#a0e7e5', '#ffadad', '#caffbf', '#bdb2ff', '#fdffb6'];
@@ -9000,9 +9201,11 @@
     setTimeout(function() { highlightAfterJump(el); }, 200);
   }
 
-  function jumpToTimetableCell(key) {
-    var ttBtn = document.querySelector('.subswitch-btn[data-sub="timetable"]');
-    if (ttBtn && !ttBtn.classList.contains('active')) ttBtn.click();
+  function jumpToTimetableCell(key, week) {
+    openSectionWindow('timetable');
+    if (week && timetable.rotation.enabled && week !== ttViewWeek) {
+      setViewWeek(week);
+    }
     setTimeout(function() {
       var cellEl = ttCellEls[key];
       if (!cellEl) return;
@@ -9012,8 +9215,7 @@
   }
 
   function jumpToSubject(id) {
-    var ttBtn = document.querySelector('.subswitch-btn[data-sub="timetable"]');
-    if (ttBtn && !ttBtn.classList.contains('active')) ttBtn.click();
+    openSectionWindow('timetable');
     setSubjectsCollapseOpen(true);
     switchToSubject(id);
     setTimeout(function() {
@@ -9064,13 +9266,18 @@
       }
     });
 
-    Object.keys(timetable.cells || {}).forEach(function(key) {
-      var cell = timetable.cells[key];
-      if (!cell) return;
-      var combined = [stripTagsForSearch(cell.subject), cell.room, cell.teacher].filter(Boolean).join(' · ');
-      if (combined.toLowerCase().indexOf(query) !== -1) {
-        matches.push({ kind: 'Timetable', snippet: makeSearchSnippet(combined, query), action: function() { jumpToTimetableCell(key); } });
-      }
+    ['A', 'B'].forEach(function(week) {
+      var cellsMap = ttCellsForWeek(week);
+      if (week === 'B' && !timetable.rotation.enabled) return;
+      Object.keys(cellsMap || {}).forEach(function(key) {
+        var cell = cellsMap[key];
+        if (!cell) return;
+        var combined = [stripTagsForSearch(cell.subject), cell.room, cell.teacher].filter(Boolean).join(' · ');
+        if (combined.toLowerCase().indexOf(query) !== -1) {
+          var label = timetable.rotation.enabled ? ('Timetable (Week ' + week + ')') : 'Timetable';
+          matches.push({ kind: label, snippet: makeSearchSnippet(combined, query), action: function() { jumpToTimetableCell(key, week); } });
+        }
+      });
     });
 
     subjects.forEach(function(s) {
@@ -9734,7 +9941,9 @@
         { start: '11:50', end: '12:35' },
         { start: '12:45', end: '13:30' }
       ],
-      cells: {}
+      cells: {},
+      cellsB: {},
+      rotation: { enabled: false, anchorDate: '' }
     };
   }
 
@@ -9742,6 +9951,10 @@
   var ttCellEls = {};
   var ttActiveField = null;
   var ttSavedRange = null;
+  /* Which week the grid currently shows ('A' or 'B'); only meaningful when
+     timetable.rotation.enabled. Reset to the real current week every time
+     the Timetable window is opened. */
+  var ttViewWeek = 'A';
 
   function normalizeTimetable(t) {
     var base = defaultTimetable();
@@ -9749,11 +9962,42 @@
     return {
       days: Array.isArray(t.days) && t.days.length ? t.days : base.days,
       periods: Array.isArray(t.periods) && t.periods.length ? t.periods : base.periods,
-      cells: t.cells && typeof t.cells === 'object' ? t.cells : {}
+      cells: t.cells && typeof t.cells === 'object' ? t.cells : {},
+      cellsB: t.cellsB && typeof t.cellsB === 'object' ? t.cellsB : {},
+      rotation: {
+        enabled: !!(t.rotation && t.rotation.enabled),
+        anchorDate: (t.rotation && typeof t.rotation.anchorDate === 'string') ? t.rotation.anchorDate : ''
+      }
     };
   }
 
   function ttKey(dayIdx, periodIdx) { return dayIdx + '-' + periodIdx; }
+
+  /* ---------- Week A/B rotation helpers ----------
+     Two weeks of cells (cells = Week A, cellsB = Week B) sharing the same
+     days/periods grid. Which calendar week is "A" vs "B" is derived from a
+     single anchor date (any date the user confirms falls in Week A) --
+     every Monday-to-Monday jump from that anchor flips the parity, so the
+     real week's letter is just (weeks-since-anchor) mod 2. */
+  function startOfWeekMonday(d) {
+    var day = d.getDay();
+    var diff = (day === 0 ? -6 : 1 - day);
+    var monday = new Date(d.getFullYear(), d.getMonth(), d.getDate() + diff);
+    monday.setHours(0, 0, 0, 0);
+    return monday;
+  }
+
+  function weekLetterForDate(d) {
+    if (!timetable.rotation.enabled || !timetable.rotation.anchorDate) return 'A';
+    var anchor = parseLocalDate(timetable.rotation.anchorDate);
+    if (!anchor) return 'A';
+    var diffWeeks = Math.round((startOfWeekMonday(d) - startOfWeekMonday(anchor)) / (7 * 86400000));
+    return (((diffWeeks % 2) + 2) % 2) === 0 ? 'A' : 'B';
+  }
+
+  function currentRealWeekLetter() { return weekLetterForDate(new Date()); }
+
+  function ttCellsForWeek(week) { return week === 'B' ? timetable.cellsB : timetable.cells; }
 
   function pushTimetableToNative() {
     if (window.NotesinoNative && window.NotesinoNative.saveTimetable) {
@@ -9780,9 +10024,10 @@
     document.execCommand(cmd, false, null);
     var key = ttActiveField.getAttribute('data-tt-key');
     if (key) {
-      var entry = timetable.cells[key] || {};
+      var cellsMap = ttCellsForWeek(ttViewWeek);
+      var entry = cellsMap[key] || {};
       entry.subject = ttActiveField.innerHTML;
-      timetable.cells[key] = entry;
+      cellsMap[key] = entry;
     }
     saveWorkspace();
   }
@@ -9807,8 +10052,9 @@
   }
 
   function computeNextLesson() {
-    var hasAnyContent = Object.keys(timetable.cells).some(function(k) {
-      var c = timetable.cells[k];
+    var cellsNow = ttCellsForWeek(currentRealWeekLetter());
+    var hasAnyContent = Object.keys(cellsNow).some(function(k) {
+      var c = cellsNow[k];
       return c && (ttPlainText(c.subject) || c.free);
     });
     if (!hasAnyContent) return { state: 'empty' };
@@ -9824,7 +10070,7 @@
       var s = parseHHMM(p.start), e = parseHHMM(p.end);
       if (s === null || e === null) continue;
       if (nowMinutes >= s && nowMinutes < e) {
-        return { state: 'now', period: p, idx: i, entry: timetable.cells[ttKey(dayIdx, i)] || {} };
+        return { state: 'now', period: p, idx: i, entry: cellsNow[ttKey(dayIdx, i)] || {} };
       }
     }
 
@@ -9835,7 +10081,7 @@
       if (!best || sj < parseHHMM(timetable.periods[best].start)) best = j;
     }
     if (best !== null) {
-      return { state: 'next', period: timetable.periods[best], idx: best, entry: timetable.cells[ttKey(dayIdx, best)] || {} };
+      return { state: 'next', period: timetable.periods[best], idx: best, entry: cellsNow[ttKey(dayIdx, best)] || {} };
     }
 
     return { state: 'done-today' };
@@ -9888,6 +10134,9 @@
     Object.keys(ttCellEls).forEach(function(k) {
       ttCellEls[k].classList.remove('tt-slot-now', 'tt-slot-next');
     });
+    /* The grid can be showing a preview of the other week -- only paint the
+       live now/next highlight when that preview matches the real week. */
+    if (ttViewWeek !== currentRealWeekLetter()) return;
     var result = computeNextLesson();
     if (result.state !== 'now' && result.state !== 'next') return;
     var todayCode = JS_DAY_TO_CODE[new Date().getDay()];
@@ -9897,11 +10146,24 @@
     if (cellEl) cellEl.classList.add(result.state === 'now' ? 'tt-slot-now' : 'tt-slot-next');
   }
 
+  function applySubjectChipStyle(subjectEl, cell, color) {
+    if (color) {
+      subjectEl.style.background = 'rgba(' + hexToRgbTriplet(color) + ', 0.22)';
+      subjectEl.style.color = color;
+      cell.classList.add('tt-slot-colored');
+    } else {
+      subjectEl.style.background = '';
+      subjectEl.style.color = '';
+      cell.classList.remove('tt-slot-colored');
+    }
+  }
+
   function renderTimetable() {
     ttGrid.innerHTML = '';
     ttCellEls = {};
     ttGrid.style.setProperty('--tt-cols', timetable.days.length);
 
+    var cellsMap = ttCellsForWeek(ttViewWeek);
     var todayCode = JS_DAY_TO_CODE[new Date().getDay()];
 
     var corner = document.createElement('div');
@@ -9954,24 +10216,43 @@
 
       timetable.days.forEach(function(day, dIdx) {
         var key = ttKey(dIdx, pIdx);
-        var entry = timetable.cells[key] || {};
+        var entry = cellsMap[key] || {};
 
         var cell = document.createElement('div');
         cell.className = 'tt-cell tt-slot';
-        if (entry.color) { cell.style.background = entry.color; cell.classList.add('tt-slot-colored'); }
         if (entry.free) cell.classList.add('tt-is-free');
         ttCellEls[key] = cell;
+
+        var fieldsWrap = document.createElement('div');
+        fieldsWrap.className = 'tt-fields';
+
+        var subjectEl = document.createElement('div');
+        subjectEl.className = 'tt-subject';
+        subjectEl.contentEditable = 'true';
+        subjectEl.setAttribute('data-placeholder', 'Subject');
+        subjectEl.setAttribute('data-tt-key', key);
+        subjectEl.innerHTML = entry.subject || '';
+        applySubjectChipStyle(subjectEl, cell, entry.color);
+        subjectEl.addEventListener('pointerdown', function(e) { e.stopPropagation(); });
+        subjectEl.addEventListener('pointerup', function() { ttSaveSelectionFor(subjectEl); });
+        subjectEl.addEventListener('keyup', function() { ttSaveSelectionFor(subjectEl); });
+        subjectEl.addEventListener('input', function() {
+          entry.subject = subjectEl.innerHTML;
+          cellsMap[key] = entry;
+          saveWorkspace();
+          updateNextLessonBanner();
+        });
 
         var panel = document.createElement('div');
         panel.className = 'tt-swatches';
 
         function pickColor(c) {
           entry.color = c;
-          timetable.cells[key] = entry;
-          if (c) { cell.style.background = c; cell.classList.add('tt-slot-colored'); }
-          else { cell.style.background = ''; cell.classList.remove('tt-slot-colored'); }
+          cellsMap[key] = entry;
+          applySubjectChipStyle(subjectEl, cell, c);
           dot.style.background = c || 'rgba(255,255,255,0.25)';
           panel.classList.remove('open');
+          cell.classList.remove('tt-swatches-open');
           saveWorkspace();
         }
 
@@ -9996,7 +10277,9 @@
           e.stopPropagation();
           var isOpen = panel.classList.contains('open');
           document.querySelectorAll('.tt-swatches.open').forEach(function(p) { p.classList.remove('open'); });
+          document.querySelectorAll('.tt-swatches-open').forEach(function(c) { c.classList.remove('tt-swatches-open'); });
           panel.classList.toggle('open', !isOpen);
+          cell.classList.toggle('tt-swatches-open', !isOpen);
         });
 
         var freeBtn = document.createElement('button');
@@ -10006,32 +10289,13 @@
         freeBtn.addEventListener('click', function(e) {
           e.stopPropagation();
           entry.free = !entry.free;
-          timetable.cells[key] = entry;
+          cellsMap[key] = entry;
           cell.classList.toggle('tt-is-free', entry.free);
           freeBtn.classList.toggle('active', entry.free);
           freeBtn.textContent = entry.free ? 'Free ✓' : 'Mark free';
           saveWorkspace();
           updateNextLessonBanner();
           highlightCurrentPeriodCells();
-        });
-
-        var fieldsWrap = document.createElement('div');
-        fieldsWrap.className = 'tt-fields';
-
-        var subjectEl = document.createElement('div');
-        subjectEl.className = 'tt-subject';
-        subjectEl.contentEditable = 'true';
-        subjectEl.setAttribute('data-placeholder', 'Subject');
-        subjectEl.setAttribute('data-tt-key', key);
-        subjectEl.innerHTML = entry.subject || '';
-        subjectEl.addEventListener('pointerdown', function(e) { e.stopPropagation(); });
-        subjectEl.addEventListener('pointerup', function() { ttSaveSelectionFor(subjectEl); });
-        subjectEl.addEventListener('keyup', function() { ttSaveSelectionFor(subjectEl); });
-        subjectEl.addEventListener('input', function() {
-          entry.subject = subjectEl.innerHTML;
-          timetable.cells[key] = entry;
-          saveWorkspace();
-          updateNextLessonBanner();
         });
 
         var roomEl = document.createElement('div');
@@ -10042,7 +10306,7 @@
         roomEl.addEventListener('pointerdown', function(e) { e.stopPropagation(); });
         roomEl.addEventListener('blur', function() {
           entry.room = roomEl.textContent.trim();
-          timetable.cells[key] = entry;
+          cellsMap[key] = entry;
           saveWorkspace();
           updateNextLessonBanner();
         });
@@ -10055,7 +10319,7 @@
         teacherEl.addEventListener('pointerdown', function(e) { e.stopPropagation(); });
         teacherEl.addEventListener('blur', function() {
           entry.teacher = teacherEl.textContent.trim();
-          timetable.cells[key] = entry;
+          cellsMap[key] = entry;
           saveWorkspace();
           updateNextLessonBanner();
         });
@@ -10084,6 +10348,7 @@
   document.addEventListener('pointerdown', function(e) {
     if (!e.target.closest('.tt-slot')) {
       document.querySelectorAll('.tt-swatches.open').forEach(function(p) { p.classList.remove('open'); });
+      document.querySelectorAll('.tt-swatches-open').forEach(function(c) { c.classList.remove('tt-swatches-open'); });
     }
   });
 
@@ -10099,7 +10364,10 @@
     if (timetable.periods.length <= 1) return;
     var removedIdx = timetable.periods.length - 1;
     timetable.periods.pop();
-    timetable.days.forEach(function(d, dIdx) { delete timetable.cells[ttKey(dIdx, removedIdx)]; });
+    timetable.days.forEach(function(d, dIdx) {
+      delete timetable.cells[ttKey(dIdx, removedIdx)];
+      delete timetable.cellsB[ttKey(dIdx, removedIdx)];
+    });
     renderTimetable();
     saveWorkspace();
     pushTimetableToNative();
@@ -10117,8 +10385,60 @@
   ttRemoveDayBtn.addEventListener('click', function() {
     if (timetable.days.length <= 1) return;
     var removedIdx = timetable.days.length - 1;
-    timetable.periods.forEach(function(p, pIdx) { delete timetable.cells[ttKey(removedIdx, pIdx)]; });
+    timetable.periods.forEach(function(p, pIdx) {
+      delete timetable.cells[ttKey(removedIdx, pIdx)];
+      delete timetable.cellsB[ttKey(removedIdx, pIdx)];
+    });
     timetable.days.pop();
+    renderTimetable();
+    saveWorkspace();
+    pushTimetableToNative();
+  });
+
+  /* ---------- Week A/B toggle UI ---------- */
+  var ttWeekToggleEl = document.getElementById('ttWeekToggle');
+  var ttWeekBtnA = document.getElementById('ttWeekBtnA');
+  var ttWeekBtnB = document.getElementById('ttWeekBtnB');
+  var ttWeekTagA = document.getElementById('ttWeekTagA');
+  var ttWeekTagB = document.getElementById('ttWeekTagB');
+  var ttRotationToggle = document.getElementById('ttRotationToggle');
+  var ttAnchorRow = document.getElementById('ttAnchorRow');
+  var ttAnchorDateInput = document.getElementById('ttAnchorDateInput');
+
+  function refreshWeekToggleUI() {
+    var enabled = timetable.rotation.enabled;
+    ttWeekToggleEl.style.display = enabled ? 'inline-flex' : 'none';
+    if (!enabled) return;
+    var real = currentRealWeekLetter();
+    ttWeekBtnA.classList.toggle('active', ttViewWeek === 'A');
+    ttWeekBtnB.classList.toggle('active', ttViewWeek === 'B');
+    ttWeekTagA.textContent = real === 'A' ? 'this week' : 'next week';
+    ttWeekTagB.textContent = real === 'B' ? 'this week' : 'next week';
+  }
+
+  function setViewWeek(week) {
+    ttViewWeek = week;
+    refreshWeekToggleUI();
+    renderTimetable();
+  }
+
+  ttWeekBtnA.addEventListener('click', function() { setViewWeek('A'); });
+  ttWeekBtnB.addEventListener('click', function() { setViewWeek('B'); });
+
+  ttRotationToggle.addEventListener('change', function() {
+    timetable.rotation.enabled = ttRotationToggle.checked;
+    ttAnchorRow.style.display = ttRotationToggle.checked ? 'flex' : 'none';
+    ttViewWeek = currentRealWeekLetter();
+    refreshWeekToggleUI();
+    renderTimetable();
+    saveWorkspace();
+    pushTimetableToNative();
+  });
+
+  ttAnchorDateInput.addEventListener('change', function() {
+    timetable.rotation.anchorDate = ttAnchorDateInput.value;
+    ttViewWeek = currentRealWeekLetter();
+    refreshWeekToggleUI();
     renderTimetable();
     saveWorkspace();
     pushTimetableToNative();
@@ -10203,6 +10523,9 @@
     if (!wasOpen) {
       termStartInput.value = termSettings.startDate || '';
       termEndInput.value = termSettings.endDate || '';
+      ttRotationToggle.checked = timetable.rotation.enabled;
+      ttAnchorRow.style.display = timetable.rotation.enabled ? 'flex' : 'none';
+      ttAnchorDateInput.value = timetable.rotation.anchorDate || '';
       renderTermExceptions();
     }
     ttCalendarPanel.classList.toggle('open', !wasOpen);
@@ -10276,6 +10599,47 @@
       'X-WR-CALNAME:Notesino Timetable'
     ];
 
+    function emitEvent(week, dIdx, pIdx, jsWeekday, byDay, entry, period, firstDate, intervalWeeks) {
+      var subjectText = entry && entry.subject ? stripTagsForSearch(entry.subject).trim() : '';
+      if (!entry || entry.free || !subjectText) return;
+      if (firstDate > end) return;
+
+      var startParts = (period.start || '00:00').split(':');
+      var endParts = (period.end || '00:00').split(':');
+      var startHH = Number(startParts[0]) || 0, startMM = Number(startParts[1]) || 0;
+      var endHH = Number(endParts[0]) || 0, endMM = Number(endParts[1]) || 0;
+
+      var dtstart = icsDateTime(firstDate, startHH, startMM);
+      var dtend = icsDateTime(firstDate, endHH, endMM);
+      var untilDate = new Date(end.getFullYear(), end.getMonth(), end.getDate());
+      var until = icsDateTime(untilDate, startHH, startMM);
+
+      var exdates = termSettings.exceptions
+        .map(function(exc) { return parseLocalDate(exc.date); })
+        .filter(function(d) {
+          if (!d || d < start || d > end || d.getDay() !== jsWeekday) return false;
+          return !week || weekLetterForDate(d) === week;
+        })
+        .map(function(d) { return icsDateTime(d, startHH, startMM); });
+
+      var uidSuffix = week ? ('-' + week) : '';
+      lines.push('BEGIN:VEVENT');
+      lines.push('UID:tt-' + dIdx + '-' + pIdx + uidSuffix + '@notesino.local');
+      lines.push('DTSTART:' + dtstart);
+      lines.push('DTEND:' + dtend);
+      lines.push('RRULE:FREQ=WEEKLY;INTERVAL=' + intervalWeeks + ';BYDAY=' + byDay + ';UNTIL=' + until);
+      if (exdates.length) lines.push('EXDATE:' + exdates.join(','));
+      lines.push('SUMMARY:' + icsEscape(subjectText));
+      if (entry.room) lines.push('LOCATION:' + icsEscape(entry.room));
+      if (entry.teacher) lines.push('DESCRIPTION:' + icsEscape('Teacher: ' + entry.teacher));
+      lines.push('BEGIN:VALARM');
+      lines.push('ACTION:DISPLAY');
+      lines.push('DESCRIPTION:' + icsEscape(subjectText) + ' starts soon');
+      lines.push('TRIGGER:-PT10M');
+      lines.push('END:VALARM');
+      lines.push('END:VEVENT');
+    }
+
     timetable.days.forEach(function(dayCode, dIdx) {
       var jsWeekday = JS_DAY_TO_CODE.indexOf(dayCode);
       if (jsWeekday === -1) return;
@@ -10283,43 +10647,24 @@
       if (!byDay) return;
 
       timetable.periods.forEach(function(period, pIdx) {
-        var entry = timetable.cells[ttKey(dIdx, pIdx)];
-        var subjectText = entry && entry.subject ? stripTagsForSearch(entry.subject).trim() : '';
-        if (!entry || entry.free || !subjectText) return;
+        var firstDateBase = firstOccurrenceOnOrAfter(start, jsWeekday);
+        if (firstDateBase > end) return;
 
-        var startParts = (period.start || '00:00').split(':');
-        var endParts = (period.end || '00:00').split(':');
-        var startHH = Number(startParts[0]) || 0, startMM = Number(startParts[1]) || 0;
-        var endHH = Number(endParts[0]) || 0, endMM = Number(endParts[1]) || 0;
+        if (!timetable.rotation.enabled) {
+          var entry = timetable.cells[ttKey(dIdx, pIdx)];
+          emitEvent(null, dIdx, pIdx, jsWeekday, byDay, entry, period, firstDateBase, 1);
+          return;
+        }
 
-        var firstDate = firstOccurrenceOnOrAfter(start, jsWeekday);
-        if (firstDate > end) return;
-
-        var dtstart = icsDateTime(firstDate, startHH, startMM);
-        var dtend = icsDateTime(firstDate, endHH, endMM);
-        var untilDate = new Date(end.getFullYear(), end.getMonth(), end.getDate());
-        var until = icsDateTime(untilDate, startHH, startMM);
-
-        var exdates = termSettings.exceptions
-          .map(function(exc) { return parseLocalDate(exc.date); })
-          .filter(function(d) { return d && d >= start && d <= end && d.getDay() === jsWeekday; })
-          .map(function(d) { return icsDateTime(d, startHH, startMM); });
-
-        lines.push('BEGIN:VEVENT');
-        lines.push('UID:tt-' + dIdx + '-' + pIdx + '@notesino.local');
-        lines.push('DTSTART:' + dtstart);
-        lines.push('DTEND:' + dtend);
-        lines.push('RRULE:FREQ=WEEKLY;BYDAY=' + byDay + ';UNTIL=' + until);
-        if (exdates.length) lines.push('EXDATE:' + exdates.join(','));
-        lines.push('SUMMARY:' + icsEscape(subjectText));
-        if (entry.room) lines.push('LOCATION:' + icsEscape(entry.room));
-        if (entry.teacher) lines.push('DESCRIPTION:' + icsEscape('Teacher: ' + entry.teacher));
-        lines.push('BEGIN:VALARM');
-        lines.push('ACTION:DISPLAY');
-        lines.push('DESCRIPTION:' + icsEscape(subjectText) + ' starts soon');
-        lines.push('TRIGGER:-PT10M');
-        lines.push('END:VALARM');
-        lines.push('END:VEVENT');
+        ['A', 'B'].forEach(function(week) {
+          var weekEntry = ttCellsForWeek(week)[ttKey(dIdx, pIdx)];
+          if (!weekEntry) return;
+          var firstDate = firstDateBase;
+          if (weekLetterForDate(firstDate) !== week) {
+            firstDate = new Date(firstDate.getFullYear(), firstDate.getMonth(), firstDate.getDate() + 7);
+          }
+          emitEvent(week, dIdx, pIdx, jsWeekday, byDay, weekEntry, period, firstDate, 2);
+        });
       });
     });
 
@@ -10801,6 +11146,8 @@
     rebuildLinkPaths(canvasLinkLayer);
 
     timetable = normalizeTimetable(state.timetable);
+    ttViewWeek = currentRealWeekLetter();
+    refreshWeekToggleUI();
     renderTimetable();
     termSettings = normalizeTermSettings(state.termSettings);
 
@@ -11464,6 +11811,7 @@
     restored = loadWorkspace();
     renderSubjectsList();
     renderSubjectCanvas();
+    refreshWeekToggleUI();
     renderTimetable();
   });
   initBoards();

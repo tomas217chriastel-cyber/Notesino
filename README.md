@@ -10,6 +10,21 @@ Android app with a home-screen timetable widget.
 Everything lives in this one repo, in this one file, on purpose — no
 separate project, no external repo.
 
+## ⏰ Reminders → your calendar
+
+The **Reminders** tab turns a quick note into calendar events. Type it the
+way you'd say it, e.g. `gym at 7pm Monday, gym Thursday`,
+`dentist tomorrow 14:30`, `gym every Monday and Thursday 7pm`,
+`call mom in 2 hours`, `pay rent on 1.12.`. A live preview shows what
+will be created; press Enter or **Add**.
+
+Each reminder has an **Add to calendar** button. It opens Google Calendar
+with the event filled in (title, time, repeat), and you tap Save. Notion
+Calendar shows your Google calendar, so the event and its notification
+appear there too. **Download all (.ics)** exports everything (with a
+15-minute alert) for any other calendar app. Reminders are stored on the
+device, separately from your boards.
+
 ## 📱 Get the Android app
 
 [![Download Notesino.apk](https://img.shields.io/badge/Download-Notesino.apk-6a7cff?style=for-the-badge&logo=android&logoColor=white)](https://github.com/tomas217chriastel-cyber/Notesino/raw/main/android/releases/notesino-debug-signed.apk)

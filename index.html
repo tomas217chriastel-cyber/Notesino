@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Notesino</title>
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#0a0a12">
@@ -1954,6 +1954,19 @@
     opacity: 1;
   }
 
+  /* Close buttons on image/video/voice-memo/file cards are fixed in a
+     corner regardless of card size (unlike note controls, they aren't
+     fighting for room), but 20px is still too small to reliably tap --
+     bump them up a bit on touch devices. */
+  body.touch-device .fi-close,
+  body.touch-device .fv-close,
+  body.touch-device .vm-close,
+  body.touch-device .fa-close {
+    width: 26px;
+    height: 26px;
+    font-size: 14px;
+  }
+
   .free-image .fi-set-note-bg {
     position: absolute;
     bottom: 6px;
@@ -3217,8 +3230,8 @@
   }
 
   body.touch-device .note-dot {
-    width: calc(18px * var(--note-scale));
-    height: calc(18px * var(--note-scale));
+    width: calc(20px * var(--note-scale));
+    height: calc(20px * var(--note-scale));
   }
 
   body.touch-device .note-head-right {
@@ -3227,9 +3240,20 @@
 
   body.touch-device .fmt-btn,
   body.touch-device .note-close {
-    width: calc(26px * var(--note-scale));
-    height: calc(26px * var(--note-scale));
-    font-size: calc(13px * var(--note-scale));
+    width: calc(30px * var(--note-scale));
+    height: calc(30px * var(--note-scale));
+    font-size: calc(14px * var(--note-scale));
+  }
+
+  /* Drag handle/grip aren't covered by the fixed @media mobile rules below
+     -- scale them too so they stay grabbable with a thumb on a small note. */
+  body.touch-device .note-drag-handle {
+    min-height: calc(20px * var(--note-scale));
+  }
+
+  body.touch-device .note-drag-grip {
+    width: calc(32px * var(--note-scale));
+    height: calc(4px * var(--note-scale));
   }
 
   body.touch-device .note-toolbar2 {
@@ -3252,8 +3276,8 @@
   }
 
   body.touch-device .note-font-color-wrap {
-    width: calc(22px * var(--note-scale));
-    height: calc(22px * var(--note-scale));
+    width: calc(26px * var(--note-scale));
+    height: calc(26px * var(--note-scale));
   }
 
   body.touch-device .note-font-color-wrap::after {
@@ -3261,9 +3285,9 @@
   }
 
   body.touch-device .note-bg-btn {
-    width: calc(26px * var(--note-scale));
-    height: calc(26px * var(--note-scale));
-    font-size: calc(13px * var(--note-scale));
+    width: calc(30px * var(--note-scale));
+    height: calc(30px * var(--note-scale));
+    font-size: calc(14px * var(--note-scale));
   }
 
   .note.has-bg-image .note-text,
@@ -3578,11 +3602,14 @@
       bottom: calc(14px + env(safe-area-inset-bottom, 0px));
     }
 
-    /* Notes canvas: smaller default note size and tighter text for mobile */
+    /* Notes canvas: smaller default note size and tighter text for mobile
+       -- kept close enough to the 220px desktop reference width that the
+       touch-scale system (--note-scale) doesn't start every new note
+       already clamped near its minimum. */
     .note {
-      width: 132px;
-      min-width: 110px;
-      min-height: 92px;
+      width: 190px;
+      min-width: 150px;
+      min-height: 130px;
       border-radius: 12px;
     }
 
@@ -3620,12 +3647,12 @@
     }
 
     .note-drag-handle {
-      height: 16px;
+      height: calc(16px * var(--note-scale, 1));
     }
 
     .note-drag-grip {
-      width: 24px;
-      height: 2.5px;
+      width: calc(28px * var(--note-scale, 1));
+      height: calc(2.5px * var(--note-scale, 1));
     }
 
     .note-toolbar2 {
@@ -3695,13 +3722,6 @@
       height: auto;
       padding: 24px 16px;
       max-height: none;
-    }
-  }
-
-  @media (max-width: 420px) {
-    .note {
-      width: 118px;
-      min-height: 84px;
     }
   }
 
@@ -4764,6 +4784,56 @@
     display: block;
   }
 
+  /* EduPage marked this lesson removed/teacher-absent -- shown struck
+     through rather than hidden, so the subject stays visible but the
+     cancellation is unmistakable. */
+  .tt-slot.tt-is-cancelled {
+    background: rgba(248, 113, 113, 0.08);
+    box-shadow: inset 0 0 0 1.5px rgba(248, 113, 113, 0.45);
+  }
+
+  .tt-slot.tt-is-cancelled .tt-fields {
+    opacity: 0.6;
+    text-decoration: line-through;
+    text-decoration-color: rgba(248, 113, 113, 0.7);
+  }
+
+  .tt-cancelled-label {
+    display: none;
+    color: #f87171;
+    font-weight: 700;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    margin-top: 6px;
+  }
+
+  .tt-slot.tt-is-cancelled .tt-cancelled-label {
+    display: block;
+  }
+
+  /* Experimental: best-effort substitution/room-change flag (not a
+     confirmed EduPage signal -- see edupage-relay/README.md). Yellow, kept
+     visually distinct from the confirmed red "cancelled" treatment above. */
+  .tt-slot.tt-is-substituted {
+    background: rgba(250, 204, 21, 0.1);
+    box-shadow: inset 0 0 0 1.5px rgba(250, 204, 21, 0.5);
+  }
+
+  .tt-substituted-label {
+    display: none;
+    color: #facc15;
+    font-weight: 700;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    margin-top: 6px;
+  }
+
+  .tt-slot.tt-is-substituted .tt-substituted-label {
+    display: block;
+  }
+
   .tt-subject {
     outline: none;
     color: rgba(var(--ink-rgb), 0.9);
@@ -5176,7 +5246,7 @@
             <button class="tt-btn" id="ttEdupageBtn">EduPage Sync&hellip;</button>
             <div class="tt-calendar-panel" id="ttEdupagePanel">
               <div class="tt-calendar-label">Sync your real schedule from EduPage</div>
-              <div class="tt-calendar-hint">Unofficial, experimental. Needs a relay you deploy yourself once -- see edupage-relay/README.md. Your password is sent straight to your own relay and never saved.</div>
+              <div class="tt-calendar-hint">Unofficial, experimental. Needs a relay you deploy yourself once -- see edupage-relay/README.md. "Sync now" sends your password straight to your own relay and never saves it; turning on "Auto-refresh" below is the one exception, since it needs to log in again on its own later.</div>
               <div class="tt-calendar-row">
                 <label for="edupageRelayInput">Relay URL</label>
               </div>
@@ -5195,6 +5265,12 @@
               <input type="password" id="edupagePasswordInput" placeholder="EduPage password" class="tt-edupage-input" autocomplete="current-password">
               <button class="tt-btn tt-calendar-download-btn" id="edupageSyncBtn">Sync now</button>
               <div class="tt-edupage-status" id="edupageStatus"></div>
+              <div class="tt-calendar-row" style="margin-top:10px;">
+                <label for="edupageAutoToggle">Auto-refresh in background</label>
+                <input type="checkbox" id="edupageAutoToggle">
+              </div>
+              <div class="tt-calendar-hint">Stores an encrypted copy of this login on your own relay so it can re-check EduPage every ~10 minutes by itself and push a notification when something changes -- even if you never open the app. Uses the same sync code as Notifications (set up in the "&#8942;" menu); turning this off deletes the stored login from the relay.</div>
+              <div class="tt-edupage-status" id="edupageAutoStatus"></div>
             </div>
           </div>
         </div>
@@ -6317,7 +6393,7 @@
        touch devices keep this note's control-scale variable in sync so
        its buttons stay proportional to its actual current size. */
     var NOTE_SCALE_REF_WIDTH = 220; /* width at which scale = 1, matches the default note width */
-    var NOTE_SCALE_MIN = 0.55;
+    var NOTE_SCALE_MIN = 0.75; /* below this, touch targets inside the note get too small to tap reliably */
     var NOTE_SCALE_MAX = 1.6;
 
     function updateNoteScale() {
@@ -10390,6 +10466,8 @@
         var cell = document.createElement('div');
         cell.className = 'tt-cell tt-slot';
         if (entry.free) cell.classList.add('tt-is-free');
+        if (entry.cancelled) cell.classList.add('tt-is-cancelled');
+        if (entry.substituted) cell.classList.add('tt-is-substituted');
         ttCellEls[key] = cell;
 
         var fieldsWrap = document.createElement('div');
@@ -10501,11 +10579,21 @@
         freeLabel.className = 'tt-free-label';
         freeLabel.textContent = 'Free';
 
+        var cancelledLabel = document.createElement('div');
+        cancelledLabel.className = 'tt-cancelled-label';
+        cancelledLabel.textContent = 'Cancelled';
+
+        var substitutedLabel = document.createElement('div');
+        substitutedLabel.className = 'tt-substituted-label';
+        substitutedLabel.textContent = 'Substitution?';
+
         cell.appendChild(dot);
         cell.appendChild(panel);
         cell.appendChild(freeBtn);
         cell.appendChild(fieldsWrap);
         cell.appendChild(freeLabel);
+        cell.appendChild(cancelledLabel);
+        cell.appendChild(substitutedLabel);
         ttGrid.appendChild(cell);
       });
     });
@@ -10764,6 +10852,9 @@
       edupageUsernameInput.value = prefs.username || '';
       edupageStatusEl.textContent = '';
       edupageStatusEl.className = 'tt-edupage-status';
+      edupageAutoToggle.checked = !!prefs.autoRefreshEnabled;
+      edupageAutoStatusEl.textContent = '';
+      edupageAutoStatusEl.className = 'tt-edupage-status';
     }
     ttEdupagePanel.classList.toggle('open', !wasOpen);
   });
@@ -10780,10 +10871,17 @@
 
   function isoDateLocal(d) { return d.getFullYear() + '-' + icsPad(d.getMonth() + 1) + '-' + icsPad(d.getDate()); }
 
-  function lessonForTime(list, start, end) {
-    return (list || []).filter(function(l) { return l.start === start && l.end === end; })[0] || null;
+  function sortLessonsByStart(list) {
+    return (list || []).slice().sort(function(a, b) { return (a.start || '').localeCompare(b.start || ''); });
   }
 
+  /* Period slots are matched by ORDINAL POSITION (chronological index within
+     each day's own lesson list), not by exact start/end string equality --
+     different days can have non-identical period timings (a double period,
+     a different break structure), so exact-matching only ever lines up the
+     one slot that happens to be identical every day (typically period 1)
+     and silently drops every other lesson. The shared row label per ordinal
+     slot is just the most common (start,end) pair seen there, for display. */
   function applyEdupageSyncResult(daysMap, thisMonday, nextMonday) {
     daysMap = daysMap || {};
     var weekA = {}, weekB = {};
@@ -10793,42 +10891,57 @@
       var offset = (jsWeekday === 0) ? 6 : jsWeekday - 1;
       var dateA = new Date(thisMonday.getFullYear(), thisMonday.getMonth(), thisMonday.getDate() + offset);
       var dateB = new Date(nextMonday.getFullYear(), nextMonday.getMonth(), nextMonday.getDate() + offset);
-      weekA[dIdx] = daysMap[isoDateLocal(dateA)] || [];
-      weekB[dIdx] = daysMap[isoDateLocal(dateB)] || [];
+      weekA[dIdx] = sortLessonsByStart(daysMap[isoDateLocal(dateA)]);
+      weekB[dIdx] = sortLessonsByStart(daysMap[isoDateLocal(dateB)]);
     });
 
-    var timeSet = {};
+    var periodCount = 0;
     Object.keys(weekA).forEach(function(dIdx) {
-      weekA[dIdx].concat(weekB[dIdx] || []).forEach(function(lesson) {
-        if (lesson.start && lesson.end) timeSet[lesson.start + '|' + lesson.end] = true;
-      });
+      periodCount = Math.max(periodCount, weekA[dIdx].length, (weekB[dIdx] || []).length);
     });
-    var periods = Object.keys(timeSet).map(function(k) {
-      var parts = k.split('|');
-      return { start: parts[0], end: parts[1] };
-    }).sort(function(a, b) { return a.start.localeCompare(b.start); });
+    periodCount = Math.min(periodCount, 14);
 
-    if (!periods.length) return 'EduPage returned no lessons for this week or next -- nothing to sync.';
+    if (!periodCount) return 'EduPage returned no lessons for this week or next -- nothing to sync.';
+
+    // Pick the most-common (start,end) pair seen at each ordinal slot, purely as a row label.
+    var periods = [];
+    for (var pIdx = 0; pIdx < periodCount; pIdx++) {
+      var counts = {};
+      Object.keys(weekA).forEach(function(dIdx) {
+        [weekA[dIdx][pIdx], (weekB[dIdx] || [])[pIdx]].forEach(function(lesson) {
+          if (lesson && lesson.start && lesson.end) {
+            var k = lesson.start + '|' + lesson.end;
+            counts[k] = (counts[k] || 0) + 1;
+          }
+        });
+      });
+      var bestKey = '', bestCount = 0;
+      Object.keys(counts).sort().forEach(function(k) {
+        if (counts[k] > bestCount) { bestCount = counts[k]; bestKey = k; }
+      });
+      var parts = bestKey.split('|');
+      periods.push({ start: parts[0] || '', end: parts[1] || '' });
+    }
 
     var newCellsA = {}, newCellsB = {};
     var anyDifference = false, lessonCount = 0;
 
     Object.keys(weekA).forEach(function(dIdxStr) {
       var dIdx = Number(dIdxStr);
-      periods.forEach(function(period, pIdx) {
-        var key = ttKey(dIdx, pIdx);
-        var lessonA = lessonForTime(weekA[dIdx], period.start, period.end);
-        var lessonB = lessonForTime(weekB[dIdx], period.start, period.end);
+      for (var i = 0; i < periodCount; i++) {
+        var key = ttKey(dIdx, i);
+        var lessonA = weekA[dIdx][i] || null;
+        var lessonB = (weekB[dIdx] || [])[i] || null;
 
         if (lessonA) {
-          newCellsA[key] = { subject: escapeHtmlForSearch(lessonA.subject || ''), room: lessonA.room || '', teacher: lessonA.teacher || '', free: false };
+          newCellsA[key] = { subject: escapeHtmlForSearch(lessonA.subject || ''), room: lessonA.room || '', teacher: lessonA.teacher || '', free: false, cancelled: !!lessonA.cancelled };
           lessonCount++;
         }
         if (lessonB) {
-          newCellsB[key] = { subject: escapeHtmlForSearch(lessonB.subject || ''), room: lessonB.room || '', teacher: lessonB.teacher || '', free: false };
+          newCellsB[key] = { subject: escapeHtmlForSearch(lessonB.subject || ''), room: lessonB.room || '', teacher: lessonB.teacher || '', free: false, cancelled: !!lessonB.cancelled };
         }
         if ((lessonA ? lessonA.subject : '') !== (lessonB ? lessonB.subject : '')) anyDifference = true;
-      });
+      }
     });
 
     timetable.periods = periods;
@@ -10853,6 +10966,27 @@
       (anyDifference ? ' across an alternating Week A/B schedule.' : '.');
   }
 
+  /* One relay request per week rather than a single combined 2-week span --
+     EduPage's day-plan endpoint has been observed to not actually return
+     week-2 data when asked for a 14-day range in one go (its scraped
+     per-request tokens appear to be scoped to a single week). */
+  function fetchEdupageWeek(relayUrl, subdomain, username, password, weekStart) {
+    var weekEnd = new Date(weekStart.getFullYear(), weekStart.getMonth(), weekStart.getDate() + 6);
+    return fetch(relayUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        subdomain: subdomain,
+        username: username,
+        password: password,
+        dateFrom: isoDateLocal(weekStart),
+        dateTo: isoDateLocal(weekEnd)
+      })
+    }).then(function(res) {
+      return res.json().catch(function() { return null; }).then(function(data) { return { ok: res.ok, data: data }; });
+    });
+  }
+
   edupageSyncBtn.addEventListener('click', function() {
     var relayUrl = edupageRelayInput.value.trim().replace(/\/+$/, '');
     var subdomain = edupageSubdomainInput.value.trim();
@@ -10868,35 +11002,30 @@
 
     var thisMonday = startOfWeekMonday(new Date());
     var nextMonday = new Date(thisMonday.getFullYear(), thisMonday.getMonth(), thisMonday.getDate() + 7);
-    var rangeEnd = new Date(nextMonday.getFullYear(), nextMonday.getMonth(), nextMonday.getDate() + 6);
 
     edupageSyncBtn.disabled = true;
     edupageSetStatus('Syncing with EduPage…', '');
 
-    fetch(relayUrl, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        subdomain: subdomain,
-        username: username,
-        password: password,
-        dateFrom: isoDateLocal(thisMonday),
-        dateTo: isoDateLocal(rangeEnd)
-      })
-    })
-      .then(function(res) {
-        return res.json().catch(function() { return null; }).then(function(data) { return { ok: res.ok, data: data }; });
-      })
-      .then(function(result) {
+    Promise.all([
+      fetchEdupageWeek(relayUrl, subdomain, username, password, thisMonday),
+      fetchEdupageWeek(relayUrl, subdomain, username, password, nextMonday)
+    ])
+      .then(function(results) {
         edupagePasswordInput.value = '';
-        var data = result.data;
-        if (!result.ok || !data || data.ok === false) {
+        var failed = results.filter(function(r) { return !r.ok || !r.data || r.data.ok === false; });
+        if (failed.length) {
+          var data = failed[0].data;
           var step = data && data.step ? (' (' + data.step + ')') : '';
           var errMsg = (data && data.error) || 'The relay did not respond as expected.';
           edupageSetStatus('Sync failed' + step + ': ' + errMsg, 'error');
           return;
         }
-        edupageSetStatus(applyEdupageSyncResult(data.days, thisMonday, nextMonday), 'ok');
+        var mergedDays = {};
+        results.forEach(function(r) {
+          var days = r.data.days || {};
+          Object.keys(days).forEach(function(k) { mergedDays[k] = days[k]; });
+        });
+        edupageSetStatus(applyEdupageSyncResult(mergedDays, thisMonday, nextMonday), 'ok');
       })
       .catch(function(err) {
         edupagePasswordInput.value = '';
@@ -10904,6 +11033,103 @@
       })
       .then(function() { edupageSyncBtn.disabled = false; });
   });
+
+  /* Auto-refresh: opt-in trade-off the user explicitly chose -- stores an
+     encrypted copy of the EduPage login on the relay (see
+     edupage-relay/README.md's "3. EduPage auto-refresh") so its Cron
+     Trigger can re-check the timetable on its own and push a notification
+     on change, without the app needing to be open. Shares the same sync
+     code as Notifications, since that's the group the relay pushes to. */
+  var edupageAutoToggle = document.getElementById('edupageAutoToggle');
+  var edupageAutoStatusEl = document.getElementById('edupageAutoStatus');
+
+  function edupageAutoSetStatus(text, kind) {
+    edupageAutoStatusEl.textContent = text;
+    edupageAutoStatusEl.className = 'tt-edupage-status' + (kind ? ' ' + kind : '');
+  }
+
+  function ensureSyncCode() {
+    var code = (notifySyncCodeInput.value || loadNotifyPrefs().syncCode || '').trim().toUpperCase();
+    if (code) return code;
+    var chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+    code = '';
+    for (var i = 0; i < 8; i++) code += chars[Math.floor(Math.random() * chars.length)];
+    notifySyncCodeInput.value = code;
+    saveNotifyPrefs({ syncCode: code });
+    return code;
+  }
+
+  edupageAutoToggle.addEventListener('change', function() {
+    var relayUrl = edupageRelayInput.value.trim().replace(/\/+$/, '');
+    var subdomain = edupageSubdomainInput.value.trim();
+    var username = edupageUsernameInput.value.trim();
+    var password = edupagePasswordInput.value;
+    var syncCode = ensureSyncCode();
+
+    if (!edupageAutoToggle.checked) {
+      edupageAutoToggle.disabled = true;
+      fetch(relayUrl + '/edupage/auto', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ syncCode: syncCode, enabled: false })
+      })
+        .then(function() {
+          saveEdupagePrefs(Object.assign({}, loadEdupagePrefs(), { autoRefreshEnabled: false }));
+          edupageAutoSetStatus('Auto-refresh turned off; stored login deleted from the relay.', 'ok');
+        })
+        .catch(function(err) { edupageAutoSetStatus('Could not reach the relay: ' + (err && err.message ? err.message : err), 'error'); })
+        .then(function() { edupageAutoToggle.disabled = false; });
+      return;
+    }
+
+    if (!relayUrl || !subdomain || !username || !password) {
+      edupageAutoToggle.checked = false;
+      edupageAutoSetStatus('Fill in the relay URL, subdomain, username and password above first.', 'error');
+      return;
+    }
+    saveNotifyPrefs({ relayUrl: relayUrl });
+    edupageAutoToggle.disabled = true;
+    edupageAutoSetStatus('Saving…', '');
+    fetch(relayUrl + '/edupage/auto', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ syncCode: syncCode, subdomain: subdomain, username: username, password: password })
+    })
+      .then(function(res) { return res.json().catch(function() { return null; }).then(function(data) { return { ok: res.ok, data: data }; }); })
+      .then(function(result) {
+        edupagePasswordInput.value = '';
+        if (!result.ok || !result.data || result.data.ok === false) {
+          edupageAutoToggle.checked = false;
+          edupageAutoSetStatus('Could not enable auto-refresh: ' + ((result.data && result.data.error) || 'unexpected response'), 'error');
+          return;
+        }
+        saveEdupagePrefs(Object.assign({}, loadEdupagePrefs(), { autoRefreshEnabled: true }));
+        edupageAutoSetStatus('Auto-refresh is on — it will re-check EduPage every ~10 minutes, even with the app closed.', 'ok');
+      })
+      .catch(function(err) {
+        edupagePasswordInput.value = '';
+        edupageAutoToggle.checked = false;
+        edupageAutoSetStatus('Could not reach the relay: ' + (err && err.message ? err.message : err), 'error');
+      })
+      .then(function() { edupageAutoToggle.disabled = false; });
+  });
+
+  /* On open/every ~10 min, pick up whatever the relay's cron last cached --
+     this is what makes the timetable feel "live" without a manual Sync tap. */
+  function fetchCachedEdupageData() {
+    var prefs = loadEdupagePrefs();
+    var relayUrl = (prefs.relayUrl || '').replace(/\/+$/, '');
+    var syncCode = (loadNotifyPrefs().syncCode || '').trim().toUpperCase();
+    if (!prefs.autoRefreshEnabled || !relayUrl || !syncCode) return;
+    var thisMonday = startOfWeekMonday(new Date());
+    var nextMonday = new Date(thisMonday.getFullYear(), thisMonday.getMonth(), thisMonday.getDate() + 7);
+    fetch(relayUrl + '/edupage/cached?syncCode=' + encodeURIComponent(syncCode))
+      .then(function(res) { return res.json(); })
+      .then(function(data) {
+        if (data && data.ok && data.days) applyEdupageSyncResult(data.days, thisMonday, nextMonday);
+      })
+      .catch(function() {});
+  }
 
   var ICS_DAY_CODE = { Mon: 'MO', Tue: 'TU', Wed: 'WE', Thu: 'TH', Fri: 'FR', Sat: 'SA', Sun: 'SU' };
 
@@ -12396,6 +12622,7 @@
   });
 
   setInterval(syncNotificationItemsNow, 2 * 60 * 1000);
+  setInterval(fetchCachedEdupageData, 10 * 60 * 1000);
 
   var restored;
   withStateRestoreGuard(function() {
@@ -12413,6 +12640,7 @@
     notifySyncCodeInput.value = loadNotifyPrefs().syncCode || '';
     applyNotifySettings(false);
   }
+  fetchCachedEdupageData();
   /* Baseline checkpoint so the very first local edit has something to
      undo back to. For a fresh install this gets set again (to the same
      thing) a moment later when the starter note's saveWorkspace() call

@@ -10,8 +10,12 @@
  *    and stores nothing. POST to "/" (or any path other than the
  *    ones below).
  *    Request:  POST { subdomain, username, password, dateFrom, dateTo }
- *    Response: { ok: true, days: { "YYYY-MM-DD": [ {start,end,subject,room,teacher,free} ] } }
+ *    Response: { ok: true, days: { "YYYY-MM-DD": [ {start,end,subject,room,teacher,free,cancelled,raw} ] } }
  *           or { ok: false, step: "...", error: "..." }
+ *    `cancelled` is true when EduPage itself marked the lesson removed or
+ *    teacher-absent. `raw` is the untouched EduPage plan item for that
+ *    lesson -- kept only so a substitution/room-change field can be found
+ *    later from a real example (none is confirmed yet; see README).
  *
  * 2. Push notifications: browsers can't push to a closed app/device
  *    by themselves -- that needs a server holding the device's push
@@ -25,6 +29,18 @@
  *      POST /push/subscribe  { syncCode, subscription }
  *      POST /push/sync       { syncCode, items: [{id,title,body,fireAt}] }
  *      POST /push/test       { syncCode }   -- sends an immediate test push
+ *
+ * 3. EduPage auto-refresh (opt-in, needs an extra secret -- see README.md):
+ *    stores an encrypted copy of your EduPage login in this group's KV
+ *    entry so the same Cron Trigger can log in periodically on its own,
+ *    re-check the timetable, cache it, and push a notification when
+ *    something actually changed -- without you reopening the app or
+ *    re-entering your password. This is the one case where EduPage
+ *    credentials are stored anywhere, and only because you explicitly
+ *    turned this feature on.
+ *      POST /edupage/auto    { syncCode, subdomain, username, password }
+ *                          or { syncCode, enabled: false }  -- turns it off
+ *      GET  /edupage/cached?syncCode=...  -- last cached snapshot, if any
  *
  * Reverse-engineered from the reference implementation at
  * https://github.com/EdupageAPI/edupage-api (GPL-3.0, Python) --
@@ -194,7 +210,9 @@ function extractBalancedJsonObject(text, from) {
 }
 
 /* ---------- main flow ---------- */
-async function loginAndFetchTimetable({ subdomain, username, password, dateFrom, dateTo }) {
+/* Split into login + fetch so the auto-refresh cron can log in once and
+   fetch both weeks, instead of logging in twice per group per sweep. */
+async function loginToEdupage({ subdomain, username, password }) {
   const jar = new CookieJar();
   const base = 'https://' + subdomain + '.edupage.org';
 
@@ -261,7 +279,11 @@ async function loginAndFetchTimetable({ subdomain, username, password, dateFrom,
   const dbi = (data && data.dbi) || {};
   if (!userId) throw new StepError('userid-missing', 'Logged in, but could not find the account id.');
 
-  res = await jarFetch(jar, base + '/dashboard/eb.php?mode=ttday');
+  return { jar, base, userId, dbi };
+}
+
+async function fetchTimetableRange({ jar, base, userId, dbi, dateFrom, dateTo }) {
+  let res = await jarFetch(jar, base + '/dashboard/eb.php?mode=ttday');
   const ebHtml = await res.text();
   let gpidRaw, gsh;
   try {
@@ -321,7 +343,10 @@ async function loginAndFetchTimetable({ subdomain, username, password, dateFrom,
     const plan = (dayObj && dayObj.plan) || [];
     const lessons = [];
     for (const item of plan) {
-      if (!item || item.type === 'event' || item.removed) continue;
+      // "event" items are calendar entries, not real lessons -- skip those,
+      // but keep removed/absent lessons (marked cancelled) instead of
+      // dropping them, so the client can show them struck through.
+      if (!item || item.type === 'event') continue;
       const subjIds = item.subjectid !== undefined ? [item.subjectid] : [];
       const classroomIds = Array.isArray(item.classroomids) ? item.classroomids : [];
       const teacherIds = Array.isArray(item.teacherids) ? item.teacherids : [];
@@ -331,7 +356,9 @@ async function loginAndFetchTimetable({ subdomain, username, password, dateFrom,
         subject: subjIds.map(subjectName).filter(Boolean).join(', '),
         room: classroomIds.map(classroomName).filter(Boolean).join(', '),
         teacher: teacherIds.map(teacherName).filter(Boolean).join(', '),
-        free: false
+        free: false,
+        cancelled: !!(item.removed || item.type === 'absent' || item.type === ''),
+        raw: item
       });
     }
     lessons.sort((a, b) => (a.start || '').localeCompare(b.start || ''));
@@ -339,6 +366,23 @@ async function loginAndFetchTimetable({ subdomain, username, password, dateFrom,
   }
 
   return { ok: true, days };
+}
+
+async function loginAndFetchTimetable({ subdomain, username, password, dateFrom, dateTo }) {
+  const { jar, base, userId, dbi } = await loginToEdupage({ subdomain, username, password });
+  return fetchTimetableRange({ jar, base, userId, dbi, dateFrom, dateTo });
+}
+
+/* Used by the auto-refresh cron: one login, two separate week-long fetches
+   (see index.html's client-side sync for why two weeks must be fetched
+   separately rather than as one combined range), merged into one days map. */
+async function fetchTwoWeekSnapshot({ subdomain, username, password, week1From, week1To, week2From, week2To }) {
+  const session = await loginToEdupage({ subdomain, username, password });
+  // Sequential, not parallel: both calls share one CookieJar, and EduPage's
+  // per-request gpid/gsh dance isn't worth risking on concurrent mutation.
+  const week1 = await fetchTimetableRange({ ...session, dateFrom: week1From, dateTo: week1To });
+  const week2 = await fetchTimetableRange({ ...session, dateFrom: week2From, dateTo: week2To });
+  return { ok: true, days: Object.assign({}, week1.days, week2.days) };
 }
 
 async function handleEdupageSync(request) {
@@ -381,7 +425,12 @@ async function loadGroup(env, syncCode) {
   if (!raw) return { subscriptions: [], items: [] };
   try {
     const parsed = JSON.parse(raw);
-    return { subscriptions: parsed.subscriptions || [], items: parsed.items || [] };
+    return {
+      subscriptions: parsed.subscriptions || [],
+      items: parsed.items || [],
+      eduAuto: parsed.eduAuto,
+      eduCache: parsed.eduCache
+    };
   } catch (e) {
     return { subscriptions: [], items: [] };
   }
@@ -477,6 +526,141 @@ async function hmacSha256(keyBytes, dataBytes) {
 async function hkdfExpandOneBlock(prk, info, length) {
   const t1 = await hmacSha256(prk, concatBytes(info, new Uint8Array([1])));
   return t1.slice(0, length);
+}
+
+/* ---------- EduPage auto-refresh: encrypted-at-rest credential storage ----------
+   Opt-in only (see handleEdupageAutoSave) -- stores subdomain/username/password
+   in this group's KV entry so the Cron trigger can re-check the timetable
+   periodically and push a notification when it changes, without the user
+   re-entering their login every time. Password is AES-GCM encrypted with a
+   key only this Worker holds (CRED_ENCRYPTION_KEY secret); nobody else
+   (including Notesino's authors) can read it. */
+async function importCredKey(env) {
+  const raw = b64urlDecode(env.CRED_ENCRYPTION_KEY);
+  return crypto.subtle.importKey('raw', raw, { name: 'AES-GCM' }, false, ['encrypt', 'decrypt']);
+}
+
+async function encryptCredential(env, plaintext) {
+  const key = await importCredKey(env);
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const ciphertext = new Uint8Array(await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, new TextEncoder().encode(plaintext)));
+  return { iv: b64urlEncode(iv), ciphertext: b64urlEncode(ciphertext) };
+}
+
+async function decryptCredential(env, enc) {
+  const key = await importCredKey(env);
+  const iv = b64urlDecode(enc.iv);
+  const ciphertext = b64urlDecode(enc.ciphertext);
+  const plaintext = await crypto.subtle.decrypt({ name: 'AES-GCM', iv }, key, ciphertext);
+  return new TextDecoder().decode(plaintext);
+}
+
+async function handleEdupageAutoSave(request, env) {
+  if (request.method !== 'POST') return withCors(json({ ok: false, error: 'Use POST' }, 405));
+  let body;
+  try { body = await request.json(); } catch (e) { return withCors(json({ ok: false, error: 'Invalid JSON body' }, 400)); }
+  const { syncCode, subdomain, username, password, enabled } = body || {};
+  if (!syncCode) return withCors(json({ ok: false, error: 'Missing syncCode' }, 400));
+
+  if (enabled === false) {
+    const group = await loadGroup(env, syncCode);
+    delete group.eduAuto;
+    delete group.eduCache;
+    await saveGroup(env, syncCode, group);
+    return withCors(json({ ok: true, enabled: false }, 200));
+  }
+
+  if (!env.CRED_ENCRYPTION_KEY) {
+    return withCors(json({ ok: false, error: 'This Worker has no CRED_ENCRYPTION_KEY set up yet -- see README.md.' }, 500));
+  }
+  if (!subdomain || !username || !password) {
+    return withCors(json({ ok: false, error: 'Missing subdomain, username or password' }, 400));
+  }
+  const group = await loadGroup(env, syncCode);
+  group.eduAuto = { subdomain, username, encPassword: await encryptCredential(env, password), updatedAt: Date.now() };
+  await saveGroup(env, syncCode, group);
+  return withCors(json({ ok: true, enabled: true }, 200));
+}
+
+async function handleEdupageCached(request, env) {
+  const url = new URL(request.url);
+  const syncCode = url.searchParams.get('syncCode');
+  if (!syncCode) return withCors(json({ ok: false, error: 'Missing syncCode' }, 400));
+  const group = await loadGroup(env, syncCode);
+  if (!group.eduCache) return withCors(json({ ok: true, days: null, updatedAt: null }, 200));
+  return withCors(json({ ok: true, days: group.eduCache.days, updatedAt: group.eduCache.updatedAt }, 200));
+}
+
+function isoDateUTC(d) {
+  return d.getUTCFullYear() + '-' + String(d.getUTCMonth() + 1).padStart(2, '0') + '-' + String(d.getUTCDate()).padStart(2, '0');
+}
+function addDaysUTC(d, days) { return new Date(d.getTime() + days * 86400000); }
+function mondayOfWeekUTC(d) {
+  const day = d.getUTCDay(); // 0=Sun..6=Sat
+  const offset = day === 0 ? -6 : 1 - day;
+  const monday = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()));
+  monday.setUTCDate(monday.getUTCDate() + offset);
+  return monday;
+}
+
+/* Builds a comparable snapshot of a days map -- excludes the `raw` passthrough
+   field (not meant for change-detection, only for finding a substitution
+   field later) so unrelated noise there can never trigger a false "changed". */
+function snapshotForCompare(days) {
+  const out = {};
+  Object.keys(days).sort().forEach(function(k) {
+    out[k] = (days[k] || []).map(function(l) {
+      return [l.start, l.end, l.subject, l.room, l.teacher, l.cancelled ? 1 : 0].join('|');
+    });
+  });
+  return JSON.stringify(out);
+}
+
+/* Cron entry point: for every group that opted into auto-refresh, re-fetch
+   this week + next week (one login, two fetches) and compare against the
+   last known snapshot. First run after enabling just establishes a
+   baseline (nothing to push yet); later runs push a change notification
+   and refresh the cached snapshot the client can read without logging in
+   itself. A transient EduPage/login failure for one group is swallowed so
+   it doesn't wipe out that group's last-known-good cache, and doesn't stop
+   the sweep from reaching the remaining groups. */
+async function refreshAutoGroups(env) {
+  if (!env.CRED_ENCRYPTION_KEY) return;
+  const now = new Date();
+  const thisMonday = mondayOfWeekUTC(now);
+  const week1From = isoDateUTC(thisMonday), week1To = isoDateUTC(addDaysUTC(thisMonday, 6));
+  const nextMonday = addDaysUTC(thisMonday, 7);
+  const week2From = isoDateUTC(nextMonday), week2To = isoDateUTC(addDaysUTC(nextMonday, 6));
+
+  let cursor;
+  do {
+    const listed = await env.PUSH_KV.list({ prefix: 'group:', cursor });
+    for (const key of listed.keys) {
+      const syncCode = key.name.slice('group:'.length);
+      const group = await loadGroup(env, syncCode);
+      if (!group.eduAuto) continue;
+      try {
+        const password = await decryptCredential(env, group.eduAuto.encPassword);
+        const result = await fetchTwoWeekSnapshot({
+          subdomain: group.eduAuto.subdomain,
+          username: group.eduAuto.username,
+          password,
+          week1From, week1To, week2From, week2To
+        });
+        const snap = snapshotForCompare(result.days);
+        const isFirstRun = !group.eduCache;
+        const changed = !isFirstRun && group.eduCache.snapshot !== snap;
+        group.eduCache = { days: result.days, snapshot: snap, updatedAt: Date.now() };
+        await saveGroup(env, syncCode, group);
+        if (changed && group.subscriptions.length) {
+          await sendToAll(env, group.subscriptions, { title: 'Notesino', body: "Your EduPage timetable changed — open the app to see what's new." });
+        }
+      } catch (e) {
+        // leave group.eduAuto/eduCache untouched; try again next sweep
+      }
+    }
+    cursor = listed.list_complete ? undefined : listed.cursor;
+  } while (cursor);
 }
 
 async function importVapidPrivateKey(env) {
@@ -589,10 +773,13 @@ export default {
     if (path === '/push/subscribe') return handlePushSubscribe(request, env);
     if (path === '/push/sync') return handlePushSync(request, env);
     if (path === '/push/test') return handlePushTest(request, env);
+    if (path === '/edupage/auto') return handleEdupageAutoSave(request, env);
+    if (path === '/edupage/cached') return handleEdupageCached(request, env);
 
     return handleEdupageSync(request);
   },
   async scheduled(event, env, ctx) {
     ctx.waitUntil(sweepAndSendPushes(env));
+    ctx.waitUntil(refreshAutoGroups(env));
   }
 };

@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Notesino</title>
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#0a0a12">
@@ -61,52 +61,67 @@
   }
 
   /* ---------- Theme tokens ----------
-     One semantic surface language (page background, glass "ink" tint used
-     for every translucent panel/border, panel/select solid fills, blob
-     gradient colors, and an inverted-emphasis chip pair for primary
-     buttons/active tabs) that every themed color in the app is expressed
-     through, so a theme is just a different set of values for these same
-     handful of variables. :root holds the Dark Gradient defaults (the
-     original look); every other theme overrides only what differs. */
+     One semantic surface language (page background, "ink" tint used for
+     every panel/border/text, solid panel/select fills, blob gradient
+     colors, and an --accent pair used for primary buttons, active tabs,
+     focus rings and the connection web) that every themed color in the
+     app is expressed through, so a theme is just a different set of
+     values for these same handful of variables. Surfaces are solid, not
+     frosted glass — depth comes from layered shadow + a crisp hairline
+     border, not blur, so the app reads as one deliberate system rather
+     than a stack of translucent panes. :root holds the default theme;
+     every other theme overrides only what differs. */
   :root {
-    --page-bg: #0a0a12;
+    --page-bg: #0b0c14;
     --ink-rgb: 255, 255, 255;
     --ink-solid: #ffffff;
-    --select-bg: #1c1c24;
-    --panel-rgb: 30, 30, 38;
-    --emphasis-rgb: 255, 255, 255;
-    --emphasis-text: #16161c;
-    --blob1: #6a7cff;
-    --blob2: #ff7bb0;
-    --blob3: #5be3c9;
-    --blob4: #a78bfa;
-    --blob-opacity: 0.55;
+    --select-bg: #1c1d28;
+    --panel-rgb: 26, 27, 36;
+    --accent-rgb: 93, 76, 237;
+    --accent-solid: #5d4ced;
+    --accent-text: #ffffff;
+    --emphasis-rgb: 93, 76, 237;
+    --emphasis-text: #ffffff;
+    --blob1: #7c6dff;
+    --blob2: #ff6fa5;
+    --blob3: #3fd8c2;
+    --blob4: #9b6bff;
+    --blob-opacity: 0.4;
+    --card-shadow: 0 10px 30px rgba(0, 0, 0, 0.35), 0 1px 0 rgba(255, 255, 255, 0.04) inset;
   }
 
   :root[data-theme="light-gradient"] {
-    --page-bg: #f3f0ff;
+    --page-bg: #f5f3ff;
     --ink-rgb: 28, 26, 38;
     --ink-solid: #1c1a26;
     --select-bg: #ffffff;
     --panel-rgb: 255, 255, 255;
-    --emphasis-rgb: 28, 26, 38;
+    --accent-rgb: 101, 84, 230;
+    --accent-solid: #6554e6;
+    --accent-text: #ffffff;
+    --emphasis-rgb: 101, 84, 230;
     --emphasis-text: #ffffff;
-    --blob1: #b9c2ff;
-    --blob2: #ffc7e0;
+    --blob1: #c3b8ff;
+    --blob2: #ffc2dd;
     --blob3: #b6f0e6;
     --blob4: #d8c8ff;
-    --blob-opacity: 0.65;
+    --blob-opacity: 0.5;
+    --card-shadow: 0 10px 28px rgba(60, 50, 110, 0.14), 0 1px 0 rgba(255, 255, 255, 0.6) inset;
   }
 
   :root[data-theme="solid-charcoal"] {
-    --page-bg: #15151d;
+    --page-bg: #16171f;
     --ink-rgb: 255, 255, 255;
     --ink-solid: #ffffff;
-    --select-bg: #1c1c24;
-    --panel-rgb: 30, 30, 38;
-    --emphasis-rgb: 255, 255, 255;
-    --emphasis-text: #16161c;
+    --select-bg: #1e1f29;
+    --panel-rgb: 28, 29, 38;
+    --accent-rgb: 56, 211, 183;
+    --accent-solid: #38d3b7;
+    --accent-text: #0a1512;
+    --emphasis-rgb: 56, 211, 183;
+    --emphasis-text: #0a1512;
     --blob-opacity: 0;
+    --card-shadow: 0 10px 28px rgba(0, 0, 0, 0.4);
   }
 
   :root[data-theme="solid-cream"] {
@@ -115,9 +130,13 @@
     --ink-solid: #1e1a14;
     --select-bg: #ffffff;
     --panel-rgb: 255, 255, 255;
-    --emphasis-rgb: 30, 26, 20;
+    --accent-rgb: 181, 84, 31;
+    --accent-solid: #b5541f;
+    --accent-text: #ffffff;
+    --emphasis-rgb: 181, 84, 31;
     --emphasis-text: #ffffff;
     --blob-opacity: 0;
+    --card-shadow: 0 10px 26px rgba(90, 65, 30, 0.14);
   }
 
   :root[data-theme="solid-ocean"] {
@@ -125,10 +144,14 @@
     --ink-rgb: 255, 255, 255;
     --ink-solid: #ffffff;
     --select-bg: #14263c;
-    --panel-rgb: 20, 34, 50;
-    --emphasis-rgb: 255, 255, 255;
-    --emphasis-text: #0c1c2e;
+    --panel-rgb: 18, 32, 48;
+    --accent-rgb: 71, 180, 255;
+    --accent-solid: #47b4ff;
+    --accent-text: #06141f;
+    --emphasis-rgb: 71, 180, 255;
+    --emphasis-text: #06141f;
     --blob-opacity: 0;
+    --card-shadow: 0 10px 28px rgba(0, 0, 0, 0.4);
   }
 
   :root[data-theme="solid-blush"] {
@@ -137,9 +160,13 @@
     --ink-solid: #2e181c;
     --select-bg: #ffffff;
     --panel-rgb: 255, 255, 255;
-    --emphasis-rgb: 46, 24, 28;
+    --accent-rgb: 194, 58, 94;
+    --accent-solid: #c23a5e;
+    --accent-text: #ffffff;
+    --emphasis-rgb: 194, 58, 94;
     --emphasis-text: #ffffff;
     --blob-opacity: 0;
+    --card-shadow: 0 10px 26px rgba(120, 40, 60, 0.14);
   }
 
   html, body {
@@ -242,8 +269,8 @@
   .veil {
     position: absolute;
     inset: 0;
-    backdrop-filter: blur(60px);
-    background: rgba(var(--panel-rgb), 0.15);
+    backdrop-filter: blur(20px);
+    background: rgba(var(--panel-rgb), 0.12);
   }
 
   /* Main content layer */
@@ -292,10 +319,10 @@
   .tb-btn {
     width: 38px;
     height: 38px;
-    border-radius: 50%;
-    background: rgba(var(--ink-rgb), 0.12);
-    border: 0.5px solid rgba(var(--ink-rgb), 0.18);
-    backdrop-filter: blur(20px);
+    border-radius: 13px;
+    background: rgba(var(--panel-rgb), 0.92);
+    border: 1px solid rgba(var(--ink-rgb), 0.1);
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.18);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -303,11 +330,13 @@
     color: var(--ink-solid);
     font-size: 18px;
     position: relative;
-    transition: background 0.15s ease, transform 0.1s ease;
+    transition: background 0.15s ease, transform 0.18s cubic-bezier(.34,1.56,.64,1), box-shadow 0.15s ease;
   }
 
   .tb-btn:hover {
-    background: rgba(var(--ink-rgb), 0.2);
+    background: rgba(var(--accent-rgb), 0.14);
+    transform: translateY(-2px) rotate(-4deg);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.22);
   }
 
   /* Hand-drawn line icons (no emoji glyphs, whose color/style vary wildly
@@ -316,10 +345,56 @@
   .tb-icon {
     display: block;
     opacity: 0.9;
+    transition: opacity 0.15s ease;
+  }
+
+  .tb-btn:hover .tb-icon {
+    opacity: 1;
   }
 
   .tb-btn:active {
-    transform: scale(0.92);
+    transform: scale(0.92) rotate(0deg);
+  }
+
+  /* A small name label that pops up above any [data-tip] element on
+     hover/focus -- used across the toolbar so every icon-only control
+     identifies itself, instead of relying on the slow native title
+     tooltip. Pure CSS: the label text lives in the data-tip attribute. */
+  [data-tip] {
+    position: relative;
+  }
+
+  [data-tip]::after {
+    content: attr(data-tip);
+    position: absolute;
+    bottom: calc(100% + 10px);
+    left: 50%;
+    transform: translateX(-50%) translateY(4px) scale(0.92);
+    white-space: nowrap;
+    background: var(--ink-solid);
+    color: var(--page-bg);
+    font-family: "Poppins", -apple-system, sans-serif;
+    font-weight: 600;
+    font-size: 11px;
+    letter-spacing: 0.01em;
+    padding: 5px 9px;
+    border-radius: 7px;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.12s ease, transform 0.12s cubic-bezier(.34,1.56,.64,1);
+    z-index: 50;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+  }
+
+  [data-tip]:hover::after,
+  [data-tip]:focus-visible::after {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0) scale(1);
+    transition-delay: 0.25s;
+  }
+
+  body.touch-device [data-tip]::after {
+    display: none;
   }
 
   .tb-btn:disabled {
@@ -357,16 +432,22 @@
     max-width: min(240px, calc(100vw - 32px));
     padding: 6px;
     gap: 2px;
-    border-radius: 14px;
-    background: rgba(var(--panel-rgb), 0.92);
-    backdrop-filter: blur(20px);
-    border: 0.5px solid rgba(var(--ink-rgb), 0.18);
-    box-shadow: 0 8px 24px rgba(0,0,0,0.35);
+    border-radius: 16px;
+    background: rgba(var(--panel-rgb), 0.98);
+    border: 1px solid rgba(var(--ink-rgb), 0.1);
+    box-shadow: var(--card-shadow), 0 8px 28px rgba(0, 0, 0, 0.3);
     z-index: 50;
+    transform-origin: top right;
   }
 
   .add-menu.open {
     display: flex;
+    animation: menu-pop 0.16s cubic-bezier(.2,.9,.3,1.3) both;
+  }
+
+  @keyframes menu-pop {
+    from { opacity: 0; transform: scale(0.92) translateY(-6px); }
+    to { opacity: 1; transform: scale(1) translateY(0); }
   }
 
   .add-menu-item {
@@ -388,7 +469,8 @@
   }
 
   .add-menu-item:hover {
-    background: rgba(var(--ink-rgb), 0.1);
+    background: rgba(var(--accent-rgb), 0.14);
+    color: var(--accent-solid);
   }
 
   .save-now-confirmed {
@@ -441,14 +523,20 @@
     gap: 6px;
     height: 38px;
     padding: 0 14px;
-    border-radius: 999px;
-    background: rgba(var(--ink-rgb), 0.12);
-    border: 0.5px solid rgba(var(--ink-rgb), 0.18);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
+    border-radius: 13px;
+    background: rgba(var(--panel-rgb), 0.92);
+    border: 1px solid rgba(var(--ink-rgb), 0.1);
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.18);
     color: var(--ink-solid);
     cursor: pointer;
     max-width: 160px;
+    transition: transform 0.18s cubic-bezier(.34,1.56,.64,1), box-shadow 0.15s ease, background 0.15s ease;
+  }
+
+  .board-switcher-btn:hover {
+    background: rgba(var(--accent-rgb), 0.14);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.22);
   }
 
   .board-switcher-name {
@@ -614,6 +702,16 @@
     color: rgba(var(--ink-rgb), 0.75);
   }
 
+  .notify-code-row {
+    display: flex;
+    gap: 6px;
+  }
+
+  .notify-code-row .tt-edupage-input {
+    flex: 1;
+    min-width: 0;
+  }
+
   .theme-customize-row input[type="color"] {
     width: 28px;
     height: 22px;
@@ -660,15 +758,15 @@
     gap: 10px;
     padding: 8px 10px 8px 14px;
     border-radius: 999px;
-    background: rgba(var(--panel-rgb), 0.92);
-    backdrop-filter: blur(20px);
-    border: 0.5px solid rgba(var(--ink-rgb), 0.18);
-    box-shadow: 0 12px 32px rgba(0,0,0,0.35);
+    background: rgba(var(--panel-rgb), 0.98);
+    border: 1px solid rgba(var(--ink-rgb), 0.1);
+    box-shadow: var(--card-shadow), 0 12px 32px rgba(0, 0, 0, 0.3);
     z-index: 60;
   }
 
   .multi-select-bar.open {
     display: flex;
+    animation: menu-pop 0.16s cubic-bezier(.2,.9,.3,1.3) both;
   }
 
   .multi-select-count {
@@ -736,41 +834,158 @@
     display: block;
   }
 
-  /* Notes sub-switcher (Canvas / Subject Notes) \u2014 now the app's only navigation */
-  .notes-subswitcher {
+  /* ---------- The web launcher ----------
+     The app's home screen: a dark starfield with three icon-nodes
+     (Notes / Timetable / Reminders) linked by faint constellation lines.
+     Deliberately NOT theme-reactive (always dark) -- it's a portal
+     screen, not themed content -- except the accent-colored pulse lines
+     and hover glow, which still pick up the user's chosen accent so it
+     doesn't feel disconnected from the rest of the app. */
+  .web-launcher {
     position: absolute;
-    top: 84px;
+    inset: 0;
+    display: none;
+    overflow: hidden;
+    background: radial-gradient(ellipse at 30% 20%, #0d0d1a 0%, #030308 55%, #000 100%);
+  }
+
+  .web-launcher.active {
+    display: block;
+  }
+
+  .web-glow {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(80px);
+    opacity: 0.32;
+  }
+
+  .web-glow.g1 { width: 34vw; height: 34vw; top: 8%; left: 6%; background: rgb(var(--accent-rgb)); }
+  .web-glow.g2 { width: 30vw; height: 30vw; bottom: 6%; right: 8%; background: #ff6fa5; }
+  .web-glow.g3 { width: 26vw; height: 26vw; top: 52%; left: 54%; background: #3fd8c2; }
+
+  .web-stars {
+    position: absolute;
+    inset: 0;
+  }
+
+  .web-star {
+    position: absolute;
+    border-radius: 50%;
+    background: #fff;
+    animation: web-twinkle 3.5s ease-in-out infinite;
+  }
+
+  @keyframes web-twinkle {
+    0%, 100% { opacity: 0.2; }
+    50% { opacity: 0.85; }
+  }
+
+  .web-lines {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+  }
+
+  .web-lines line {
+    stroke: rgba(255, 255, 255, 0.22);
+    stroke-width: 1.4;
+  }
+
+  .web-lines .pulse {
+    stroke: rgb(var(--accent-rgb));
+    stroke-width: 1.6;
+    stroke-opacity: 0.85;
+    fill: none;
+    stroke-dasharray: 6 10;
+    animation: web-dash 3s linear infinite;
+  }
+
+  @keyframes web-dash {
+    to { stroke-dashoffset: -160; }
+  }
+
+  .web-hub {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 14px;
+    height: 14px;
+    margin: -7px 0 0 -7px;
+    border-radius: 50%;
+    background: #fff;
+    box-shadow: 0 0 8px rgba(255, 255, 255, 0.8);
+    z-index: 1;
+  }
+
+  .web-launcher .app-title {
+    top: 40px;
+  }
+
+  .web-tagline {
+    position: absolute;
+    top: 134px;
     left: 50%;
     transform: translateX(-50%);
+    color: rgba(255, 255, 255, 0.4);
+    font-size: 12.5px;
+    letter-spacing: 0.03em;
+    z-index: 3;
+  }
+
+  .web-node {
+    position: absolute;
+    width: 104px;
+    height: 104px;
+    margin: -52px 0 0 -52px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 30%, rgba(255, 255, 255, 0.14), rgba(255, 255, 255, 0.04));
+    border: 1.5px solid rgba(255, 255, 255, 0.55);
+    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.05), 0 0 40px rgba(var(--accent-rgb), 0.3), 0 10px 30px rgba(0, 0, 0, 0.6);
+    color: #fff;
     display: flex;
-    gap: 4px;
-    padding: 4px;
-    border-radius: 999px;
-    background: rgba(var(--ink-rgb), 0.1);
-    border: 0.5px solid rgba(var(--ink-rgb), 0.18);
-    backdrop-filter: blur(24px);
-    z-index: 10;
-  }
-
-  .subswitch-btn {
-    padding: 7px 18px;
-    border-radius: 999px;
-    border: none;
-    background: transparent;
-    color: rgba(var(--ink-rgb), 0.6);
-    font-size: 13.5px;
-    font-weight: 500;
+    align-items: center;
+    justify-content: center;
     cursor: pointer;
-    transition: background 0.2s ease, color 0.2s ease;
+    transition: transform 0.25s cubic-bezier(.34,1.56,.64,1), box-shadow 0.25s ease, border-color 0.25s ease;
   }
 
-  .subswitch-btn.active {
-    background: rgba(var(--emphasis-rgb), 0.85);
-    color: var(--emphasis-text);
+  .web-node:hover,
+  .web-node:focus-visible {
+    transform: scale(1.08) rotate(-3deg);
+    border-color: #fff;
+    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.1), 0 0 60px rgba(var(--accent-rgb), 0.6), 0 14px 36px rgba(0, 0, 0, 0.7);
   }
 
-  .subswitch-btn:not(.active):hover {
-    color: rgba(var(--ink-rgb), 0.85);
+  .web-node:active {
+    transform: scale(0.97);
+  }
+
+  .web-node-label {
+    position: absolute;
+    top: 112px;
+    left: 50%;
+    transform: translateX(-50%);
+    color: #fff;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.03em;
+    white-space: nowrap;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+  }
+
+  .web-node:hover .web-node-label,
+  .web-node:focus-visible .web-node-label {
+    opacity: 0.85;
+  }
+
+  .window-title-label {
+    color: var(--ink-solid);
+    font-weight: 700;
+    font-size: 15px;
+    padding: 0 4px;
   }
 
   .notes-sub {
@@ -781,6 +996,17 @@
 
   .notes-sub.active {
     display: block;
+  }
+
+  /* Timetable and Reminders are full-screen windows opened from the web
+     launcher. Each gets its own internal top bar (the back button + title
+     live globally in #shareToolbar, see .window-title-label) so only the
+     content below needs flex-column sizing here. */
+  #sub-timetable.active,
+  #sub-reminders.active {
+    display: flex;
+    flex-direction: column;
+    padding-top: 90px;
   }
 
   /* Subject Notes (nested inside the Timetable tab as a collapsible section) */
@@ -1264,19 +1490,24 @@
 
   .subject-modal-overlay.show {
     display: flex;
+    animation: overlay-fade 0.15s ease both;
+  }
+
+  @keyframes overlay-fade {
+    from { background: rgba(0, 0, 0, 0); }
+    to { background: rgba(0, 0, 0, 0.55); }
   }
 
   .subject-modal {
     width: 90%;
     max-width: 320px;
     border-radius: 20px;
-    background: rgba(var(--panel-rgb), 0.92);
-    backdrop-filter: blur(28px) saturate(150%);
-    -webkit-backdrop-filter: blur(28px) saturate(150%);
-    border: 0.5px solid rgba(var(--ink-rgb), 0.18);
-    box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+    background: rgba(var(--panel-rgb), 0.98);
+    border: 1px solid rgba(var(--ink-rgb), 0.1);
+    box-shadow: var(--card-shadow), 0 24px 60px rgba(0, 0, 0, 0.45);
     padding: 22px 20px 18px;
     color: var(--ink-solid);
+    animation: menu-pop 0.18s cubic-bezier(.2,.9,.3,1.3) both;
   }
 
   .subject-modal-title {
@@ -1642,24 +1873,38 @@
     right: -12px;
     width: 22px;
     height: 22px;
+    border-radius: 50%;
+    background: rgba(var(--panel-rgb), 0.98);
+    border: 1px solid rgba(var(--ink-rgb), 0.14);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
     cursor: nwse-resize;
     z-index: 5;
     display: block;
     opacity: 0;
-    transition: opacity 0.15s ease;
+    transform: scale(0.8);
+    transition: opacity 0.15s ease, transform 0.15s cubic-bezier(.34,1.56,.64,1), background 0.15s ease;
     touch-action: none;
   }
 
   .resize-handle::after {
     content: '';
     position: absolute;
-    top: 6px;
-    left: 6px;
-    width: 9px;
-    height: 9px;
-    border-right: 2px solid rgba(var(--ink-rgb), 0.55);
-    border-bottom: 2px solid rgba(var(--ink-rgb), 0.55);
+    top: 7px;
+    left: 7px;
+    width: 8px;
+    height: 8px;
+    border-right: 2px solid rgba(var(--ink-rgb), 0.65);
+    border-bottom: 2px solid rgba(var(--ink-rgb), 0.65);
     border-radius: 0 0 2px 0;
+  }
+
+  .resize-handle:hover {
+    background: rgb(var(--accent-rgb));
+    transform: scale(1.1);
+  }
+
+  .resize-handle:hover::after {
+    border-color: var(--accent-text);
   }
 
   .note:hover .resize-handle,
@@ -1667,6 +1912,13 @@
   .free-video:hover .resize-handle,
   body.touch-device .resize-handle {
     opacity: 1;
+    transform: scale(1);
+  }
+
+  .note:hover .resize-handle:hover,
+  .free-image:hover .resize-handle:hover,
+  .free-video:hover .resize-handle:hover {
+    transform: scale(1.1);
   }
 
   .free-image img {
@@ -1700,6 +1952,19 @@
   .free-image:hover .fi-close,
   body.touch-device .fi-close {
     opacity: 1;
+  }
+
+  /* Close buttons on image/video/voice-memo/file cards are fixed in a
+     corner regardless of card size (unlike note controls, they aren't
+     fighting for room), but 20px is still too small to reliably tap --
+     bump them up a bit on touch devices. */
+  body.touch-device .fi-close,
+  body.touch-device .fv-close,
+  body.touch-device .vm-close,
+  body.touch-device .fa-close {
+    width: 26px;
+    height: 26px;
+    font-size: 14px;
   }
 
   .free-image .fi-set-note-bg {
@@ -2165,28 +2430,40 @@
     width: 220px;
     min-height: 180px;
     border-radius: 16px;
-    background: rgba(var(--ink-rgb), 0.14);
-    border: 1.5px solid rgba(var(--ink-rgb), 0.55);
-    backdrop-filter: blur(24px) saturate(140%);
-    -webkit-backdrop-filter: blur(24px) saturate(140%);
-    box-shadow: 0 8px 32px rgba(0,0,0,0.18), 0 1px 2px rgba(0,0,0,0.08);
+    background: rgba(var(--panel-rgb), 0.97);
+    border: 1px solid rgba(var(--ink-rgb), 0.1);
+    box-shadow: var(--card-shadow);
     display: flex;
     flex-direction: column;
-    transition: box-shadow 0.2s ease;
+    transition: box-shadow 0.2s ease, transform 0.2s cubic-bezier(.2,.8,.3,1.2);
     background-size: cover;
     background-position: center;
     overflow: visible;
     min-width: 160px;
   }
 
+  .note::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 5px;
+    border-radius: 16px 0 0 16px;
+    background: var(--note-accent, transparent);
+    pointer-events: none;
+  }
+
   .note:hover {
-    box-shadow: 0 12px 40px rgba(0,0,0,0.24), 0 2px 4px rgba(0,0,0,0.1);
+    box-shadow: var(--card-shadow), 0 16px 36px rgba(0, 0, 0, 0.22);
+    transform: translateY(-2px);
   }
 
   .note.dragging {
-    box-shadow: 0 20px 48px rgba(0,0,0,0.3);
+    box-shadow: 0 24px 50px rgba(0, 0, 0, 0.32);
     z-index: 100;
     transition: none;
+    transform: none;
   }
 
   /* A quick materialize animation for instances created via the add menu
@@ -2223,26 +2500,31 @@
     justify-content: center;
     cursor: grab;
     touch-action: none;
-    border-top: 0.5px solid rgba(var(--ink-rgb), 0.12);
-    background: rgba(0,0,0,0.06);
+    border-top: 1px solid rgba(var(--ink-rgb), 0.08);
+    background: rgba(var(--ink-rgb), 0.03);
     transition: background 0.15s ease;
   }
 
   .note-drag-handle:hover {
-    background: rgba(0,0,0,0.14);
+    background: rgba(var(--accent-rgb), 0.12);
   }
 
   .note.dragging .note-drag-handle {
     cursor: grabbing;
-    background: rgba(0,0,0,0.2);
+    background: rgba(var(--accent-rgb), 0.18);
   }
 
   .note-drag-grip {
-    width: 32px;
+    width: 28px;
     height: 3px;
     border-radius: 3px;
-    background: rgba(var(--ink-rgb), 0.4);
+    background: rgba(var(--ink-rgb), 0.3);
     pointer-events: none;
+    transition: background 0.15s ease;
+  }
+
+  .note-drag-handle:hover .note-drag-grip {
+    background: rgb(var(--accent-rgb));
   }
 
   /* Sticky Canvas card */
@@ -2541,21 +2823,31 @@
     right: -6px;
     width: 22px;
     height: 22px;
+    border-radius: 50%;
+    background: rgba(var(--panel-rgb), 0.98);
+    border: 1px solid rgba(var(--ink-rgb), 0.14);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
     cursor: nwse-resize;
     touch-action: none;
     display: none;
+    transition: transform 0.15s cubic-bezier(.34,1.56,.64,1), background 0.15s ease;
     z-index: 2;
+  }
+
+  .text-line-resize:hover {
+    background: rgb(var(--accent-rgb));
+    transform: scale(1.1);
   }
 
   .text-line-resize::after {
     content: '';
     position: absolute;
-    bottom: 5px;
-    right: 5px;
-    width: 9px;
-    height: 9px;
-    border-right: 2px solid rgba(var(--ink-rgb), 0.55);
-    border-bottom: 2px solid rgba(var(--ink-rgb), 0.55);
+    top: 7px;
+    left: 7px;
+    width: 8px;
+    height: 8px;
+    border-right: 2px solid rgba(var(--ink-rgb), 0.65);
+    border-bottom: 2px solid rgba(var(--ink-rgb), 0.65);
     border-radius: 0 0 2px 0;
   }
 
@@ -2571,11 +2863,9 @@
     gap: 4px;
     padding: 5px 6px;
     border-radius: 10px;
-    background: rgba(var(--panel-rgb), 0.55);
-    backdrop-filter: blur(16px) saturate(160%);
-    -webkit-backdrop-filter: blur(16px) saturate(160%);
-    border: 0.5px solid rgba(var(--ink-rgb), 0.2);
-    box-shadow: 0 6px 18px rgba(0,0,0,0.3);
+    background: rgba(var(--panel-rgb), 0.98);
+    border: 1px solid rgba(var(--ink-rgb), 0.1);
+    box-shadow: var(--card-shadow), 0 6px 18px rgba(0, 0, 0, 0.25);
     z-index: 70;
   }
 
@@ -2661,15 +2951,15 @@
     gap: 6px;
     padding: 8px;
     border-radius: 12px;
-    background: rgba(var(--panel-rgb), 0.75);
-    backdrop-filter: blur(20px);
-    border: 0.5px solid rgba(var(--ink-rgb), 0.18);
-    box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+    background: rgba(var(--panel-rgb), 0.98);
+    border: 1px solid rgba(var(--ink-rgb), 0.1);
+    box-shadow: var(--card-shadow), 0 8px 24px rgba(0, 0, 0, 0.3);
     z-index: 50;
   }
 
   .swatches.open {
     display: flex;
+    animation: menu-pop 0.14s cubic-bezier(.2,.9,.3,1.3) both;
   }
 
   .swatch {
@@ -2940,8 +3230,8 @@
   }
 
   body.touch-device .note-dot {
-    width: calc(18px * var(--note-scale));
-    height: calc(18px * var(--note-scale));
+    width: calc(20px * var(--note-scale));
+    height: calc(20px * var(--note-scale));
   }
 
   body.touch-device .note-head-right {
@@ -2950,9 +3240,20 @@
 
   body.touch-device .fmt-btn,
   body.touch-device .note-close {
-    width: calc(26px * var(--note-scale));
-    height: calc(26px * var(--note-scale));
-    font-size: calc(13px * var(--note-scale));
+    width: calc(30px * var(--note-scale));
+    height: calc(30px * var(--note-scale));
+    font-size: calc(14px * var(--note-scale));
+  }
+
+  /* Drag handle/grip aren't covered by the fixed @media mobile rules below
+     -- scale them too so they stay grabbable with a thumb on a small note. */
+  body.touch-device .note-drag-handle {
+    min-height: calc(20px * var(--note-scale));
+  }
+
+  body.touch-device .note-drag-grip {
+    width: calc(32px * var(--note-scale));
+    height: calc(4px * var(--note-scale));
   }
 
   body.touch-device .note-toolbar2 {
@@ -2975,8 +3276,8 @@
   }
 
   body.touch-device .note-font-color-wrap {
-    width: calc(22px * var(--note-scale));
-    height: calc(22px * var(--note-scale));
+    width: calc(26px * var(--note-scale));
+    height: calc(26px * var(--note-scale));
   }
 
   body.touch-device .note-font-color-wrap::after {
@@ -2984,9 +3285,9 @@
   }
 
   body.touch-device .note-bg-btn {
-    width: calc(26px * var(--note-scale));
-    height: calc(26px * var(--note-scale));
-    font-size: calc(13px * var(--note-scale));
+    width: calc(30px * var(--note-scale));
+    height: calc(30px * var(--note-scale));
+    font-size: calc(14px * var(--note-scale));
   }
 
   .note.has-bg-image .note-text,
@@ -3221,10 +3522,52 @@
       top: calc(14px + env(safe-area-inset-top, 0px));
       right: calc(14px + env(safe-area-inset-right, 0px));
       gap: 6px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      max-width: calc(100vw - 28px);
     }
 
     #shareToolbar {
       left: calc(14px + env(safe-area-inset-left, 0px));
+      justify-content: flex-start;
+    }
+
+    /* The left-anchored share toolbar and right-anchored notes toolbar both
+       fit fine on their own on a phone-width screen -- they only collide
+       because they used to share one row. Stack the notes toolbar onto a
+       second row below it instead of letting them overlap. */
+    #notesToolbar {
+      top: calc(14px + env(safe-area-inset-top, 0px) + 44px);
+    }
+
+    /* The add-menu normally hangs right-aligned under the Add button, which
+       is fine when that button sits near the screen's right edge (desktop).
+       On mobile the notes toolbar (and the Add button with it) sits much
+       further left, so a right-aligned dropdown of this width would run
+       off the left edge of the screen instead. */
+    .add-menu {
+      left: 0;
+      right: auto;
+    }
+
+    /* The board switcher lives in the share toolbar's own row, but its
+       dropdown's default offset only clears a single toolbar row -- now
+       that the notes toolbar sits on a second row below it (see
+       #notesToolbar above), the menu needs to drop further to clear both. */
+    .board-switcher-menu {
+      top: 86px;
+      left: 0;
+      right: auto;
+    }
+
+    /* The EduPage Sync panel's trigger button is wide enough that it wraps
+       onto its own row starting near the left edge (unlike Calendar, whose
+       row has room to spare on the right) -- a right-anchored 300px panel
+       from there would run off the left edge of the screen. */
+    #ttEdupagePanel {
+      left: 0;
+      right: auto;
+      width: min(300px, calc(100vw - 40px));
     }
 
     .tb-btn {
@@ -3238,13 +3581,20 @@
       height: 15px;
     }
 
-    .notes-subswitcher {
-      top: calc(58px + env(safe-area-inset-top, 0px));
+    .web-node {
+      width: 76px;
+      height: 76px;
+      margin: -38px 0 0 -38px;
     }
 
-    .subswitch-btn {
-      padding: 4px 10px;
-      font-size: 10.5px;
+    .web-node svg {
+      width: 22px;
+      height: 22px;
+    }
+
+    .web-node-label {
+      top: 82px;
+      font-size: 11px;
     }
 
     .hint {
@@ -3252,11 +3602,14 @@
       bottom: calc(14px + env(safe-area-inset-bottom, 0px));
     }
 
-    /* Notes canvas: smaller default note size and tighter text for mobile */
+    /* Notes canvas: smaller default note size and tighter text for mobile
+       -- kept close enough to the 220px desktop reference width that the
+       touch-scale system (--note-scale) doesn't start every new note
+       already clamped near its minimum. */
     .note {
-      width: 132px;
-      min-width: 110px;
-      min-height: 92px;
+      width: 190px;
+      min-width: 150px;
+      min-height: 130px;
       border-radius: 12px;
     }
 
@@ -3294,12 +3647,12 @@
     }
 
     .note-drag-handle {
-      height: 16px;
+      height: calc(16px * var(--note-scale, 1));
     }
 
     .note-drag-grip {
-      width: 24px;
-      height: 2.5px;
+      width: calc(28px * var(--note-scale, 1));
+      height: calc(2.5px * var(--note-scale, 1));
     }
 
     .note-toolbar2 {
@@ -3369,13 +3722,6 @@
       height: auto;
       padding: 24px 16px;
       max-height: none;
-    }
-  }
-
-  @media (max-width: 420px) {
-    .note {
-      width: 118px;
-      min-height: 84px;
     }
   }
 
@@ -3664,8 +4010,8 @@
     margin-left: -10px;
     margin-top: -10px;
     border-radius: 50%;
-    background: #ffffff;
-    color: #16161c;
+    background: var(--ink-solid);
+    color: var(--page-bg);
     font-size: 14px;
     font-weight: 800;
     line-height: 1;
@@ -3673,17 +4019,29 @@
     align-items: center;
     justify-content: center;
     cursor: crosshair;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4), 0 0 0 2px rgba(var(--ink-rgb), 0.4);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4), 0 0 0 2px rgba(var(--accent-rgb), 0.5);
     pointer-events: auto;
     touch-action: none;
     user-select: none;
-    transition: transform 0.15s ease, box-shadow 0.15s ease;
+    transition: box-shadow 0.15s ease;
+    animation: dot-breathe 3.2s ease-in-out infinite;
+  }
+
+  @keyframes dot-breathe {
+    0%, 100% { box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4), 0 0 0 2px rgba(var(--accent-rgb), 0.5); }
+    50% { box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4), 0 0 0 4px rgba(var(--accent-rgb), 0.22); }
+  }
+
+  @keyframes dot-wobble {
+    0%, 100% { transform: scale(1.25) rotate(0deg); }
+    25% { transform: scale(1.25) rotate(-12deg); }
+    75% { transform: scale(1.25) rotate(12deg); }
   }
 
   .connect-dot:hover,
   .connect-dot.linking {
-    transform: scale(1.2);
-    box-shadow: 0 2px 14px rgba(var(--ink-rgb), 0.8), 0 0 0 2px rgba(var(--ink-rgb), 0.95);
+    animation: dot-wobble 0.45s ease-in-out;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5), 0 0 0 3px rgb(var(--accent-rgb));
   }
 
   /* The dot itself stays small so it doesn't crowd tiny instances, but a
@@ -3712,12 +4070,8 @@
   }
 
   /* Reminders: quick natural-language notes -> calendar events
-     (Google Calendar, which Notion Calendar shows and notifies for) */
-  #sub-reminders.active {
-    display: flex;
-    flex-direction: column;
-    padding-top: 138px;
-  }
+     (Google Calendar, which Notion Calendar shows and notifies for) --
+     its own full-screen window, opened from the web launcher. */
 
   .rm-wrap {
     flex: 1;
@@ -3898,14 +4252,14 @@
     .rm-wrap { padding: 0 16px 16px; }
     .rm-item { flex-wrap: wrap; }
     .rm-item-actions { width: 100%; justify-content: flex-end; }
+
+    /* The example placeholder text wraps to two lines once the Add button
+       eats into the input's width on a phone -- give it room instead of
+       clipping the second line. */
+    .rm-input { min-height: 64px; }
   }
 
-  /* Timetable */
-  #sub-timetable.active {
-    display: flex;
-    flex-direction: column;
-    padding-top: 138px;
-  }
+  /* Timetable -- its own full-screen window, opened from the web launcher. */
 
   .tt-wrap {
     flex: 1;
@@ -3949,6 +4303,46 @@
   .tt-next-detail {
     font-size: 13px;
     color: rgba(var(--ink-rgb), 0.75);
+  }
+
+  .tt-week-toggle {
+    display: inline-flex;
+    gap: 4px;
+    padding: 4px;
+    border-radius: 999px;
+    background: rgba(var(--ink-rgb), 0.08);
+    width: fit-content;
+    flex-shrink: 0;
+  }
+
+  .tt-week-btn {
+    border: none;
+    background: transparent;
+    padding: 7px 18px;
+    border-radius: 999px;
+    font-size: 12.5px;
+    font-weight: 600;
+    color: rgba(var(--ink-rgb), 0.6);
+    cursor: pointer;
+    text-align: center;
+    transition: background 0.15s ease, color 0.15s ease;
+  }
+
+  .tt-week-btn.active {
+    background: rgb(var(--accent-rgb));
+    color: var(--accent-text);
+  }
+
+  .tt-week-tag {
+    display: block;
+    font-size: 9.5px;
+    font-weight: 500;
+    opacity: 0.75;
+    letter-spacing: 0.02em;
+  }
+
+  .tt-week-btn.active .tt-week-tag {
+    opacity: 1;
   }
 
   .tt-toolbar {
@@ -4155,6 +4549,34 @@
     line-height: 1.4;
   }
 
+  #ttEdupagePanel {
+    width: 300px;
+  }
+
+  .tt-edupage-input {
+    width: 100%;
+    font-size: 12px;
+    border-radius: 6px;
+    border: 0.5px solid rgba(var(--ink-rgb), 0.25);
+    background: rgba(var(--ink-rgb), 0.06);
+    color: var(--ink-solid);
+    padding: 6px 8px;
+  }
+
+  .tt-edupage-status {
+    font-size: 11px;
+    line-height: 1.4;
+    min-height: 14px;
+  }
+
+  .tt-edupage-status.error {
+    color: #f87171;
+  }
+
+  .tt-edupage-status.ok {
+    color: #4ade80;
+  }
+
   .tt-grid-scroll {
     flex: 1;
     min-height: 0;
@@ -4257,14 +4679,22 @@
     cursor: pointer;
     padding: 0;
     z-index: 2;
+    opacity: 0;
+    transition: opacity 0.15s ease;
+  }
+
+  .tt-slot:hover .tt-dot,
+  .tt-slot:focus-within .tt-dot,
+  .tt-slot.tt-swatches-open .tt-dot {
+    opacity: 1;
   }
 
   .tt-swatches {
     position: absolute;
     top: 22px;
     right: 4px;
-    background: rgba(var(--panel-rgb), 0.95);
-    border: 0.5px solid rgba(var(--ink-rgb), 0.18);
+    background: rgba(var(--panel-rgb), 0.98);
+    border: 1px solid rgba(var(--ink-rgb), 0.1);
     border-radius: 10px;
     padding: 6px;
     display: none;
@@ -4272,7 +4702,7 @@
     gap: 5px;
     width: 92px;
     z-index: 20;
-    backdrop-filter: blur(20px);
+    box-shadow: var(--card-shadow);
   }
 
   .tt-swatches.open {
@@ -4316,6 +4746,14 @@
     text-transform: uppercase;
     letter-spacing: 0.03em;
     cursor: pointer;
+    opacity: 0;
+    transition: opacity 0.15s ease;
+  }
+
+  .tt-slot:hover .tt-free-btn,
+  .tt-slot:focus-within .tt-free-btn,
+  .tt-free-btn.active {
+    opacity: 1;
   }
 
   .tt-free-btn.active {
@@ -4346,29 +4784,76 @@
     display: block;
   }
 
+  /* EduPage marked this lesson removed/teacher-absent -- shown struck
+     through rather than hidden, so the subject stays visible but the
+     cancellation is unmistakable. */
+  .tt-slot.tt-is-cancelled {
+    background: rgba(248, 113, 113, 0.08);
+    box-shadow: inset 0 0 0 1.5px rgba(248, 113, 113, 0.45);
+  }
+
+  .tt-slot.tt-is-cancelled .tt-fields {
+    opacity: 0.6;
+    text-decoration: line-through;
+    text-decoration-color: rgba(248, 113, 113, 0.7);
+  }
+
+  .tt-cancelled-label {
+    display: none;
+    color: #f87171;
+    font-weight: 700;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    margin-top: 6px;
+  }
+
+  .tt-slot.tt-is-cancelled .tt-cancelled-label {
+    display: block;
+  }
+
+  /* Experimental: best-effort substitution/room-change flag (not a
+     confirmed EduPage signal -- see edupage-relay/README.md). Yellow, kept
+     visually distinct from the confirmed red "cancelled" treatment above. */
+  .tt-slot.tt-is-substituted {
+    background: rgba(250, 204, 21, 0.1);
+    box-shadow: inset 0 0 0 1.5px rgba(250, 204, 21, 0.5);
+  }
+
+  .tt-substituted-label {
+    display: none;
+    color: #facc15;
+    font-weight: 700;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    margin-top: 6px;
+  }
+
+  .tt-slot.tt-is-substituted .tt-substituted-label {
+    display: block;
+  }
+
   .tt-subject {
     outline: none;
     color: rgba(var(--ink-rgb), 0.9);
     font-size: 13px;
-    font-weight: 500;
+    font-weight: 600;
     min-height: 16px;
     margin-right: 16px;
+    display: inline-block;
+    padding: 2px 4px;
+    border-radius: 6px;
+    transition: background 0.15s ease, color 0.15s ease;
   }
 
   .tt-room,
   .tt-teacher {
     outline: none;
-    color: rgba(var(--ink-rgb), 0.6);
+    color: rgba(var(--ink-rgb), 0.55);
     font-size: 11px;
     min-height: 14px;
-    margin-top: 2px;
-  }
-
-  .tt-slot-colored .tt-subject,
-  .tt-slot-colored .tt-room,
-  .tt-slot-colored .tt-teacher {
-    color: #1a1a1a;
-    opacity: 0.85;
+    margin-top: 3px;
   }
 
   .tt-subject:empty:before,
@@ -4507,9 +4992,11 @@
 
 <div class="stage" role="main">
 
-  <h1 class="app-title">Notesino</h1>
-
   <div class="toolbar" id="shareToolbar" style="left:calc(24px + env(safe-area-inset-left, 0px)); right:auto;">
+    <button class="tb-btn" id="windowBackBtn" title="Back to the web" aria-label="Back to the web" data-tip="Back" style="display:none;">
+      <svg class="tb-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+    </button>
+    <div class="window-title-label" id="windowTitleLabel" style="display:none;"></div>
     <div class="add-menu-wrap" id="boardSwitcherWrap">
       <button class="board-switcher-btn" id="boardSwitcherBtn" title="Switch board" aria-label="Switch board" aria-haspopup="true" aria-expanded="false">
         <span class="board-switcher-name" id="boardSwitcherName">Board</span>
@@ -4521,7 +5008,7 @@
         <button class="add-menu-item" id="newBoardBtn">+ New Board</button>
       </div>
     </div>
-    <button class="tb-btn" id="shareBtn" title="Collaborate live" aria-label="Collaborate live">
+    <button class="tb-btn" id="shareBtn" title="Collaborate live" aria-label="Collaborate live" data-tip="Collaborate">
       <svg class="tb-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
       <span class="live-dot" id="liveDot"></span>
     </button>
@@ -4529,7 +5016,7 @@
 
   <div class="toolbar" id="notesToolbar">
     <div class="add-menu-wrap" id="addMenuWrap">
-      <button class="tb-btn" id="addMenuBtn" title="Add" aria-label="Add">
+      <button class="tb-btn" id="addMenuBtn" title="Add" aria-label="Add" data-tip="Add">
         <svg class="tb-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
       </button>
       <div class="add-menu" id="addMenu">
@@ -4543,17 +5030,17 @@
         <button class="add-menu-item" id="addFileAttachment">Attach File</button>
       </div>
     </div>
-    <button class="tb-btn" id="undoBtn" title="Undo (Ctrl+Z)" aria-label="Undo" disabled>
+    <button class="tb-btn" id="undoBtn" title="Undo (Ctrl+Z)" aria-label="Undo" data-tip="Undo" disabled>
       <svg class="tb-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 14 4 9 9 4"/><path d="M20 20v-7a4 4 0 0 0-4-4H4"/></svg>
     </button>
-    <button class="tb-btn" id="redoBtn" title="Redo (Ctrl+Shift+Z)" aria-label="Redo" disabled>
+    <button class="tb-btn" id="redoBtn" title="Redo (Ctrl+Shift+Z)" aria-label="Redo" data-tip="Redo" disabled>
       <svg class="tb-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 14 20 9 15 4"/><path d="M4 20v-7a4 4 0 0 1 4-4h12"/></svg>
     </button>
-    <button class="tb-btn" id="zoomFitBtn" title="Zoom to fit / recenter (0)" aria-label="Zoom to fit / recenter">
+    <button class="tb-btn" id="zoomFitBtn" title="Zoom to fit / recenter (0)" aria-label="Zoom to fit / recenter" data-tip="Zoom to fit">
       <svg class="tb-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3"/><path d="M21 8V5a2 2 0 0 0-2-2h-3"/><path d="M3 16v3a2 2 0 0 0 2 2h3"/><path d="M16 21h3a2 2 0 0 0 2-2v-3"/></svg>
     </button>
     <div class="add-menu-wrap" id="searchWrap">
-      <button class="tb-btn" id="searchBtn" title="Search notes, tables, timetable (Ctrl+F)" aria-label="Search">
+      <button class="tb-btn" id="searchBtn" title="Search notes, tables, timetable (Ctrl+F)" aria-label="Search" data-tip="Search">
         <svg class="tb-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
       </button>
       <div class="add-menu search-panel" id="searchPanel">
@@ -4561,14 +5048,14 @@
         <div id="searchResults"></div>
       </div>
     </div>
-    <button class="tb-btn" id="removeWorkspaceBg" title="Remove workspace background" aria-label="Remove workspace background" style="display:none;">
+    <button class="tb-btn" id="removeWorkspaceBg" title="Remove workspace background" aria-label="Remove workspace background" data-tip="Remove background" style="display:none;">
       <svg class="tb-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
     </button>
-    <button class="tb-btn" id="shortcutsBtn" title="Keyboard shortcuts (?)" aria-label="Keyboard shortcuts">
+    <button class="tb-btn" id="shortcutsBtn" title="Keyboard shortcuts (?)" aria-label="Keyboard shortcuts" data-tip="Shortcuts">
       <svg class="tb-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9.2 9a2.8 2.8 0 0 1 5.4 1c0 1.8-2.4 2-2.6 3.5"/><line x1="12" y1="16.7" x2="12" y2="16.75"/></svg>
     </button>
     <div class="add-menu-wrap" id="moreMenuWrap">
-      <button class="tb-btn" id="moreMenuBtn" title="More options" aria-label="More options">
+      <button class="tb-btn" id="moreMenuBtn" title="More options" aria-label="More options" data-tip="More">
         <svg class="tb-icon" viewBox="0 0 24 24" width="18" height="18" fill="currentColor" stroke="none"><circle cx="12" cy="5" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="12" cy="19" r="1.6"/></svg>
       </button>
       <div class="add-menu" id="moreMenu">
@@ -4607,6 +5094,29 @@
         <div class="add-menu-divider"></div>
         <button class="add-menu-item" id="exportWorkspaceBtn">Export Workspace&hellip;</button>
         <button class="add-menu-item" id="importWorkspaceBtn">Import Workspace&hellip;</button>
+        <div class="add-menu-divider"></div>
+        <button class="add-menu-item" id="notificationsBtn">Notifications&hellip;</button>
+        <div class="theme-customize-panel" id="notificationsPanel">
+          <div class="theme-customize-row">
+            <label for="notifyEnabledToggle">Send me notifications</label>
+            <input type="checkbox" id="notifyEnabledToggle">
+          </div>
+          <div class="tt-calendar-hint">Real device notifications for reminders and subject notes with a date, matched against your timetable -- e.g. a note mentioning a test for a subject that meets tomorrow. Needs the same relay as EduPage Sync, deployed with push support (see edupage-relay/README.md).</div>
+          <div class="tt-calendar-row">
+            <label for="notifyRelayInput">Relay URL</label>
+          </div>
+          <input type="text" id="notifyRelayInput" placeholder="https://your-relay.workers.dev" class="tt-edupage-input">
+          <div class="tt-calendar-row">
+            <label for="notifySyncCodeInput">Sync code</label>
+          </div>
+          <div class="notify-code-row">
+            <input type="text" id="notifySyncCodeInput" placeholder="Shared across your devices" class="tt-edupage-input">
+            <button class="tt-btn" id="notifyGenerateCodeBtn" title="Generate a new code">New</button>
+          </div>
+          <div class="tt-calendar-hint">Enter the <b>same code</b> on every device (phone, desktop) you want notified together.</div>
+          <button class="tt-btn tt-calendar-download-btn" id="notifyTestBtn">Send test notification</button>
+          <div class="tt-edupage-status" id="notifyStatus"></div>
+        </div>
         <div class="add-menu-divider" id="snapshotsDivider" style="display:none;"></div>
         <div class="theme-picker-label" id="snapshotsLabel" style="display:none;">Restore a Previous Version</div>
         <div id="snapshotsList"></div>
@@ -4615,13 +5125,37 @@
     <input type="file" id="importFileInput" accept="application/json,.json" style="display:none;">
   </div>
 
-  <div class="notes-subswitcher" id="notesSubswitcher">
-    <button class="subswitch-btn active" data-sub="board">Notes</button>
-    <button class="subswitch-btn" data-sub="timetable">Timetable</button>
-    <button class="subswitch-btn" data-sub="reminders">Reminders</button>
+  <div class="web-launcher active" id="webLauncher">
+    <div class="web-glow g1"></div>
+    <div class="web-glow g2"></div>
+    <div class="web-glow g3"></div>
+    <div class="web-stars" id="webStars"></div>
+    <svg class="web-lines" viewBox="0 0 100 100" preserveAspectRatio="none">
+      <line x1="50" y1="50" x2="30" y2="33.33" vector-effect="non-scaling-stroke" />
+      <line x1="50" y1="50" x2="70" y2="33.33" vector-effect="non-scaling-stroke" />
+      <line x1="50" y1="50" x2="50" y2="72.22" vector-effect="non-scaling-stroke" />
+      <path class="pulse" d="M30,33.33 Q50,42.22 70,33.33" vector-effect="non-scaling-stroke" />
+      <path class="pulse" d="M30,33.33 Q40,55.56 50,72.22" vector-effect="non-scaling-stroke" />
+      <path class="pulse" d="M70,33.33 Q60,55.56 50,72.22" vector-effect="non-scaling-stroke" />
+    </svg>
+    <div class="web-hub"></div>
+    <h1 class="app-title">Notesino</h1>
+    <div class="web-tagline">Pick a space to open</div>
+    <button class="web-node" data-sub="board" style="top:33.33%;left:30%;" title="Notes" data-tip="Notes">
+      <svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 4h12l4 4v12H4z"/><path d="M16 4v4h4"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="8" y1="16" x2="13" y2="16"/></svg>
+      <span class="web-node-label">Notes</span>
+    </button>
+    <button class="web-node" data-sub="timetable" style="top:33.33%;left:70%;" title="Timetable" data-tip="Timetable">
+      <svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="5" width="18" height="16" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="8" y1="3" x2="8" y2="7"/><line x1="16" y1="3" x2="16" y2="7"/></svg>
+      <span class="web-node-label">Timetable</span>
+    </button>
+    <button class="web-node" data-sub="reminders" style="top:72.22%;left:50%;" title="Reminders" data-tip="Reminders">
+      <svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2a6 6 0 0 0-6 6c0 5-2 6-2 7h16s-2-1-2-7a6 6 0 0 0-6-6Z"/><path d="M10 20a2 2 0 0 0 4 0"/></svg>
+      <span class="web-node-label">Reminders</span>
+    </button>
   </div>
 
-  <div class="notes-sub active" id="sub-board">
+  <div class="notes-sub" id="sub-board">
     <div class="canvas-viewport" id="canvasViewport">
       <div class="workspace-bg-layer" id="workspaceBgLayer">
         <video id="workspaceBgVideo" muted loop playsinline autoplay></video>
@@ -4659,6 +5193,10 @@
         <div class="tt-next-label" id="ttNextLabel">No timetable yet</div>
         <div class="tt-next-detail" id="ttNextDetail">Fill in the grid below to see your next lesson here.</div>
       </div>
+      <div class="tt-week-toggle" id="ttWeekToggle" style="display:none;">
+        <button class="tt-week-btn" data-week="A" id="ttWeekBtnA">Week A<span class="tt-week-tag" id="ttWeekTagA"></span></button>
+        <button class="tt-week-btn" data-week="B" id="ttWeekBtnB">Week B<span class="tt-week-tag" id="ttWeekTagB"></span></button>
+      </div>
       <div class="tt-toolbar">
         <div class="tt-title">Weekly Timetable</div>
         <div class="tt-fmt-group">
@@ -4675,6 +5213,15 @@
             <button class="tt-btn" id="ttCalendarBtn">Calendar&hellip;</button>
             <div class="tt-calendar-panel" id="ttCalendarPanel">
               <div class="tt-calendar-row">
+                <label for="ttRotationToggle">Alternating Week A/B</label>
+                <input type="checkbox" id="ttRotationToggle">
+              </div>
+              <div class="tt-calendar-row" id="ttAnchorRow" style="display:none;">
+                <label for="ttAnchorDateInput">A date in Week A</label>
+                <input type="date" id="ttAnchorDateInput">
+              </div>
+              <div class="tt-calendar-divider"></div>
+              <div class="tt-calendar-row">
                 <label for="termStartInput">Term start</label>
                 <input type="date" id="termStartInput">
               </div>
@@ -4686,13 +5233,44 @@
               <div class="tt-calendar-label">Term exceptions (no classes)</div>
               <div id="termExceptionsList"></div>
               <div class="tt-calendar-add-row">
-                <input type="date" id="termExceptionDateInput">
+                <input type="date" id="termExceptionDateInput" aria-label="Exception date">
                 <input type="text" id="termExceptionLabelInput" placeholder="Label (optional)">
                 <button class="tt-calendar-add-btn" id="termExceptionAddBtn" aria-label="Add exception">+</button>
               </div>
               <div class="tt-calendar-divider"></div>
               <button class="tt-btn tt-calendar-download-btn" id="downloadIcsBtn">Download Calendar (.ics)</button>
               <div class="tt-calendar-hint">Import this file into Google Calendar, Apple Calendar, or Outlook for real reminders before each class.</div>
+            </div>
+          </div>
+          <div class="tt-calendar-wrap" id="ttEdupageWrap">
+            <button class="tt-btn" id="ttEdupageBtn">EduPage Sync&hellip;</button>
+            <div class="tt-calendar-panel" id="ttEdupagePanel">
+              <div class="tt-calendar-label">Sync your real schedule from EduPage</div>
+              <div class="tt-calendar-hint">Unofficial, experimental. Needs a relay you deploy yourself once -- see edupage-relay/README.md. "Sync now" sends your password straight to your own relay and never saves it; turning on "Auto-refresh" below is the one exception, since it needs to log in again on its own later.</div>
+              <div class="tt-calendar-row">
+                <label for="edupageRelayInput">Relay URL</label>
+              </div>
+              <input type="text" id="edupageRelayInput" placeholder="https://your-relay.workers.dev" class="tt-edupage-input">
+              <div class="tt-calendar-row">
+                <label for="edupageSubdomainInput">School subdomain</label>
+              </div>
+              <input type="text" id="edupageSubdomainInput" placeholder="e.g. gymxyz" class="tt-edupage-input">
+              <div class="tt-calendar-row">
+                <label for="edupageUsernameInput">Username</label>
+              </div>
+              <input type="text" id="edupageUsernameInput" placeholder="EduPage username" class="tt-edupage-input" autocomplete="username">
+              <div class="tt-calendar-row">
+                <label for="edupagePasswordInput">Password</label>
+              </div>
+              <input type="password" id="edupagePasswordInput" placeholder="EduPage password" class="tt-edupage-input" autocomplete="current-password">
+              <button class="tt-btn tt-calendar-download-btn" id="edupageSyncBtn">Sync now</button>
+              <div class="tt-edupage-status" id="edupageStatus"></div>
+              <div class="tt-calendar-row" style="margin-top:10px;">
+                <label for="edupageAutoToggle">Auto-refresh in background</label>
+                <input type="checkbox" id="edupageAutoToggle">
+              </div>
+              <div class="tt-calendar-hint">Stores an encrypted copy of this login on your own relay so it can re-check EduPage every ~10 minutes by itself and push a notification when something changes -- even if you never open the app. Uses the same sync code as Notifications (set up in the "&#8942;" menu); turning this off deletes the stored login from the relay.</div>
+              <div class="tt-edupage-status" id="edupageAutoStatus"></div>
             </div>
           </div>
         </div>
@@ -4885,32 +5463,74 @@
   var isTouchDevice = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0) || window.matchMedia('(pointer: coarse)').matches;
   if (isTouchDevice) document.body.classList.add('touch-device');
 
-  /* ---------- Notes sub-switcher: Notes board / Subject Notes / Canvas ---------- */
-  var subSwitchBtns = document.querySelectorAll('.subswitch-btn');
+  /* ---------- The web launcher ----------
+     Home screen: a dark starfield with three icon-nodes. Clicking one
+     opens that section as a full-screen "window"; the back button
+     returns to the web. Nothing is destroyed when a window closes --
+     all state keeps living in the same place it always has (localStorage
+     / collectState()), so reopening a section just reveals the same DOM
+     with the same content, same as it was left. */
+  var webLauncherEl = document.getElementById('webLauncher');
+  var windowBackBtn = document.getElementById('windowBackBtn');
+  var windowTitleLabel = document.getElementById('windowTitleLabel');
   var notesSubs = {
     board: document.getElementById('sub-board'),
     timetable: document.getElementById('sub-timetable'),
     reminders: document.getElementById('sub-reminders')
   };
   var notesToolbar = document.getElementById('notesToolbar');
-  var activeNotesSub = 'board';
+  var SECTION_TITLES = { board: 'Notes', timetable: 'Timetable', reminders: 'Reminders' };
+  var openSection = null;
 
-  function updateToolbarVisibility() {
-    notesToolbar.style.display = activeNotesSub === 'board' ? 'flex' : 'none';
+  function updateChromeForSection(key) {
+    windowBackBtn.style.display = key ? 'flex' : 'none';
+    windowTitleLabel.style.display = key ? 'block' : 'none';
+    windowTitleLabel.textContent = key ? SECTION_TITLES[key] : '';
+    notesToolbar.style.display = key === 'board' ? 'flex' : 'none';
   }
 
-  subSwitchBtns.forEach(function(btn) {
-    btn.addEventListener('click', function() {
-      subSwitchBtns.forEach(function(b) { b.classList.remove('active'); });
-      btn.classList.add('active');
-      activeNotesSub = btn.getAttribute('data-sub');
-      Object.keys(notesSubs).forEach(function(key) {
-        notesSubs[key].classList.toggle('active', key === activeNotesSub);
-      });
-      updateToolbarVisibility();
+  function openSectionWindow(key) {
+    if (!notesSubs[key]) return;
+    openSection = key;
+    webLauncherEl.classList.remove('active');
+    Object.keys(notesSubs).forEach(function(k) {
+      notesSubs[k].classList.toggle('active', k === key);
     });
+    updateChromeForSection(key);
+    if (key === 'timetable') {
+      ttViewWeek = currentRealWeekLetter();
+      refreshWeekToggleUI();
+      renderTimetable();
+    }
+  }
+
+  function closeSectionWindow() {
+    openSection = null;
+    webLauncherEl.classList.add('active');
+    Object.keys(notesSubs).forEach(function(k) { notesSubs[k].classList.remove('active'); });
+    updateChromeForSection(null);
+  }
+
+  document.querySelectorAll('.web-node').forEach(function(btn) {
+    btn.addEventListener('click', function() { openSectionWindow(btn.getAttribute('data-sub')); });
   });
-  updateToolbarVisibility();
+  windowBackBtn.addEventListener('click', closeSectionWindow);
+  updateChromeForSection(null);
+
+  (function spawnWebStars() {
+    var starsEl = document.getElementById('webStars');
+    for (var i = 0; i < 40; i++) {
+      var s = document.createElement('div');
+      s.className = 'web-star';
+      var size = Math.random() * 2 + 1;
+      s.style.width = size + 'px';
+      s.style.height = size + 'px';
+      s.style.top = (Math.random() * 100) + '%';
+      s.style.left = (Math.random() * 100) + '%';
+      s.style.animationDelay = (Math.random() * 3) + 's';
+      starsEl.appendChild(s);
+    }
+  })();
 
   /* ---------- Notes ---------- */
   var colors = ['#ffd6a5', '#a0e7e5', '#ffadad', '#caffbf', '#bdb2ff', '#fdffb6'];
@@ -5331,6 +5951,37 @@
     }
   });
 
+  /* Cascades sequential spawns by a fixed diagonal step instead of drawing
+     each one independently at random -- on a narrow phone viewport the
+     random spread can be barely wider than the card itself, so two notes
+     added back to back would otherwise land almost exactly on top of each
+     other. Wraps back to a fresh (still randomized) start once a cascade
+     would run off the visible area. */
+  var lastSpawnOffset = new Map();
+  function cascadePos(key, maxX, maxY, minX, minY) {
+    var prev = lastSpawnOffset.get(key);
+    /* X and Y wrap independently rather than both needing to fit the same
+       step before either resets -- on a short mobile viewport the usable
+       vertical room (after header clearance) is often far smaller than the
+       horizontal room, so requiring both to advance together meant the
+       step almost never fit and every spawn fell back to the same tiny
+       random corner. */
+    var stepX = Math.max(70, Math.min(140, (maxX - minX) * 0.5));
+    var stepY = Math.max(40, Math.min(90, (maxY - minY) * 0.5));
+    var x, y;
+    if (prev) {
+      x = prev.x + stepX;
+      y = prev.y + stepY;
+      if (x > maxX) x = minX + Math.random() * Math.max(10, (maxX - minX) * 0.25);
+      if (y > maxY) y = minY + Math.random() * Math.max(10, (maxY - minY) * 0.25);
+    } else {
+      x = minX + Math.random() * Math.max(10, (maxX - minX) * 0.25);
+      y = minY + Math.random() * Math.max(10, (maxY - minY) * 0.25);
+    }
+    lastSpawnOffset.set(key, { x: x, y: y });
+    return { x: x, y: y };
+  }
+
   function randomPos(container, needsHeaderClearance) {
     if (container === layer) {
       /* Main canvas is pan/zoomable \u2014 place new items somewhere within
@@ -5338,9 +5989,10 @@
          own (unbounded) coordinate space. */
       var vrect = canvasViewport.getBoundingClientRect();
       var topMin = needsHeaderClearance ? 220 : 20;
-      var sx = Math.random() * Math.max(40, vrect.width - 260) + 20;
-      var sy = Math.random() * Math.max(40, vrect.height - topMin - 200) + topMin;
-      return screenToCanvas(vrect.left + sx, vrect.top + sy);
+      var maxX = Math.max(60, vrect.width - 160);
+      var maxY = Math.max(60, vrect.height - topMin - 160);
+      var p = cascadePos('layer', maxX, maxY, 20, topMin);
+      return screenToCanvas(vrect.left + p.x, vrect.top + p.y);
     }
     var w = window.innerWidth, h = window.innerHeight;
     if (container) {
@@ -5349,14 +6001,14 @@
       if (rect.height > 40) h = rect.height;
     }
     var topMin = needsHeaderClearance ? 220 : 20;
-    var x = Math.max(20, Math.random() * Math.max(40, w - 260));
-    var y = Math.max(topMin, Math.random() * Math.max(40, h - topMin - 200) + topMin);
-    return { x: x, y: y };
+    var maxX = Math.max(60, w - 160);
+    var maxY = Math.max(60, h - topMin - 160);
+    return cascadePos(container || 'default', maxX, maxY, 20, topMin);
   }
 
   function setNoteColor(note, dot, color) {
     dot.style.background = color;
-    note.style.borderColor = color;
+    note.style.setProperty('--note-accent', color);
   }
 
   function createNote(data, targetLayer) {
@@ -5741,7 +6393,7 @@
        touch devices keep this note's control-scale variable in sync so
        its buttons stay proportional to its actual current size. */
     var NOTE_SCALE_REF_WIDTH = 220; /* width at which scale = 1, matches the default note width */
-    var NOTE_SCALE_MIN = 0.55;
+    var NOTE_SCALE_MIN = 0.75; /* below this, touch targets inside the note get too small to tap reliably */
     var NOTE_SCALE_MAX = 1.6;
 
     function updateNoteScale() {
@@ -6823,14 +7475,17 @@
     });
 
     /* Resizing is a pure font-scale control (via --tl-scale): drag the
-       corner further from the text's own top-left to grow it, closer to
-       shrink it \u2014 the same "distance from a fixed anchor" convention as
-       resizing a text box in any slide/design tool. The wrap always
-       auto-fits whatever size the (scaled) text ends up being, so there's
-       no separate box-dimension to fight with the font size over, and no
-       way for the two to drift out of sync. */
+       corner away from the text to grow it, back toward it to shrink --
+       a plain linear delta from the drag's own start point (like every
+       other instance's resize), not a ratio of distance-from-anchor (that
+       older formula made the same pixel movement produce wildly different
+       scale changes depending on where the drag started, which is what
+       made it feel unpredictable). The wrap always auto-fits whatever
+       size the (scaled) text ends up being, so there's no separate
+       box-dimension to fight with the font size over, and no way for the
+       two to drift out of sync. */
     (function() {
-      var anchorX = 0, anchorY = 0, startDist = 1, startScale = 1, resizing = false;
+      var startX = 0, startY = 0, startScale = 1, resizing = false;
       resizeHandle.style.touchAction = 'none';
 
       resizeHandle.addEventListener('pointerdown', function(e) {
@@ -6842,10 +7497,8 @@
         wrap.classList.remove('tl-manual-size');
         wrap.style.width = '';
         wrap.style.height = '';
-        var rect = wrap.getBoundingClientRect();
-        anchorX = rect.left;
-        anchorY = rect.top;
-        startDist = Math.hypot(e.clientX - anchorX, e.clientY - anchorY) || 1;
+        startX = e.clientX;
+        startY = e.clientY;
         startScale = parseFloat(getComputedStyle(wrap).getPropertyValue('--tl-scale')) || 1;
         wrap.style.zIndex = ++topZ;
         resizeHandle.setPointerCapture(e.pointerId);
@@ -6855,8 +7508,10 @@
 
       resizeHandle.addEventListener('pointermove', function(e) {
         if (!resizing) return;
-        var dist = Math.hypot(e.clientX - anchorX, e.clientY - anchorY);
-        var newScale = Math.max(0.5, Math.min(6, startScale * (dist / startDist)));
+        var dx = e.clientX - startX;
+        var dy = e.clientY - startY;
+        if (typeof canvasZoom === 'number' && canvasZoom) { dx /= canvasZoom; dy /= canvasZoom; }
+        var newScale = Math.max(0.5, Math.min(6, startScale + (dx + dy) / 2 / 120));
         wrap.style.setProperty('--tl-scale', newScale);
         positionTlToolbar(wrap);
         syncDotFor(wrap);
@@ -7913,7 +8568,11 @@
     notebookWrap.classList.toggle('has-content', !!text.trim());
     nbRecalcLineHeights();
     clearTimeout(quickNoteSaveTimer);
-    quickNoteSaveTimer = setTimeout(saveWorkspace, 400);
+    var subjectIdForReminders = activeSubjectId;
+    quickNoteSaveTimer = setTimeout(function() {
+      saveWorkspace();
+      syncSubjectNoteReminders(subjectIdForReminders, text);
+    }, 400);
   }
 
   quickNoteInput.addEventListener('input', saveQuickNote);
@@ -8772,9 +9431,6 @@
   }
 
   function jumpToCanvasEl(el) {
-    var boardBtn = document.querySelector('.subswitch-btn[data-sub="board"]');
-    if (boardBtn && !boardBtn.classList.contains('active')) boardBtn.click();
-
     var vpW = canvasViewport.clientWidth;
     var vpH = canvasViewport.clientHeight;
     var targetZoom = Math.max(CANVAS_ZOOM_MIN, Math.min(CANVAS_ZOOM_MAX, canvasZoom < 0.5 ? 1 : canvasZoom));
@@ -8790,9 +9446,11 @@
     setTimeout(function() { highlightAfterJump(el); }, 200);
   }
 
-  function jumpToTimetableCell(key) {
-    var ttBtn = document.querySelector('.subswitch-btn[data-sub="timetable"]');
-    if (ttBtn && !ttBtn.classList.contains('active')) ttBtn.click();
+  function jumpToTimetableCell(key, week) {
+    openSectionWindow('timetable');
+    if (week && timetable.rotation.enabled && week !== ttViewWeek) {
+      setViewWeek(week);
+    }
     setTimeout(function() {
       var cellEl = ttCellEls[key];
       if (!cellEl) return;
@@ -8802,8 +9460,7 @@
   }
 
   function jumpToSubject(id) {
-    var ttBtn = document.querySelector('.subswitch-btn[data-sub="timetable"]');
-    if (ttBtn && !ttBtn.classList.contains('active')) ttBtn.click();
+    openSectionWindow('timetable');
     setSubjectsCollapseOpen(true);
     switchToSubject(id);
     setTimeout(function() {
@@ -8854,13 +9511,18 @@
       }
     });
 
-    Object.keys(timetable.cells || {}).forEach(function(key) {
-      var cell = timetable.cells[key];
-      if (!cell) return;
-      var combined = [stripTagsForSearch(cell.subject), cell.room, cell.teacher].filter(Boolean).join(' · ');
-      if (combined.toLowerCase().indexOf(query) !== -1) {
-        matches.push({ kind: 'Timetable', snippet: makeSearchSnippet(combined, query), action: function() { jumpToTimetableCell(key); } });
-      }
+    ['A', 'B'].forEach(function(week) {
+      var cellsMap = ttCellsForWeek(week);
+      if (week === 'B' && !timetable.rotation.enabled) return;
+      Object.keys(cellsMap || {}).forEach(function(key) {
+        var cell = cellsMap[key];
+        if (!cell) return;
+        var combined = [stripTagsForSearch(cell.subject), cell.room, cell.teacher].filter(Boolean).join(' · ');
+        if (combined.toLowerCase().indexOf(query) !== -1) {
+          var label = timetable.rotation.enabled ? ('Timetable (Week ' + week + ')') : 'Timetable';
+          matches.push({ kind: label, snippet: makeSearchSnippet(combined, query), action: function() { jumpToTimetableCell(key, week); } });
+        }
+      });
     });
 
     subjects.forEach(function(s) {
@@ -9373,6 +10035,7 @@
     dot.className = 'connect-dot';
     dot.textContent = '+';
     dot.title = 'Drag to connect this to another instance';
+    dot.setAttribute('data-tip', 'Drag to connect');
     dot.addEventListener('pointerdown', function(e) { startLinking(e, id, linkLayer, dot); });
     linkLayer.overlay.appendChild(dot);
     linkLayer.dotOwners[id] = { el: el, dot: dot };
@@ -9523,7 +10186,9 @@
         { start: '11:50', end: '12:35' },
         { start: '12:45', end: '13:30' }
       ],
-      cells: {}
+      cells: {},
+      cellsB: {},
+      rotation: { enabled: false, anchorDate: '' }
     };
   }
 
@@ -9531,6 +10196,10 @@
   var ttCellEls = {};
   var ttActiveField = null;
   var ttSavedRange = null;
+  /* Which week the grid currently shows ('A' or 'B'); only meaningful when
+     timetable.rotation.enabled. Reset to the real current week every time
+     the Timetable window is opened. */
+  var ttViewWeek = 'A';
 
   function normalizeTimetable(t) {
     var base = defaultTimetable();
@@ -9538,11 +10207,42 @@
     return {
       days: Array.isArray(t.days) && t.days.length ? t.days : base.days,
       periods: Array.isArray(t.periods) && t.periods.length ? t.periods : base.periods,
-      cells: t.cells && typeof t.cells === 'object' ? t.cells : {}
+      cells: t.cells && typeof t.cells === 'object' ? t.cells : {},
+      cellsB: t.cellsB && typeof t.cellsB === 'object' ? t.cellsB : {},
+      rotation: {
+        enabled: !!(t.rotation && t.rotation.enabled),
+        anchorDate: (t.rotation && typeof t.rotation.anchorDate === 'string') ? t.rotation.anchorDate : ''
+      }
     };
   }
 
   function ttKey(dayIdx, periodIdx) { return dayIdx + '-' + periodIdx; }
+
+  /* ---------- Week A/B rotation helpers ----------
+     Two weeks of cells (cells = Week A, cellsB = Week B) sharing the same
+     days/periods grid. Which calendar week is "A" vs "B" is derived from a
+     single anchor date (any date the user confirms falls in Week A) --
+     every Monday-to-Monday jump from that anchor flips the parity, so the
+     real week's letter is just (weeks-since-anchor) mod 2. */
+  function startOfWeekMonday(d) {
+    var day = d.getDay();
+    var diff = (day === 0 ? -6 : 1 - day);
+    var monday = new Date(d.getFullYear(), d.getMonth(), d.getDate() + diff);
+    monday.setHours(0, 0, 0, 0);
+    return monday;
+  }
+
+  function weekLetterForDate(d) {
+    if (!timetable.rotation.enabled || !timetable.rotation.anchorDate) return 'A';
+    var anchor = parseLocalDate(timetable.rotation.anchorDate);
+    if (!anchor) return 'A';
+    var diffWeeks = Math.round((startOfWeekMonday(d) - startOfWeekMonday(anchor)) / (7 * 86400000));
+    return (((diffWeeks % 2) + 2) % 2) === 0 ? 'A' : 'B';
+  }
+
+  function currentRealWeekLetter() { return weekLetterForDate(new Date()); }
+
+  function ttCellsForWeek(week) { return week === 'B' ? timetable.cellsB : timetable.cells; }
 
   function pushTimetableToNative() {
     if (window.NotesinoNative && window.NotesinoNative.saveTimetable) {
@@ -9569,9 +10269,10 @@
     document.execCommand(cmd, false, null);
     var key = ttActiveField.getAttribute('data-tt-key');
     if (key) {
-      var entry = timetable.cells[key] || {};
+      var cellsMap = ttCellsForWeek(ttViewWeek);
+      var entry = cellsMap[key] || {};
       entry.subject = ttActiveField.innerHTML;
-      timetable.cells[key] = entry;
+      cellsMap[key] = entry;
     }
     saveWorkspace();
   }
@@ -9596,8 +10297,9 @@
   }
 
   function computeNextLesson() {
-    var hasAnyContent = Object.keys(timetable.cells).some(function(k) {
-      var c = timetable.cells[k];
+    var cellsNow = ttCellsForWeek(currentRealWeekLetter());
+    var hasAnyContent = Object.keys(cellsNow).some(function(k) {
+      var c = cellsNow[k];
       return c && (ttPlainText(c.subject) || c.free);
     });
     if (!hasAnyContent) return { state: 'empty' };
@@ -9613,7 +10315,7 @@
       var s = parseHHMM(p.start), e = parseHHMM(p.end);
       if (s === null || e === null) continue;
       if (nowMinutes >= s && nowMinutes < e) {
-        return { state: 'now', period: p, idx: i, entry: timetable.cells[ttKey(dayIdx, i)] || {} };
+        return { state: 'now', period: p, idx: i, entry: cellsNow[ttKey(dayIdx, i)] || {} };
       }
     }
 
@@ -9624,7 +10326,7 @@
       if (!best || sj < parseHHMM(timetable.periods[best].start)) best = j;
     }
     if (best !== null) {
-      return { state: 'next', period: timetable.periods[best], idx: best, entry: timetable.cells[ttKey(dayIdx, best)] || {} };
+      return { state: 'next', period: timetable.periods[best], idx: best, entry: cellsNow[ttKey(dayIdx, best)] || {} };
     }
 
     return { state: 'done-today' };
@@ -9677,6 +10379,9 @@
     Object.keys(ttCellEls).forEach(function(k) {
       ttCellEls[k].classList.remove('tt-slot-now', 'tt-slot-next');
     });
+    /* The grid can be showing a preview of the other week -- only paint the
+       live now/next highlight when that preview matches the real week. */
+    if (ttViewWeek !== currentRealWeekLetter()) return;
     var result = computeNextLesson();
     if (result.state !== 'now' && result.state !== 'next') return;
     var todayCode = JS_DAY_TO_CODE[new Date().getDay()];
@@ -9686,11 +10391,24 @@
     if (cellEl) cellEl.classList.add(result.state === 'now' ? 'tt-slot-now' : 'tt-slot-next');
   }
 
+  function applySubjectChipStyle(subjectEl, cell, color) {
+    if (color) {
+      subjectEl.style.background = 'rgba(' + hexToRgbTriplet(color) + ', 0.22)';
+      subjectEl.style.color = color;
+      cell.classList.add('tt-slot-colored');
+    } else {
+      subjectEl.style.background = '';
+      subjectEl.style.color = '';
+      cell.classList.remove('tt-slot-colored');
+    }
+  }
+
   function renderTimetable() {
     ttGrid.innerHTML = '';
     ttCellEls = {};
     ttGrid.style.setProperty('--tt-cols', timetable.days.length);
 
+    var cellsMap = ttCellsForWeek(ttViewWeek);
     var todayCode = JS_DAY_TO_CODE[new Date().getDay()];
 
     var corner = document.createElement('div');
@@ -9743,24 +10461,45 @@
 
       timetable.days.forEach(function(day, dIdx) {
         var key = ttKey(dIdx, pIdx);
-        var entry = timetable.cells[key] || {};
+        var entry = cellsMap[key] || {};
 
         var cell = document.createElement('div');
         cell.className = 'tt-cell tt-slot';
-        if (entry.color) { cell.style.background = entry.color; cell.classList.add('tt-slot-colored'); }
         if (entry.free) cell.classList.add('tt-is-free');
+        if (entry.cancelled) cell.classList.add('tt-is-cancelled');
+        if (entry.substituted) cell.classList.add('tt-is-substituted');
         ttCellEls[key] = cell;
+
+        var fieldsWrap = document.createElement('div');
+        fieldsWrap.className = 'tt-fields';
+
+        var subjectEl = document.createElement('div');
+        subjectEl.className = 'tt-subject';
+        subjectEl.contentEditable = 'true';
+        subjectEl.setAttribute('data-placeholder', 'Subject');
+        subjectEl.setAttribute('data-tt-key', key);
+        subjectEl.innerHTML = entry.subject || '';
+        applySubjectChipStyle(subjectEl, cell, entry.color);
+        subjectEl.addEventListener('pointerdown', function(e) { e.stopPropagation(); });
+        subjectEl.addEventListener('pointerup', function() { ttSaveSelectionFor(subjectEl); });
+        subjectEl.addEventListener('keyup', function() { ttSaveSelectionFor(subjectEl); });
+        subjectEl.addEventListener('input', function() {
+          entry.subject = subjectEl.innerHTML;
+          cellsMap[key] = entry;
+          saveWorkspace();
+          updateNextLessonBanner();
+        });
 
         var panel = document.createElement('div');
         panel.className = 'tt-swatches';
 
         function pickColor(c) {
           entry.color = c;
-          timetable.cells[key] = entry;
-          if (c) { cell.style.background = c; cell.classList.add('tt-slot-colored'); }
-          else { cell.style.background = ''; cell.classList.remove('tt-slot-colored'); }
+          cellsMap[key] = entry;
+          applySubjectChipStyle(subjectEl, cell, c);
           dot.style.background = c || 'rgba(255,255,255,0.25)';
           panel.classList.remove('open');
+          cell.classList.remove('tt-swatches-open');
           saveWorkspace();
         }
 
@@ -9785,7 +10524,9 @@
           e.stopPropagation();
           var isOpen = panel.classList.contains('open');
           document.querySelectorAll('.tt-swatches.open').forEach(function(p) { p.classList.remove('open'); });
+          document.querySelectorAll('.tt-swatches-open').forEach(function(c) { c.classList.remove('tt-swatches-open'); });
           panel.classList.toggle('open', !isOpen);
+          cell.classList.toggle('tt-swatches-open', !isOpen);
         });
 
         var freeBtn = document.createElement('button');
@@ -9795,32 +10536,13 @@
         freeBtn.addEventListener('click', function(e) {
           e.stopPropagation();
           entry.free = !entry.free;
-          timetable.cells[key] = entry;
+          cellsMap[key] = entry;
           cell.classList.toggle('tt-is-free', entry.free);
           freeBtn.classList.toggle('active', entry.free);
           freeBtn.textContent = entry.free ? 'Free ✓' : 'Mark free';
           saveWorkspace();
           updateNextLessonBanner();
           highlightCurrentPeriodCells();
-        });
-
-        var fieldsWrap = document.createElement('div');
-        fieldsWrap.className = 'tt-fields';
-
-        var subjectEl = document.createElement('div');
-        subjectEl.className = 'tt-subject';
-        subjectEl.contentEditable = 'true';
-        subjectEl.setAttribute('data-placeholder', 'Subject');
-        subjectEl.setAttribute('data-tt-key', key);
-        subjectEl.innerHTML = entry.subject || '';
-        subjectEl.addEventListener('pointerdown', function(e) { e.stopPropagation(); });
-        subjectEl.addEventListener('pointerup', function() { ttSaveSelectionFor(subjectEl); });
-        subjectEl.addEventListener('keyup', function() { ttSaveSelectionFor(subjectEl); });
-        subjectEl.addEventListener('input', function() {
-          entry.subject = subjectEl.innerHTML;
-          timetable.cells[key] = entry;
-          saveWorkspace();
-          updateNextLessonBanner();
         });
 
         var roomEl = document.createElement('div');
@@ -9831,7 +10553,7 @@
         roomEl.addEventListener('pointerdown', function(e) { e.stopPropagation(); });
         roomEl.addEventListener('blur', function() {
           entry.room = roomEl.textContent.trim();
-          timetable.cells[key] = entry;
+          cellsMap[key] = entry;
           saveWorkspace();
           updateNextLessonBanner();
         });
@@ -9844,7 +10566,7 @@
         teacherEl.addEventListener('pointerdown', function(e) { e.stopPropagation(); });
         teacherEl.addEventListener('blur', function() {
           entry.teacher = teacherEl.textContent.trim();
-          timetable.cells[key] = entry;
+          cellsMap[key] = entry;
           saveWorkspace();
           updateNextLessonBanner();
         });
@@ -9857,11 +10579,21 @@
         freeLabel.className = 'tt-free-label';
         freeLabel.textContent = 'Free';
 
+        var cancelledLabel = document.createElement('div');
+        cancelledLabel.className = 'tt-cancelled-label';
+        cancelledLabel.textContent = 'Cancelled';
+
+        var substitutedLabel = document.createElement('div');
+        substitutedLabel.className = 'tt-substituted-label';
+        substitutedLabel.textContent = 'Substitution?';
+
         cell.appendChild(dot);
         cell.appendChild(panel);
         cell.appendChild(freeBtn);
         cell.appendChild(fieldsWrap);
         cell.appendChild(freeLabel);
+        cell.appendChild(cancelledLabel);
+        cell.appendChild(substitutedLabel);
         ttGrid.appendChild(cell);
       });
     });
@@ -9873,6 +10605,7 @@
   document.addEventListener('pointerdown', function(e) {
     if (!e.target.closest('.tt-slot')) {
       document.querySelectorAll('.tt-swatches.open').forEach(function(p) { p.classList.remove('open'); });
+      document.querySelectorAll('.tt-swatches-open').forEach(function(c) { c.classList.remove('tt-swatches-open'); });
     }
   });
 
@@ -9888,7 +10621,10 @@
     if (timetable.periods.length <= 1) return;
     var removedIdx = timetable.periods.length - 1;
     timetable.periods.pop();
-    timetable.days.forEach(function(d, dIdx) { delete timetable.cells[ttKey(dIdx, removedIdx)]; });
+    timetable.days.forEach(function(d, dIdx) {
+      delete timetable.cells[ttKey(dIdx, removedIdx)];
+      delete timetable.cellsB[ttKey(dIdx, removedIdx)];
+    });
     renderTimetable();
     saveWorkspace();
     pushTimetableToNative();
@@ -9906,8 +10642,60 @@
   ttRemoveDayBtn.addEventListener('click', function() {
     if (timetable.days.length <= 1) return;
     var removedIdx = timetable.days.length - 1;
-    timetable.periods.forEach(function(p, pIdx) { delete timetable.cells[ttKey(removedIdx, pIdx)]; });
+    timetable.periods.forEach(function(p, pIdx) {
+      delete timetable.cells[ttKey(removedIdx, pIdx)];
+      delete timetable.cellsB[ttKey(removedIdx, pIdx)];
+    });
     timetable.days.pop();
+    renderTimetable();
+    saveWorkspace();
+    pushTimetableToNative();
+  });
+
+  /* ---------- Week A/B toggle UI ---------- */
+  var ttWeekToggleEl = document.getElementById('ttWeekToggle');
+  var ttWeekBtnA = document.getElementById('ttWeekBtnA');
+  var ttWeekBtnB = document.getElementById('ttWeekBtnB');
+  var ttWeekTagA = document.getElementById('ttWeekTagA');
+  var ttWeekTagB = document.getElementById('ttWeekTagB');
+  var ttRotationToggle = document.getElementById('ttRotationToggle');
+  var ttAnchorRow = document.getElementById('ttAnchorRow');
+  var ttAnchorDateInput = document.getElementById('ttAnchorDateInput');
+
+  function refreshWeekToggleUI() {
+    var enabled = timetable.rotation.enabled;
+    ttWeekToggleEl.style.display = enabled ? 'inline-flex' : 'none';
+    if (!enabled) return;
+    var real = currentRealWeekLetter();
+    ttWeekBtnA.classList.toggle('active', ttViewWeek === 'A');
+    ttWeekBtnB.classList.toggle('active', ttViewWeek === 'B');
+    ttWeekTagA.textContent = real === 'A' ? 'this week' : 'next week';
+    ttWeekTagB.textContent = real === 'B' ? 'this week' : 'next week';
+  }
+
+  function setViewWeek(week) {
+    ttViewWeek = week;
+    refreshWeekToggleUI();
+    renderTimetable();
+  }
+
+  ttWeekBtnA.addEventListener('click', function() { setViewWeek('A'); });
+  ttWeekBtnB.addEventListener('click', function() { setViewWeek('B'); });
+
+  ttRotationToggle.addEventListener('change', function() {
+    timetable.rotation.enabled = ttRotationToggle.checked;
+    ttAnchorRow.style.display = ttRotationToggle.checked ? 'flex' : 'none';
+    ttViewWeek = currentRealWeekLetter();
+    refreshWeekToggleUI();
+    renderTimetable();
+    saveWorkspace();
+    pushTimetableToNative();
+  });
+
+  ttAnchorDateInput.addEventListener('change', function() {
+    timetable.rotation.anchorDate = ttAnchorDateInput.value;
+    ttViewWeek = currentRealWeekLetter();
+    refreshWeekToggleUI();
     renderTimetable();
     saveWorkspace();
     pushTimetableToNative();
@@ -9992,6 +10780,9 @@
     if (!wasOpen) {
       termStartInput.value = termSettings.startDate || '';
       termEndInput.value = termSettings.endDate || '';
+      ttRotationToggle.checked = timetable.rotation.enabled;
+      ttAnchorRow.style.display = timetable.rotation.enabled ? 'flex' : 'none';
+      ttAnchorDateInput.value = timetable.rotation.anchorDate || '';
       renderTermExceptions();
     }
     ttCalendarPanel.classList.toggle('open', !wasOpen);
@@ -10021,6 +10812,324 @@
     renderTermExceptions();
     saveWorkspace();
   });
+
+  /* ---------- EduPage sync (unofficial, via a user-deployed relay) ----------
+     EduPage has no public API and no CORS, so this calls a small Cloudflare
+     Worker (see edupage-relay/) that the user deploys themselves; it does the
+     actual login/scrape and returns a plain {date: [{start,end,subject,room,
+     teacher}]} map. The relay URL/subdomain/username are convenience-only
+     (saved locally, not sensitive); the password is only ever sent to the
+     user's own relay for this one request, never stored. Fetches this week
+     and next week in one call so it can tell, by comparing the two, whether
+     the school actually runs an alternating Week A/B schedule. */
+  var EDUPAGE_PREFS_KEY = 'claude_workspace_edupage_prefs_v1';
+  var ttEdupageBtn = document.getElementById('ttEdupageBtn');
+  var ttEdupagePanel = document.getElementById('ttEdupagePanel');
+  var edupageRelayInput = document.getElementById('edupageRelayInput');
+  var edupageSubdomainInput = document.getElementById('edupageSubdomainInput');
+  var edupageUsernameInput = document.getElementById('edupageUsernameInput');
+  var edupagePasswordInput = document.getElementById('edupagePasswordInput');
+  var edupageSyncBtn = document.getElementById('edupageSyncBtn');
+  var edupageStatusEl = document.getElementById('edupageStatus');
+
+  function loadEdupagePrefs() {
+    try {
+      var raw = localStorage.getItem(EDUPAGE_PREFS_KEY);
+      return raw ? JSON.parse(raw) : {};
+    } catch (err) { return {}; }
+  }
+  function saveEdupagePrefs(prefs) {
+    try { localStorage.setItem(EDUPAGE_PREFS_KEY, JSON.stringify(prefs)); } catch (err) {}
+  }
+
+  ttEdupageBtn.addEventListener('click', function(e) {
+    e.stopPropagation();
+    var wasOpen = ttEdupagePanel.classList.contains('open');
+    if (!wasOpen) {
+      var prefs = loadEdupagePrefs();
+      edupageRelayInput.value = prefs.relayUrl || '';
+      edupageSubdomainInput.value = prefs.subdomain || '';
+      edupageUsernameInput.value = prefs.username || '';
+      edupageStatusEl.textContent = '';
+      edupageStatusEl.className = 'tt-edupage-status';
+      edupageAutoToggle.checked = !!prefs.autoRefreshEnabled;
+      edupageAutoStatusEl.textContent = '';
+      edupageAutoStatusEl.className = 'tt-edupage-status';
+    }
+    ttEdupagePanel.classList.toggle('open', !wasOpen);
+  });
+
+  document.addEventListener('pointerdown', function(e) {
+    if (!e.target.closest('#ttEdupageWrap')) ttEdupagePanel.classList.remove('open');
+  });
+  ttEdupagePanel.addEventListener('pointerdown', function(e) { e.stopPropagation(); });
+
+  function edupageSetStatus(text, kind) {
+    edupageStatusEl.textContent = text;
+    edupageStatusEl.className = 'tt-edupage-status' + (kind ? ' ' + kind : '');
+  }
+
+  function isoDateLocal(d) { return d.getFullYear() + '-' + icsPad(d.getMonth() + 1) + '-' + icsPad(d.getDate()); }
+
+  function sortLessonsByStart(list) {
+    return (list || []).slice().sort(function(a, b) { return (a.start || '').localeCompare(b.start || ''); });
+  }
+
+  /* Period slots are matched by ORDINAL POSITION (chronological index within
+     each day's own lesson list), not by exact start/end string equality --
+     different days can have non-identical period timings (a double period,
+     a different break structure), so exact-matching only ever lines up the
+     one slot that happens to be identical every day (typically period 1)
+     and silently drops every other lesson. The shared row label per ordinal
+     slot is just the most common (start,end) pair seen there, for display. */
+  function applyEdupageSyncResult(daysMap, thisMonday, nextMonday) {
+    daysMap = daysMap || {};
+    var weekA = {}, weekB = {};
+    timetable.days.forEach(function(dayCode, dIdx) {
+      var jsWeekday = JS_DAY_TO_CODE.indexOf(dayCode);
+      if (jsWeekday === -1) return;
+      var offset = (jsWeekday === 0) ? 6 : jsWeekday - 1;
+      var dateA = new Date(thisMonday.getFullYear(), thisMonday.getMonth(), thisMonday.getDate() + offset);
+      var dateB = new Date(nextMonday.getFullYear(), nextMonday.getMonth(), nextMonday.getDate() + offset);
+      weekA[dIdx] = sortLessonsByStart(daysMap[isoDateLocal(dateA)]);
+      weekB[dIdx] = sortLessonsByStart(daysMap[isoDateLocal(dateB)]);
+    });
+
+    var periodCount = 0;
+    Object.keys(weekA).forEach(function(dIdx) {
+      periodCount = Math.max(periodCount, weekA[dIdx].length, (weekB[dIdx] || []).length);
+    });
+    periodCount = Math.min(periodCount, 14);
+
+    if (!periodCount) return 'EduPage returned no lessons for this week or next -- nothing to sync.';
+
+    // Pick the most-common (start,end) pair seen at each ordinal slot, purely as a row label.
+    var periods = [];
+    for (var pIdx = 0; pIdx < periodCount; pIdx++) {
+      var counts = {};
+      Object.keys(weekA).forEach(function(dIdx) {
+        [weekA[dIdx][pIdx], (weekB[dIdx] || [])[pIdx]].forEach(function(lesson) {
+          if (lesson && lesson.start && lesson.end) {
+            var k = lesson.start + '|' + lesson.end;
+            counts[k] = (counts[k] || 0) + 1;
+          }
+        });
+      });
+      var bestKey = '', bestCount = 0;
+      Object.keys(counts).sort().forEach(function(k) {
+        if (counts[k] > bestCount) { bestCount = counts[k]; bestKey = k; }
+      });
+      var parts = bestKey.split('|');
+      periods.push({ start: parts[0] || '', end: parts[1] || '' });
+    }
+
+    var newCellsA = {}, newCellsB = {};
+    var anyDifference = false, lessonCount = 0;
+
+    Object.keys(weekA).forEach(function(dIdxStr) {
+      var dIdx = Number(dIdxStr);
+      for (var i = 0; i < periodCount; i++) {
+        var key = ttKey(dIdx, i);
+        var lessonA = weekA[dIdx][i] || null;
+        var lessonB = (weekB[dIdx] || [])[i] || null;
+
+        if (lessonA) {
+          newCellsA[key] = { subject: escapeHtmlForSearch(lessonA.subject || ''), room: lessonA.room || '', teacher: lessonA.teacher || '', free: false, cancelled: !!lessonA.cancelled };
+          lessonCount++;
+        }
+        if (lessonB) {
+          newCellsB[key] = { subject: escapeHtmlForSearch(lessonB.subject || ''), room: lessonB.room || '', teacher: lessonB.teacher || '', free: false, cancelled: !!lessonB.cancelled };
+        }
+        if ((lessonA ? lessonA.subject : '') !== (lessonB ? lessonB.subject : '')) anyDifference = true;
+      }
+    });
+
+    timetable.periods = periods;
+    timetable.cells = newCellsA;
+    if (anyDifference) {
+      timetable.cellsB = newCellsB;
+      timetable.rotation.enabled = true;
+      timetable.rotation.anchorDate = isoDateLocal(thisMonday);
+    } else {
+      timetable.cellsB = {};
+      timetable.rotation.enabled = false;
+      timetable.rotation.anchorDate = '';
+    }
+
+    ttViewWeek = currentRealWeekLetter();
+    refreshWeekToggleUI();
+    renderTimetable();
+    saveWorkspace();
+    pushTimetableToNative();
+
+    return 'Synced ' + lessonCount + ' lesson' + (lessonCount === 1 ? '' : 's') +
+      (anyDifference ? ' across an alternating Week A/B schedule.' : '.');
+  }
+
+  /* One relay request per week rather than a single combined 2-week span --
+     EduPage's day-plan endpoint has been observed to not actually return
+     week-2 data when asked for a 14-day range in one go (its scraped
+     per-request tokens appear to be scoped to a single week). */
+  function fetchEdupageWeek(relayUrl, subdomain, username, password, weekStart) {
+    var weekEnd = new Date(weekStart.getFullYear(), weekStart.getMonth(), weekStart.getDate() + 6);
+    return fetch(relayUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        subdomain: subdomain,
+        username: username,
+        password: password,
+        dateFrom: isoDateLocal(weekStart),
+        dateTo: isoDateLocal(weekEnd)
+      })
+    }).then(function(res) {
+      return res.json().catch(function() { return null; }).then(function(data) { return { ok: res.ok, data: data }; });
+    });
+  }
+
+  edupageSyncBtn.addEventListener('click', function() {
+    var relayUrl = edupageRelayInput.value.trim().replace(/\/+$/, '');
+    var subdomain = edupageSubdomainInput.value.trim();
+    var username = edupageUsernameInput.value.trim();
+    var password = edupagePasswordInput.value;
+
+    if (!relayUrl || !subdomain || !username || !password) {
+      edupageSetStatus('Fill in the relay URL, subdomain, username and password.', 'error');
+      return;
+    }
+
+    saveEdupagePrefs({ relayUrl: relayUrl, subdomain: subdomain, username: username });
+
+    var thisMonday = startOfWeekMonday(new Date());
+    var nextMonday = new Date(thisMonday.getFullYear(), thisMonday.getMonth(), thisMonday.getDate() + 7);
+
+    edupageSyncBtn.disabled = true;
+    edupageSetStatus('Syncing with EduPage…', '');
+
+    Promise.all([
+      fetchEdupageWeek(relayUrl, subdomain, username, password, thisMonday),
+      fetchEdupageWeek(relayUrl, subdomain, username, password, nextMonday)
+    ])
+      .then(function(results) {
+        edupagePasswordInput.value = '';
+        var failed = results.filter(function(r) { return !r.ok || !r.data || r.data.ok === false; });
+        if (failed.length) {
+          var data = failed[0].data;
+          var step = data && data.step ? (' (' + data.step + ')') : '';
+          var errMsg = (data && data.error) || 'The relay did not respond as expected.';
+          edupageSetStatus('Sync failed' + step + ': ' + errMsg, 'error');
+          return;
+        }
+        var mergedDays = {};
+        results.forEach(function(r) {
+          var days = r.data.days || {};
+          Object.keys(days).forEach(function(k) { mergedDays[k] = days[k]; });
+        });
+        edupageSetStatus(applyEdupageSyncResult(mergedDays, thisMonday, nextMonday), 'ok');
+      })
+      .catch(function(err) {
+        edupagePasswordInput.value = '';
+        edupageSetStatus('Could not reach the relay: ' + (err && err.message ? err.message : err), 'error');
+      })
+      .then(function() { edupageSyncBtn.disabled = false; });
+  });
+
+  /* Auto-refresh: opt-in trade-off the user explicitly chose -- stores an
+     encrypted copy of the EduPage login on the relay (see
+     edupage-relay/README.md's "3. EduPage auto-refresh") so its Cron
+     Trigger can re-check the timetable on its own and push a notification
+     on change, without the app needing to be open. Shares the same sync
+     code as Notifications, since that's the group the relay pushes to. */
+  var edupageAutoToggle = document.getElementById('edupageAutoToggle');
+  var edupageAutoStatusEl = document.getElementById('edupageAutoStatus');
+
+  function edupageAutoSetStatus(text, kind) {
+    edupageAutoStatusEl.textContent = text;
+    edupageAutoStatusEl.className = 'tt-edupage-status' + (kind ? ' ' + kind : '');
+  }
+
+  function ensureSyncCode() {
+    var code = (notifySyncCodeInput.value || loadNotifyPrefs().syncCode || '').trim().toUpperCase();
+    if (code) return code;
+    var chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+    code = '';
+    for (var i = 0; i < 8; i++) code += chars[Math.floor(Math.random() * chars.length)];
+    notifySyncCodeInput.value = code;
+    saveNotifyPrefs({ syncCode: code });
+    return code;
+  }
+
+  edupageAutoToggle.addEventListener('change', function() {
+    var relayUrl = edupageRelayInput.value.trim().replace(/\/+$/, '');
+    var subdomain = edupageSubdomainInput.value.trim();
+    var username = edupageUsernameInput.value.trim();
+    var password = edupagePasswordInput.value;
+    var syncCode = ensureSyncCode();
+
+    if (!edupageAutoToggle.checked) {
+      edupageAutoToggle.disabled = true;
+      fetch(relayUrl + '/edupage/auto', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ syncCode: syncCode, enabled: false })
+      })
+        .then(function() {
+          saveEdupagePrefs(Object.assign({}, loadEdupagePrefs(), { autoRefreshEnabled: false }));
+          edupageAutoSetStatus('Auto-refresh turned off; stored login deleted from the relay.', 'ok');
+        })
+        .catch(function(err) { edupageAutoSetStatus('Could not reach the relay: ' + (err && err.message ? err.message : err), 'error'); })
+        .then(function() { edupageAutoToggle.disabled = false; });
+      return;
+    }
+
+    if (!relayUrl || !subdomain || !username || !password) {
+      edupageAutoToggle.checked = false;
+      edupageAutoSetStatus('Fill in the relay URL, subdomain, username and password above first.', 'error');
+      return;
+    }
+    saveNotifyPrefs({ relayUrl: relayUrl });
+    edupageAutoToggle.disabled = true;
+    edupageAutoSetStatus('Saving…', '');
+    fetch(relayUrl + '/edupage/auto', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ syncCode: syncCode, subdomain: subdomain, username: username, password: password })
+    })
+      .then(function(res) { return res.json().catch(function() { return null; }).then(function(data) { return { ok: res.ok, data: data }; }); })
+      .then(function(result) {
+        edupagePasswordInput.value = '';
+        if (!result.ok || !result.data || result.data.ok === false) {
+          edupageAutoToggle.checked = false;
+          edupageAutoSetStatus('Could not enable auto-refresh: ' + ((result.data && result.data.error) || 'unexpected response'), 'error');
+          return;
+        }
+        saveEdupagePrefs(Object.assign({}, loadEdupagePrefs(), { autoRefreshEnabled: true }));
+        edupageAutoSetStatus('Auto-refresh is on — it will re-check EduPage every ~10 minutes, even with the app closed.', 'ok');
+      })
+      .catch(function(err) {
+        edupagePasswordInput.value = '';
+        edupageAutoToggle.checked = false;
+        edupageAutoSetStatus('Could not reach the relay: ' + (err && err.message ? err.message : err), 'error');
+      })
+      .then(function() { edupageAutoToggle.disabled = false; });
+  });
+
+  /* On open/every ~10 min, pick up whatever the relay's cron last cached --
+     this is what makes the timetable feel "live" without a manual Sync tap. */
+  function fetchCachedEdupageData() {
+    var prefs = loadEdupagePrefs();
+    var relayUrl = (prefs.relayUrl || '').replace(/\/+$/, '');
+    var syncCode = (loadNotifyPrefs().syncCode || '').trim().toUpperCase();
+    if (!prefs.autoRefreshEnabled || !relayUrl || !syncCode) return;
+    var thisMonday = startOfWeekMonday(new Date());
+    var nextMonday = new Date(thisMonday.getFullYear(), thisMonday.getMonth(), thisMonday.getDate() + 7);
+    fetch(relayUrl + '/edupage/cached?syncCode=' + encodeURIComponent(syncCode))
+      .then(function(res) { return res.json(); })
+      .then(function(data) {
+        if (data && data.ok && data.days) applyEdupageSyncResult(data.days, thisMonday, nextMonday);
+      })
+      .catch(function() {});
+  }
 
   var ICS_DAY_CODE = { Mon: 'MO', Tue: 'TU', Wed: 'WE', Thu: 'TH', Fri: 'FR', Sat: 'SA', Sun: 'SU' };
 
@@ -10065,6 +11174,47 @@
       'X-WR-CALNAME:Notesino Timetable'
     ];
 
+    function emitEvent(week, dIdx, pIdx, jsWeekday, byDay, entry, period, firstDate, intervalWeeks) {
+      var subjectText = entry && entry.subject ? stripTagsForSearch(entry.subject).trim() : '';
+      if (!entry || entry.free || !subjectText) return;
+      if (firstDate > end) return;
+
+      var startParts = (period.start || '00:00').split(':');
+      var endParts = (period.end || '00:00').split(':');
+      var startHH = Number(startParts[0]) || 0, startMM = Number(startParts[1]) || 0;
+      var endHH = Number(endParts[0]) || 0, endMM = Number(endParts[1]) || 0;
+
+      var dtstart = icsDateTime(firstDate, startHH, startMM);
+      var dtend = icsDateTime(firstDate, endHH, endMM);
+      var untilDate = new Date(end.getFullYear(), end.getMonth(), end.getDate());
+      var until = icsDateTime(untilDate, startHH, startMM);
+
+      var exdates = termSettings.exceptions
+        .map(function(exc) { return parseLocalDate(exc.date); })
+        .filter(function(d) {
+          if (!d || d < start || d > end || d.getDay() !== jsWeekday) return false;
+          return !week || weekLetterForDate(d) === week;
+        })
+        .map(function(d) { return icsDateTime(d, startHH, startMM); });
+
+      var uidSuffix = week ? ('-' + week) : '';
+      lines.push('BEGIN:VEVENT');
+      lines.push('UID:tt-' + dIdx + '-' + pIdx + uidSuffix + '@notesino.local');
+      lines.push('DTSTART:' + dtstart);
+      lines.push('DTEND:' + dtend);
+      lines.push('RRULE:FREQ=WEEKLY;INTERVAL=' + intervalWeeks + ';BYDAY=' + byDay + ';UNTIL=' + until);
+      if (exdates.length) lines.push('EXDATE:' + exdates.join(','));
+      lines.push('SUMMARY:' + icsEscape(subjectText));
+      if (entry.room) lines.push('LOCATION:' + icsEscape(entry.room));
+      if (entry.teacher) lines.push('DESCRIPTION:' + icsEscape('Teacher: ' + entry.teacher));
+      lines.push('BEGIN:VALARM');
+      lines.push('ACTION:DISPLAY');
+      lines.push('DESCRIPTION:' + icsEscape(subjectText) + ' starts soon');
+      lines.push('TRIGGER:-PT10M');
+      lines.push('END:VALARM');
+      lines.push('END:VEVENT');
+    }
+
     timetable.days.forEach(function(dayCode, dIdx) {
       var jsWeekday = JS_DAY_TO_CODE.indexOf(dayCode);
       if (jsWeekday === -1) return;
@@ -10072,43 +11222,24 @@
       if (!byDay) return;
 
       timetable.periods.forEach(function(period, pIdx) {
-        var entry = timetable.cells[ttKey(dIdx, pIdx)];
-        var subjectText = entry && entry.subject ? stripTagsForSearch(entry.subject).trim() : '';
-        if (!entry || entry.free || !subjectText) return;
+        var firstDateBase = firstOccurrenceOnOrAfter(start, jsWeekday);
+        if (firstDateBase > end) return;
 
-        var startParts = (period.start || '00:00').split(':');
-        var endParts = (period.end || '00:00').split(':');
-        var startHH = Number(startParts[0]) || 0, startMM = Number(startParts[1]) || 0;
-        var endHH = Number(endParts[0]) || 0, endMM = Number(endParts[1]) || 0;
+        if (!timetable.rotation.enabled) {
+          var entry = timetable.cells[ttKey(dIdx, pIdx)];
+          emitEvent(null, dIdx, pIdx, jsWeekday, byDay, entry, period, firstDateBase, 1);
+          return;
+        }
 
-        var firstDate = firstOccurrenceOnOrAfter(start, jsWeekday);
-        if (firstDate > end) return;
-
-        var dtstart = icsDateTime(firstDate, startHH, startMM);
-        var dtend = icsDateTime(firstDate, endHH, endMM);
-        var untilDate = new Date(end.getFullYear(), end.getMonth(), end.getDate());
-        var until = icsDateTime(untilDate, startHH, startMM);
-
-        var exdates = termSettings.exceptions
-          .map(function(exc) { return parseLocalDate(exc.date); })
-          .filter(function(d) { return d && d >= start && d <= end && d.getDay() === jsWeekday; })
-          .map(function(d) { return icsDateTime(d, startHH, startMM); });
-
-        lines.push('BEGIN:VEVENT');
-        lines.push('UID:tt-' + dIdx + '-' + pIdx + '@notesino.local');
-        lines.push('DTSTART:' + dtstart);
-        lines.push('DTEND:' + dtend);
-        lines.push('RRULE:FREQ=WEEKLY;BYDAY=' + byDay + ';UNTIL=' + until);
-        if (exdates.length) lines.push('EXDATE:' + exdates.join(','));
-        lines.push('SUMMARY:' + icsEscape(subjectText));
-        if (entry.room) lines.push('LOCATION:' + icsEscape(entry.room));
-        if (entry.teacher) lines.push('DESCRIPTION:' + icsEscape('Teacher: ' + entry.teacher));
-        lines.push('BEGIN:VALARM');
-        lines.push('ACTION:DISPLAY');
-        lines.push('DESCRIPTION:' + icsEscape(subjectText) + ' starts soon');
-        lines.push('TRIGGER:-PT10M');
-        lines.push('END:VALARM');
-        lines.push('END:VEVENT');
+        ['A', 'B'].forEach(function(week) {
+          var weekEntry = ttCellsForWeek(week)[ttKey(dIdx, pIdx)];
+          if (!weekEntry) return;
+          var firstDate = firstDateBase;
+          if (weekLetterForDate(firstDate) !== week) {
+            firstDate = new Date(firstDate.getFullYear(), firstDate.getMonth(), firstDate.getDate() + 7);
+          }
+          emitEvent(week, dIdx, pIdx, jsWeekday, byDay, weekEntry, period, firstDate, 2);
+        });
       });
     });
 
@@ -10590,6 +11721,8 @@
     rebuildLinkPaths(canvasLinkLayer);
 
     timetable = normalizeTimetable(state.timetable);
+    ttViewWeek = currentRealWeekLetter();
+    refreshWeekToggleUI();
     renderTimetable();
     termSettings = normalizeTermSettings(state.termSettings);
 
@@ -11248,14 +12381,266 @@
     }
   });
 
+  /* ---------- Notifications: connects Reminders + Subject Notes + Timetable ----------
+     A subject note that mentions a date ("test tomorrow") becomes a real,
+     visible reminder tied to that subject; any reminder that names a
+     subject gets enriched with that subject's actual class time/room for
+     that date (checking Week A/B where it applies); and, if the user turns
+     notifications on, the resulting schedule is kept in sync with a
+     Cloudflare Worker (edupage-relay/, extended with push support) that
+     sends a real Web Push to every device sharing the same sync code,
+     whether or not this tab/app is open at the time. */
+  var VAPID_PUBLIC_KEY = 'REPLACE_WITH_YOUR_VAPID_PUBLIC_KEY';
+  var NOTIFY_PREFS_KEY = 'claude_workspace_notify_prefs_v1';
+
+  function loadNotifyPrefs() {
+    try { return JSON.parse(localStorage.getItem(NOTIFY_PREFS_KEY) || '{}') || {}; } catch (err) { return {}; }
+  }
+  function saveNotifyPrefs(patch) {
+    var merged = Object.assign(loadNotifyPrefs(), patch);
+    try { localStorage.setItem(NOTIFY_PREFS_KEY, JSON.stringify(merged)); } catch (err) {}
+    return merged;
+  }
+
+  function htmlToPlainText(html) {
+    var tmp = document.createElement('div');
+    tmp.innerHTML = html || '';
+    return tmp.textContent || '';
+  }
+
+  /* Subject Notes -> Reminders. Re-derives the set of auto-reminders for one
+     subject's note text every time it's called, so edits/deletions in the
+     note text are reflected (including removing an auto-reminder whose date
+     phrase was edited away). Ids are stable per subject+segment-index so
+     re-parsing the same text updates in place instead of duplicating. */
+  function syncSubjectNoteReminders(subjectId, text) {
+    if (!window.NotesinoReminders) return;
+    var subject = subjects.filter(function(s) { return s.id === subjectId; })[0];
+    if (!subject) return;
+    var res = window.NotesinoReminders.parse(text || '');
+    res.reminders.slice(0, 10).forEach(function(rem, i) {
+      window.NotesinoReminders.upsertAuto('sn-' + subjectId + '-' + i, subject.name + ': ' + rem.title, rem.start, {
+        subjectId: subjectId, allDay: rem.allDay
+      });
+    });
+    for (var i = res.reminders.length; i < 10; i++) {
+      window.NotesinoReminders.removeAuto('sn-' + subjectId + '-' + i);
+    }
+  }
+
+  function rescanAllSubjectNoteReminders() {
+    subjects.forEach(function(s) {
+      syncSubjectNoteReminders(s.id, htmlToPlainText(subjectQuickNotes[s.id]));
+    });
+  }
+
+  /* Reminders -> Timetable. Finds the longest subject name mentioned in a
+     reminder's own title (manual reminders aren't tagged with a subjectId,
+     so this is a best-effort text match) -- a subject-note-derived
+     reminder already carries subjectId directly. */
+  function findSubjectMentioned(text) {
+    var lower = (text || '').toLowerCase();
+    var best = null;
+    subjects.forEach(function(s) {
+      var name = (s.name || '').toLowerCase().trim();
+      if (name.length < 3) return;
+      if (lower.indexOf(name) !== -1 && (!best || name.length > best.name.length)) best = s;
+    });
+    return best;
+  }
+
+  /* Does `subject` actually meet, per the Timetable, on the calendar date
+     `dateMs` falls on -- correctly following the Week A/B rotation when
+     it's enabled. Returns the matching period (for its room/time) or null. */
+  function timetableMatchForSubjectOnDate(subject, dateMs) {
+    if (!subject) return null;
+    var date = new Date(dateMs);
+    var dayCode = JS_DAY_TO_CODE[date.getDay()];
+    var dIdx = timetable.days.indexOf(dayCode);
+    if (dIdx === -1) return null;
+    var cellsMap = ttCellsForWeek(weekLetterForDate(date));
+    var name = subject.name.toLowerCase();
+    for (var pIdx = 0; pIdx < timetable.periods.length; pIdx++) {
+      var entry = cellsMap[ttKey(dIdx, pIdx)];
+      if (!entry || entry.free) continue;
+      if (ttPlainText(entry.subject || '').toLowerCase().indexOf(name) !== -1) {
+        return { period: timetable.periods[pIdx], entry: entry };
+      }
+    }
+    return null;
+  }
+
+  /* The final {id,title,body,fireAt} list sent to the relay -- recomputed
+     fresh each time rather than stored, so it always reflects the current
+     reminders/subjects/timetable without needing invasive change hooks. */
+  function computeNotificationItems() {
+    if (!window.NotesinoReminders) return [];
+    var now = Date.now();
+    var horizon = now + 30 * 24 * 60 * 60 * 1000;
+    return window.NotesinoReminders.getAll().reduce(function(items, rem) {
+      var fireAt = window.NotesinoReminders.nextOccurrence(rem, now);
+      if (!fireAt || fireAt < now - 5 * 60 * 1000 || fireAt > horizon) return items;
+
+      var subject = rem.subjectId
+        ? subjects.filter(function(s) { return s.id === rem.subjectId; })[0]
+        : findSubjectMentioned(rem.title);
+      var body = window.NotesinoReminders.whenText(rem);
+      if (subject) {
+        var match = timetableMatchForSubjectOnDate(subject, fireAt);
+        if (match) {
+          var bits = [subject.name + ' meets ' + match.period.start + '–' + match.period.end];
+          if (match.entry.room) bits.push('Room ' + match.entry.room);
+          body = bits.join(' · ');
+        }
+      }
+      items.push({ id: rem.id, title: rem.title, body: body, fireAt: fireAt });
+      return items;
+    }, []);
+  }
+
+  function urlBase64ToUint8Array(base64String) {
+    var padding = '='.repeat((4 - base64String.length % 4) % 4);
+    var base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+    var raw = atob(base64);
+    var out = new Uint8Array(raw.length);
+    for (var i = 0; i < raw.length; i++) out[i] = raw.charCodeAt(i);
+    return out;
+  }
+
+  async function subscribeToPush() {
+    if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+      throw new Error('Push notifications are not supported in this browser.');
+    }
+    if (VAPID_PUBLIC_KEY === 'REPLACE_WITH_YOUR_VAPID_PUBLIC_KEY') {
+      throw new Error('The app has no VAPID public key configured yet.');
+    }
+    var permission = await Notification.requestPermission();
+    if (permission !== 'granted') throw new Error('Notification permission was not granted.');
+    var reg = await navigator.serviceWorker.ready;
+    var sub = await reg.pushManager.getSubscription();
+    if (!sub) {
+      sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY) });
+    }
+    return sub.toJSON();
+  }
+
+  var notificationsBtn = document.getElementById('notificationsBtn');
+  var notificationsPanel = document.getElementById('notificationsPanel');
+  var notifyEnabledToggle = document.getElementById('notifyEnabledToggle');
+  var notifyRelayInput = document.getElementById('notifyRelayInput');
+  var notifySyncCodeInput = document.getElementById('notifySyncCodeInput');
+  var notifyGenerateCodeBtn = document.getElementById('notifyGenerateCodeBtn');
+  var notifyTestBtn = document.getElementById('notifyTestBtn');
+  var notifyStatusEl = document.getElementById('notifyStatus');
+
+  function setNotifyStatus(text, kind) {
+    notifyStatusEl.textContent = text;
+    notifyStatusEl.className = 'tt-edupage-status' + (kind ? ' ' + kind : '');
+  }
+
+  notificationsBtn.addEventListener('click', function(e) {
+    e.stopPropagation();
+    var wasOpen = notificationsPanel.classList.contains('open');
+    if (!wasOpen) {
+      var prefs = loadNotifyPrefs();
+      notifyEnabledToggle.checked = !!prefs.enabled;
+      notifyRelayInput.value = prefs.relayUrl || loadEdupagePrefs().relayUrl || '';
+      notifySyncCodeInput.value = prefs.syncCode || '';
+      setNotifyStatus('', '');
+    }
+    notificationsPanel.classList.toggle('open', !wasOpen);
+  });
+  notificationsPanel.addEventListener('pointerdown', function(e) { e.stopPropagation(); });
+
+  notifyGenerateCodeBtn.addEventListener('click', function() {
+    var chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+    var code = '';
+    for (var i = 0; i < 8; i++) code += chars[Math.floor(Math.random() * chars.length)];
+    notifySyncCodeInput.value = code;
+    saveNotifyPrefs({ syncCode: code });
+  });
+
+  async function syncNotificationItemsNow() {
+    var prefs = loadNotifyPrefs();
+    if (!prefs.enabled || !prefs.relayUrl || !prefs.syncCode) return;
+    try {
+      await fetch(prefs.relayUrl + '/push/sync', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ syncCode: prefs.syncCode, items: computeNotificationItems() })
+      });
+    } catch (err) {}
+  }
+
+  async function applyNotifySettings(showStatus) {
+    var relayUrl = notifyRelayInput.value.trim().replace(/\/+$/, '');
+    var syncCode = notifySyncCodeInput.value.trim().toUpperCase();
+    var enabled = notifyEnabledToggle.checked;
+    saveNotifyPrefs({ enabled: enabled, relayUrl: relayUrl, syncCode: syncCode });
+    if (!enabled) return;
+    if (!relayUrl || !syncCode) {
+      if (showStatus) setNotifyStatus('Enter a relay URL and a sync code first.', 'error');
+      notifyEnabledToggle.checked = false;
+      saveNotifyPrefs({ enabled: false });
+      return;
+    }
+    try {
+      var subscription = await subscribeToPush();
+      await fetch(relayUrl + '/push/subscribe', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ syncCode: syncCode, subscription: subscription })
+      });
+      await syncNotificationItemsNow();
+      if (showStatus) setNotifyStatus('Notifications are on for this device.', 'ok');
+    } catch (err) {
+      if (showStatus) setNotifyStatus('Could not enable notifications: ' + (err && err.message ? err.message : err), 'error');
+      notifyEnabledToggle.checked = false;
+      saveNotifyPrefs({ enabled: false });
+    }
+  }
+
+  notifyEnabledToggle.addEventListener('change', function() { applyNotifySettings(true); });
+  notifyRelayInput.addEventListener('change', function() { saveNotifyPrefs({ relayUrl: notifyRelayInput.value.trim().replace(/\/+$/, '') }); });
+  notifySyncCodeInput.addEventListener('change', function() { saveNotifyPrefs({ syncCode: notifySyncCodeInput.value.trim().toUpperCase() }); });
+
+  notifyTestBtn.addEventListener('click', async function() {
+    var relayUrl = notifyRelayInput.value.trim().replace(/\/+$/, '');
+    var syncCode = notifySyncCodeInput.value.trim().toUpperCase();
+    if (!relayUrl || !syncCode) { setNotifyStatus('Enter a relay URL and a sync code first.', 'error'); return; }
+    setNotifyStatus('Sending test notification…', '');
+    try {
+      var res = await fetch(relayUrl + '/push/test', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ syncCode: syncCode })
+      });
+      var data = await res.json().catch(function() { return null; });
+      if (!res.ok || !data || data.ok === false) throw new Error((data && data.error) || 'Test failed.');
+      setNotifyStatus('Sent to ' + data.sentTo + ' of ' + data.devices + ' device(s).', data.sentTo ? 'ok' : 'error');
+    } catch (err) {
+      setNotifyStatus('Could not send test: ' + (err && err.message ? err.message : err), 'error');
+    }
+  });
+
+  setInterval(syncNotificationItemsNow, 2 * 60 * 1000);
+  setInterval(fetchCachedEdupageData, 10 * 60 * 1000);
+
   var restored;
   withStateRestoreGuard(function() {
     restored = loadWorkspace();
     renderSubjectsList();
     renderSubjectCanvas();
+    refreshWeekToggleUI();
     renderTimetable();
   });
   initBoards();
+  rescanAllSubjectNoteReminders();
+  if (loadNotifyPrefs().enabled) {
+    notifyEnabledToggle.checked = true;
+    notifyRelayInput.value = loadNotifyPrefs().relayUrl || '';
+    notifySyncCodeInput.value = loadNotifyPrefs().syncCode || '';
+    applyNotifySettings(false);
+  }
+  fetchCachedEdupageData();
   /* Baseline checkpoint so the very first local edit has something to
      undo back to. For a fresh install this gets set again (to the same
      thing) a moment later when the starter note's saveWorkspace() call
@@ -11636,7 +13021,31 @@
     return start.getTime();
   }
 
-  window.NotesinoReminders = { parse: parse, googleUrl: googleUrl, buildIcs: buildIcs, whenText: whenText, nextOccurrence: nextOccurrence };
+  window.NotesinoReminders = {
+    parse: parse, googleUrl: googleUrl, buildIcs: buildIcs, whenText: whenText, nextOccurrence: nextOccurrence,
+    getAll: function() { return reminders.slice(); },
+    /* Lets Subject Notes keep a reminder in sync with a note's own text --
+       same id in, same reminder updated in place (not duplicated); a fresh
+       id creates one. Used for reminders derived from something else, so
+       they stay distinguishable (source:'auto') and linked to a subject. */
+    upsertAuto: function(id, title, startMs, meta) {
+      var idx = reminders.findIndex(function(r) { return r.id === id; });
+      var base = idx === -1 ? { id: id, created: Date.now() } : reminders[idx];
+      var next = Object.assign({}, base, {
+        id: id, title: title, start: startMs, allDay: !!(meta && meta.allDay),
+        duration: base.duration || DEFAULT_DURATION, rrule: null, sent: false,
+        source: 'auto', subjectId: (meta && meta.subjectId) || null
+      });
+      if (idx === -1) reminders.push(next); else reminders[idx] = next;
+      save();
+      renderList();
+    },
+    removeAuto: function(id) {
+      var before = reminders.length;
+      reminders = reminders.filter(function(r) { return r.id !== id; });
+      if (reminders.length !== before) { save(); renderList(); }
+    }
+  };
 
   /* ---------- UI ---------- */
   if (typeof document === 'undefined') return;

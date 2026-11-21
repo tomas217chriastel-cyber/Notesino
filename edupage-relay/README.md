@@ -21,6 +21,28 @@ failed (e.g. `gpid-gsh-missing`, `bad-credentials`), which is the thing to
 report back so the Worker can be fixed. (Confirmed working against a real
 account.)
 
+The sync button makes two separate week-long requests (this week, next
+week) instead of one combined two-week request, because EduPage's day-plan
+endpoint has been observed to silently drop the second week when asked for
+a 14-day span in one call.
+
+**Cancelled lessons**: EduPage flags a removed or teacher-absent lesson
+with `removed`/`type` fields on the raw plan item; Notesino now keeps those
+lessons instead of dropping them, and the Timetable shows them struck
+through in red ("Cancelled").
+
+**Substitution / room-change marking (not implemented yet)**: EduPage's
+own UI highlights a substituted lesson in yellow, but no reference
+implementation checked so far reads a specific field for this, so
+Notesino isn't guessing at one. Each lesson in the relay's response now
+carries a `raw` field with the untouched EduPage plan item for exactly
+this purpose — if you have a day with a *real* known substitution, sync
+it, open your browser's DevTools → Network tab, find the POST to this
+Worker, and look at that lesson's `raw` object for anything that looks
+like an "original teacher/room" field or a highlight flag. Once that
+field is known, the yellow "Substitution?" treatment already wired into
+the Timetable's CSS/JS just needs that one field hooked up.
+
 ## 2. Push notifications
 
 Lets a reminder, or a Subject Note that mentions a date ("test tomorrow"),
@@ -97,9 +119,27 @@ and report back exactly what it says.
    **same sync code** on every device you want notified together, then
    use "Send test notification" to confirm it actually reaches that
    device before relying on it for anything real.
+10. **Optional** -- only if you want "Auto-refresh in background" (in the
+    EduPage Sync panel) to work: generate and set a credential encryption
+    key, so your EduPage password can be stored encrypted-at-rest for the
+    Cron Trigger to use later. Skip this step entirely if you don't want
+    that feature; everything else above works without it.
+    ```
+    node -e "
+    const { webcrypto } = require('node:crypto');
+    const raw = webcrypto.getRandomValues(new Uint8Array(32));
+    let binary = ''; for (let i = 0; i < raw.length; i++) binary += String.fromCharCode(raw[i]);
+    console.log(Buffer.from(binary, 'binary').toString('base64').replace(/\+/g,'-').replace(/\//g,'_').replace(/=+\$/,''));
+    "
+    ```
+    Then set it as a secret (paste the printed key when it prompts):
+    ```
+    wrangler secret put CRED_ENCRYPTION_KEY
+    ```
+    Redeploy (`wrangler deploy`) after setting it.
 
 Redeploying later (e.g. after an update to `worker.js`) is just
-`wrangler deploy` again from this folder — the KV namespace and secret
+`wrangler deploy` again from this folder — the KV namespace and secrets
 stay configured.
 
 ## What EduPage sync needs from you each time
@@ -126,3 +166,13 @@ stay configured.
   it from) can call it. If you want to lock it down, change
   `ALLOWED_ORIGIN` at the top of `worker.js` to your app's exact origin
   and redeploy.
+- **"Auto-refresh in background" is the one case where your EduPage
+  password is stored anywhere.** Everything else in this file never stores
+  it. Turning that toggle on sends it once to your own Worker, which
+  encrypts it at rest (AES-GCM, with `CRED_ENCRYPTION_KEY` — a key only
+  your deployment holds) in the same KV entry as your sync code, so its
+  Cron Trigger can log in again on its own every ~10 minutes. Turning the
+  toggle back off deletes it from KV immediately. Since you deploy and
+  hold this Worker yourself, this is still only you (and EduPage) ever
+  seeing your real password — but it is a deliberate trade-off, not the
+  "never stored" default everything else here keeps, so it's opt-in.

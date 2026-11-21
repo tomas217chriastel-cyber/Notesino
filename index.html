@@ -10875,72 +10875,112 @@
     return (list || []).slice().sort(function(a, b) { return (a.start || '').localeCompare(b.start || ''); });
   }
 
-  /* Period slots are matched by ORDINAL POSITION (chronological index within
-     each day's own lesson list), not by exact start/end string equality --
-     different days can have non-identical period timings (a double period,
-     a different break structure), so exact-matching only ever lines up the
-     one slot that happens to be identical every day (typically period 1)
-     and silently drops every other lesson. The shared row label per ordinal
-     slot is just the most common (start,end) pair seen there, for display. */
+  /* Period slots are matched by the lesson's OWN START TIME, not by its
+     position in the day's (gap-compressed) lesson list and not by exact
+     (start,end) pair equality. Ordinal position broke on real schools where
+     different days skip different periods -- a day missing an early lesson
+     shifts every later one up by a row relative to other days, since
+     EduPage's own list only contains actual lessons, no placeholders for
+     free periods. Exact-pair equality broke similarly whenever a period's
+     END time varied slightly (e.g. a double period) even though its START
+     lined up fine. Matching purely by start time, with one canonical row
+     per distinct start seen anywhere this week/next, fixes both: a lesson
+     always lands in the row for its own real time, and a day's gap just
+     leaves that one row empty for that day without disturbing any other. */
   function applyEdupageSyncResult(daysMap, thisMonday, nextMonday) {
     daysMap = daysMap || {};
     var weekA = {}, weekB = {};
+    var rawCountsA = [], rawCountsB = [];
     timetable.days.forEach(function(dayCode, dIdx) {
       var jsWeekday = JS_DAY_TO_CODE.indexOf(dayCode);
       if (jsWeekday === -1) return;
       var offset = (jsWeekday === 0) ? 6 : jsWeekday - 1;
       var dateA = new Date(thisMonday.getFullYear(), thisMonday.getMonth(), thisMonday.getDate() + offset);
       var dateB = new Date(nextMonday.getFullYear(), nextMonday.getMonth(), nextMonday.getDate() + offset);
-      weekA[dIdx] = sortLessonsByStart(daysMap[isoDateLocal(dateA)]);
-      weekB[dIdx] = sortLessonsByStart(daysMap[isoDateLocal(dateB)]);
+      var rawA = daysMap[isoDateLocal(dateA)];
+      var rawB = daysMap[isoDateLocal(dateB)];
+      rawCountsA.push(dayCode + ':' + (rawA ? rawA.length : 'none'));
+      rawCountsB.push(dayCode + ':' + (rawB ? rawB.length : 'none'));
+      weekA[dIdx] = sortLessonsByStart(rawA);
+      weekB[dIdx] = sortLessonsByStart(rawB);
     });
 
-    var periodCount = 0;
+    // Union of every distinct start time seen anywhere -> one canonical row each.
+    var startSet = {};
     Object.keys(weekA).forEach(function(dIdx) {
-      periodCount = Math.max(periodCount, weekA[dIdx].length, (weekB[dIdx] || []).length);
+      weekA[dIdx].concat(weekB[dIdx] || []).forEach(function(lesson) {
+        if (lesson && lesson.start) startSet[lesson.start] = true;
+      });
     });
-    periodCount = Math.min(periodCount, 14);
-
+    var startsSorted = Object.keys(startSet).sort(function(a, b) {
+      return (parseHHMM(a) || 0) - (parseHHMM(b) || 0);
+    });
+    var periodCount = Math.min(startsSorted.length, 14);
     if (!periodCount) return 'EduPage returned no lessons for this week or next -- nothing to sync.';
 
-    // Pick the most-common (start,end) pair seen at each ordinal slot, purely as a row label.
-    var periods = [];
-    for (var pIdx = 0; pIdx < periodCount; pIdx++) {
-      var counts = {};
+    var startToIndex = {};
+    startsSorted.slice(0, periodCount).forEach(function(s, i) { startToIndex[s] = i; });
+
+    // Row label's end time: the most common end seen for lessons at that start.
+    var periods = startsSorted.slice(0, periodCount).map(function(s) {
+      var endCounts = {};
       Object.keys(weekA).forEach(function(dIdx) {
-        [weekA[dIdx][pIdx], (weekB[dIdx] || [])[pIdx]].forEach(function(lesson) {
-          if (lesson && lesson.start && lesson.end) {
-            var k = lesson.start + '|' + lesson.end;
-            counts[k] = (counts[k] || 0) + 1;
-          }
+        weekA[dIdx].concat(weekB[dIdx] || []).forEach(function(lesson) {
+          if (lesson && lesson.start === s && lesson.end) endCounts[lesson.end] = (endCounts[lesson.end] || 0) + 1;
         });
       });
-      var bestKey = '', bestCount = 0;
-      Object.keys(counts).sort().forEach(function(k) {
-        if (counts[k] > bestCount) { bestCount = counts[k]; bestKey = k; }
+      var bestEnd = '', bestCount = 0;
+      Object.keys(endCounts).sort().forEach(function(e) {
+        if (endCounts[e] > bestCount) { bestCount = endCounts[e]; bestEnd = e; }
       });
-      var parts = bestKey.split('|');
-      periods.push({ start: parts[0] || '', end: parts[1] || '' });
+      return { start: s, end: bestEnd };
+    });
+
+    function mergeAtSameStart(list) {
+      // Two lessons can legitimately share a start (split groups) -- combine
+      // rather than silently dropping one.
+      var byStart = {};
+      var order = [];
+      list.forEach(function(lesson) {
+        if (!lesson || startToIndex[lesson.start] === undefined) return;
+        var k = lesson.start;
+        if (!byStart[k]) { byStart[k] = { subject: [], room: [], teacher: [], cancelled: true }; order.push(k); }
+        var g = byStart[k];
+        if (lesson.subject && g.subject.indexOf(lesson.subject) === -1) g.subject.push(lesson.subject);
+        if (lesson.room && g.room.indexOf(lesson.room) === -1) g.room.push(lesson.room);
+        if (lesson.teacher && g.teacher.indexOf(lesson.teacher) === -1) g.teacher.push(lesson.teacher);
+        g.cancelled = g.cancelled && !!lesson.cancelled; // only "cancelled" if every group's section is
+      });
+      return order.map(function(k) {
+        var g = byStart[k];
+        return { pIdx: startToIndex[k], subject: g.subject.join(' / '), room: g.room.join(' / '), teacher: g.teacher.join(' / '), cancelled: g.cancelled };
+      });
     }
 
     var newCellsA = {}, newCellsB = {};
     var anyDifference = false, lessonCount = 0;
+    var subjectAtKeyA = {}, subjectAtKeyB = {};
+
+    Object.keys(weekA).forEach(function(dIdxStr) {
+      var dIdx = Number(dIdxStr);
+      mergeAtSameStart(weekA[dIdx]).forEach(function(g) {
+        var key = ttKey(dIdx, g.pIdx);
+        newCellsA[key] = { subject: escapeHtmlForSearch(g.subject), room: g.room, teacher: g.teacher, free: false, cancelled: g.cancelled };
+        subjectAtKeyA[key] = g.subject;
+        lessonCount++;
+      });
+      mergeAtSameStart((weekB[dIdx] || [])).forEach(function(g) {
+        var key = ttKey(dIdx, g.pIdx);
+        newCellsB[key] = { subject: escapeHtmlForSearch(g.subject), room: g.room, teacher: g.teacher, free: false, cancelled: g.cancelled };
+        subjectAtKeyB[key] = g.subject;
+      });
+    });
 
     Object.keys(weekA).forEach(function(dIdxStr) {
       var dIdx = Number(dIdxStr);
       for (var i = 0; i < periodCount; i++) {
         var key = ttKey(dIdx, i);
-        var lessonA = weekA[dIdx][i] || null;
-        var lessonB = (weekB[dIdx] || [])[i] || null;
-
-        if (lessonA) {
-          newCellsA[key] = { subject: escapeHtmlForSearch(lessonA.subject || ''), room: lessonA.room || '', teacher: lessonA.teacher || '', free: false, cancelled: !!lessonA.cancelled };
-          lessonCount++;
-        }
-        if (lessonB) {
-          newCellsB[key] = { subject: escapeHtmlForSearch(lessonB.subject || ''), room: lessonB.room || '', teacher: lessonB.teacher || '', free: false, cancelled: !!lessonB.cancelled };
-        }
-        if ((lessonA ? lessonA.subject : '') !== (lessonB ? lessonB.subject : '')) anyDifference = true;
+        if ((subjectAtKeyA[key] || '') !== (subjectAtKeyB[key] || '')) anyDifference = true;
       }
     });
 
@@ -10963,7 +11003,8 @@
     pushTimetableToNative();
 
     return 'Synced ' + lessonCount + ' lesson' + (lessonCount === 1 ? '' : 's') +
-      (anyDifference ? ' across an alternating Week A/B schedule.' : '.');
+      (anyDifference ? ' across an alternating Week A/B schedule.' : '.') +
+      ' [raw this week: ' + rawCountsA.join(' ') + ' | raw next week: ' + rawCountsB.join(' ') + ']';
   }
 
   /* One relay request per week rather than a single combined 2-week span --

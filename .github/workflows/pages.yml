@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - claude/affectionate-sagan-axos6g
+      - claude/notesino-capabilities-pa3811
   workflow_dispatch:
 
 permissions:

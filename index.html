@@ -4472,6 +4472,34 @@
     line-height: 1.4;
   }
 
+  #ttEdupagePanel {
+    width: 300px;
+  }
+
+  .tt-edupage-input {
+    width: 100%;
+    font-size: 12px;
+    border-radius: 6px;
+    border: 0.5px solid rgba(var(--ink-rgb), 0.25);
+    background: rgba(var(--ink-rgb), 0.06);
+    color: var(--ink-solid);
+    padding: 6px 8px;
+  }
+
+  .tt-edupage-status {
+    font-size: 11px;
+    line-height: 1.4;
+    min-height: 14px;
+  }
+
+  .tt-edupage-status.error {
+    color: #f87171;
+  }
+
+  .tt-edupage-status.ok {
+    color: #4ade80;
+  }
+
   .tt-grid-scroll {
     flex: 1;
     min-height: 0;
@@ -5062,6 +5090,31 @@
               <div class="tt-calendar-divider"></div>
               <button class="tt-btn tt-calendar-download-btn" id="downloadIcsBtn">Download Calendar (.ics)</button>
               <div class="tt-calendar-hint">Import this file into Google Calendar, Apple Calendar, or Outlook for real reminders before each class.</div>
+            </div>
+          </div>
+          <div class="tt-calendar-wrap" id="ttEdupageWrap">
+            <button class="tt-btn" id="ttEdupageBtn">EduPage Sync&hellip;</button>
+            <div class="tt-calendar-panel" id="ttEdupagePanel">
+              <div class="tt-calendar-label">Sync your real schedule from EduPage</div>
+              <div class="tt-calendar-hint">Unofficial, experimental. Needs a relay you deploy yourself once -- see edupage-relay/README.md. Your password is sent straight to your own relay and never saved.</div>
+              <div class="tt-calendar-row">
+                <label for="edupageRelayInput">Relay URL</label>
+              </div>
+              <input type="text" id="edupageRelayInput" placeholder="https://your-relay.workers.dev" class="tt-edupage-input">
+              <div class="tt-calendar-row">
+                <label for="edupageSubdomainInput">School subdomain</label>
+              </div>
+              <input type="text" id="edupageSubdomainInput" placeholder="e.g. gymxyz" class="tt-edupage-input">
+              <div class="tt-calendar-row">
+                <label for="edupageUsernameInput">Username</label>
+              </div>
+              <input type="text" id="edupageUsernameInput" placeholder="EduPage username" class="tt-edupage-input" autocomplete="username">
+              <div class="tt-calendar-row">
+                <label for="edupagePasswordInput">Password</label>
+              </div>
+              <input type="password" id="edupagePasswordInput" placeholder="EduPage password" class="tt-edupage-input" autocomplete="current-password">
+              <button class="tt-btn tt-calendar-download-btn" id="edupageSyncBtn">Sync now</button>
+              <div class="tt-edupage-status" id="edupageStatus"></div>
             </div>
           </div>
         </div>
@@ -10554,6 +10607,186 @@
     termExceptionLabelInput.value = '';
     renderTermExceptions();
     saveWorkspace();
+  });
+
+  /* ---------- EduPage sync (unofficial, via a user-deployed relay) ----------
+     EduPage has no public API and no CORS, so this calls a small Cloudflare
+     Worker (see edupage-relay/) that the user deploys themselves; it does the
+     actual login/scrape and returns a plain {date: [{start,end,subject,room,
+     teacher}]} map. The relay URL/subdomain/username are convenience-only
+     (saved locally, not sensitive); the password is only ever sent to the
+     user's own relay for this one request, never stored. Fetches this week
+     and next week in one call so it can tell, by comparing the two, whether
+     the school actually runs an alternating Week A/B schedule. */
+  var EDUPAGE_PREFS_KEY = 'claude_workspace_edupage_prefs_v1';
+  var ttEdupageBtn = document.getElementById('ttEdupageBtn');
+  var ttEdupagePanel = document.getElementById('ttEdupagePanel');
+  var edupageRelayInput = document.getElementById('edupageRelayInput');
+  var edupageSubdomainInput = document.getElementById('edupageSubdomainInput');
+  var edupageUsernameInput = document.getElementById('edupageUsernameInput');
+  var edupagePasswordInput = document.getElementById('edupagePasswordInput');
+  var edupageSyncBtn = document.getElementById('edupageSyncBtn');
+  var edupageStatusEl = document.getElementById('edupageStatus');
+
+  function loadEdupagePrefs() {
+    try {
+      var raw = localStorage.getItem(EDUPAGE_PREFS_KEY);
+      return raw ? JSON.parse(raw) : {};
+    } catch (err) { return {}; }
+  }
+  function saveEdupagePrefs(prefs) {
+    try { localStorage.setItem(EDUPAGE_PREFS_KEY, JSON.stringify(prefs)); } catch (err) {}
+  }
+
+  ttEdupageBtn.addEventListener('click', function(e) {
+    e.stopPropagation();
+    var wasOpen = ttEdupagePanel.classList.contains('open');
+    if (!wasOpen) {
+      var prefs = loadEdupagePrefs();
+      edupageRelayInput.value = prefs.relayUrl || '';
+      edupageSubdomainInput.value = prefs.subdomain || '';
+      edupageUsernameInput.value = prefs.username || '';
+      edupageStatusEl.textContent = '';
+      edupageStatusEl.className = 'tt-edupage-status';
+    }
+    ttEdupagePanel.classList.toggle('open', !wasOpen);
+  });
+
+  document.addEventListener('pointerdown', function(e) {
+    if (!e.target.closest('#ttEdupageWrap')) ttEdupagePanel.classList.remove('open');
+  });
+  ttEdupagePanel.addEventListener('pointerdown', function(e) { e.stopPropagation(); });
+
+  function edupageSetStatus(text, kind) {
+    edupageStatusEl.textContent = text;
+    edupageStatusEl.className = 'tt-edupage-status' + (kind ? ' ' + kind : '');
+  }
+
+  function isoDateLocal(d) { return d.getFullYear() + '-' + icsPad(d.getMonth() + 1) + '-' + icsPad(d.getDate()); }
+
+  function lessonForTime(list, start, end) {
+    return (list || []).filter(function(l) { return l.start === start && l.end === end; })[0] || null;
+  }
+
+  function applyEdupageSyncResult(daysMap, thisMonday, nextMonday) {
+    daysMap = daysMap || {};
+    var weekA = {}, weekB = {};
+    timetable.days.forEach(function(dayCode, dIdx) {
+      var jsWeekday = JS_DAY_TO_CODE.indexOf(dayCode);
+      if (jsWeekday === -1) return;
+      var offset = (jsWeekday === 0) ? 6 : jsWeekday - 1;
+      var dateA = new Date(thisMonday.getFullYear(), thisMonday.getMonth(), thisMonday.getDate() + offset);
+      var dateB = new Date(nextMonday.getFullYear(), nextMonday.getMonth(), nextMonday.getDate() + offset);
+      weekA[dIdx] = daysMap[isoDateLocal(dateA)] || [];
+      weekB[dIdx] = daysMap[isoDateLocal(dateB)] || [];
+    });
+
+    var timeSet = {};
+    Object.keys(weekA).forEach(function(dIdx) {
+      weekA[dIdx].concat(weekB[dIdx] || []).forEach(function(lesson) {
+        if (lesson.start && lesson.end) timeSet[lesson.start + '|' + lesson.end] = true;
+      });
+    });
+    var periods = Object.keys(timeSet).map(function(k) {
+      var parts = k.split('|');
+      return { start: parts[0], end: parts[1] };
+    }).sort(function(a, b) { return a.start.localeCompare(b.start); });
+
+    if (!periods.length) return 'EduPage returned no lessons for this week or next -- nothing to sync.';
+
+    var newCellsA = {}, newCellsB = {};
+    var anyDifference = false, lessonCount = 0;
+
+    Object.keys(weekA).forEach(function(dIdxStr) {
+      var dIdx = Number(dIdxStr);
+      periods.forEach(function(period, pIdx) {
+        var key = ttKey(dIdx, pIdx);
+        var lessonA = lessonForTime(weekA[dIdx], period.start, period.end);
+        var lessonB = lessonForTime(weekB[dIdx], period.start, period.end);
+
+        if (lessonA) {
+          newCellsA[key] = { subject: escapeHtmlForSearch(lessonA.subject || ''), room: lessonA.room || '', teacher: lessonA.teacher || '', free: false };
+          lessonCount++;
+        }
+        if (lessonB) {
+          newCellsB[key] = { subject: escapeHtmlForSearch(lessonB.subject || ''), room: lessonB.room || '', teacher: lessonB.teacher || '', free: false };
+        }
+        if ((lessonA ? lessonA.subject : '') !== (lessonB ? lessonB.subject : '')) anyDifference = true;
+      });
+    });
+
+    timetable.periods = periods;
+    timetable.cells = newCellsA;
+    if (anyDifference) {
+      timetable.cellsB = newCellsB;
+      timetable.rotation.enabled = true;
+      timetable.rotation.anchorDate = isoDateLocal(thisMonday);
+    } else {
+      timetable.cellsB = {};
+      timetable.rotation.enabled = false;
+      timetable.rotation.anchorDate = '';
+    }
+
+    ttViewWeek = currentRealWeekLetter();
+    refreshWeekToggleUI();
+    renderTimetable();
+    saveWorkspace();
+    pushTimetableToNative();
+
+    return 'Synced ' + lessonCount + ' lesson' + (lessonCount === 1 ? '' : 's') +
+      (anyDifference ? ' across an alternating Week A/B schedule.' : '.');
+  }
+
+  edupageSyncBtn.addEventListener('click', function() {
+    var relayUrl = edupageRelayInput.value.trim().replace(/\/+$/, '');
+    var subdomain = edupageSubdomainInput.value.trim();
+    var username = edupageUsernameInput.value.trim();
+    var password = edupagePasswordInput.value;
+
+    if (!relayUrl || !subdomain || !username || !password) {
+      edupageSetStatus('Fill in the relay URL, subdomain, username and password.', 'error');
+      return;
+    }
+
+    saveEdupagePrefs({ relayUrl: relayUrl, subdomain: subdomain, username: username });
+
+    var thisMonday = startOfWeekMonday(new Date());
+    var nextMonday = new Date(thisMonday.getFullYear(), thisMonday.getMonth(), thisMonday.getDate() + 7);
+    var rangeEnd = new Date(nextMonday.getFullYear(), nextMonday.getMonth(), nextMonday.getDate() + 6);
+
+    edupageSyncBtn.disabled = true;
+    edupageSetStatus('Syncing with EduPage…', '');
+
+    fetch(relayUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        subdomain: subdomain,
+        username: username,
+        password: password,
+        dateFrom: isoDateLocal(thisMonday),
+        dateTo: isoDateLocal(rangeEnd)
+      })
+    })
+      .then(function(res) {
+        return res.json().catch(function() { return null; }).then(function(data) { return { ok: res.ok, data: data }; });
+      })
+      .then(function(result) {
+        edupagePasswordInput.value = '';
+        var data = result.data;
+        if (!result.ok || !data || data.ok === false) {
+          var step = data && data.step ? (' (' + data.step + ')') : '';
+          var errMsg = (data && data.error) || 'The relay did not respond as expected.';
+          edupageSetStatus('Sync failed' + step + ': ' + errMsg, 'error');
+          return;
+        }
+        edupageSetStatus(applyEdupageSyncResult(data.days, thisMonday, nextMonday), 'ok');
+      })
+      .catch(function(err) {
+        edupagePasswordInput.value = '';
+        edupageSetStatus('Could not reach the relay: ' + (err && err.message ? err.message : err), 'error');
+      })
+      .then(function() { edupageSyncBtn.disabled = false; });
   });
 
   var ICS_DAY_CODE = { Mon: 'MO', Tue: 'TU', Wed: 'WE', Thu: 'TH', Fri: 'FR', Sat: 'SA', Sun: 'SU' };

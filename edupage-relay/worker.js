@@ -111,13 +111,6 @@ function bytesToBase64(bytes) {
   return btoa(binary);
 }
 
-function base64ToBytes(b64) {
-  const binary = atob(b64);
-  const bytes = new Uint8Array(binary.length);
-  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
-  return bytes;
-}
-
 async function rawDeflateBase64(str) {
   const cs = new CompressionStream('deflate-raw');
   const writer = cs.writable.getWriter();
@@ -125,15 +118,6 @@ async function rawDeflateBase64(str) {
   writer.close();
   const compressed = new Uint8Array(await new Response(cs.readable).arrayBuffer());
   return bytesToBase64(compressed);
-}
-
-async function rawInflateToString(b64) {
-  const ds = new DecompressionStream('deflate-raw');
-  const writer = ds.writable.getWriter();
-  writer.write(base64ToBytes(b64));
-  writer.close();
-  const decompressed = new Uint8Array(await new Response(ds.readable).arrayBuffer());
-  return new TextDecoder().decode(decompressed);
 }
 
 async function encodeRpcBody(paramsObj) {
@@ -144,10 +128,13 @@ async function encodeRpcBody(paramsObj) {
   return toFormUrlEncoded({ eqap, eqacs, eqaz: '1' });
 }
 
-async function decodeRpcResponse(text) {
-  if (text.startsWith('eqwd:')) return atob(text.slice(5));
-  if (!text.startsWith('eqz:')) return text;
-  return await rawInflateToString(text.slice(4));
+/* The reference implementation's "eqz:"/"eqwd:" responses are base64 only --
+   despite the "z" in the name, decode_response never calls zlib.decompress;
+   __decode_data is just chromium_base64_decode. Only requests are compressed. */
+function decodeRpcResponse(text) {
+  if (text.startsWith('eqwd:')) return atob(text.slice(5).replace(/[\t\n\f\r]/g, ''));
+  if (text.startsWith('eqz:')) return atob(text.slice(4).replace(/[\t\n\f\r]/g, ''));
+  return text;
 }
 
 /* rsplit(sep, n)[0] equivalent: strip at most the last n occurrences of sep

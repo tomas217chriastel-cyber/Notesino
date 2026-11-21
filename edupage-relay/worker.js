@@ -1,14 +1,30 @@
 /*
- * Notesino EduPage relay (Cloudflare Worker)
+ * Notesino relay (Cloudflare Worker)
  * ---------------------------------------------------------------
- * EduPage (edupage.org) has no official public API and no CORS
- * headers that would let a browser call it directly, and its login
- * is a multi-step, cookie-bound flow. This Worker performs that
- * flow server-side, on each request, and never stores anything --
- * no KV, no database, no logging of credentials. It exists purely
- * to let the Notesino app ask "what's my timetable between these
- * two dates" without the user's password or school account ever
- * touching Notesino's own code.
+ * Two unrelated jobs living in one deployed Worker so there's only
+ * one thing to set up:
+ *
+ * 1. EduPage sync (unchanged from before): edupage.org has no public
+ *    API and no CORS, and its login is a multi-step cookie-bound
+ *    flow, so this performs that flow server-side, on each request,
+ *    and stores nothing. POST to "/" (or any path other than the
+ *    ones below).
+ *    Request:  POST { subdomain, username, password, dateFrom, dateTo }
+ *    Response: { ok: true, days: { "YYYY-MM-DD": [ {start,end,subject,room,teacher,free} ] } }
+ *           or { ok: false, step: "...", error: "..." }
+ *
+ * 2. Push notifications: browsers can't push to a closed app/device
+ *    by themselves -- that needs a server holding the device's push
+ *    subscription and sending to it at the right time. This Worker
+ *    stores (in KV) a small per-"sync code" group of push
+ *    subscriptions and upcoming {title, body, fireAt} items the
+ *    client computed locally (from reminders/subject notes/
+ *    timetable), and a Cron Trigger sweeps every few minutes for
+ *    items whose time has come and sends a real Web Push (RFC 8291 +
+ *    VAPID) to every device in that group.
+ *      POST /push/subscribe  { syncCode, subscription }
+ *      POST /push/sync       { syncCode, items: [{id,title,body,fireAt}] }
+ *      POST /push/test       { syncCode }   -- sends an immediate test push
  *
  * Reverse-engineered from the reference implementation at
  * https://github.com/EdupageAPI/edupage-api (GPL-3.0, Python) --
@@ -17,14 +33,19 @@
  * fails, the error response names which step failed so it can be
  * fixed without guessing.
  *
- * Deploy: `wrangler deploy` from this directory (see README.md).
- * Request:  POST { subdomain, username, password, dateFrom, dateTo }
- *           dateFrom/dateTo are "YYYY-MM-DD".
- * Response: { ok: true, days: { "YYYY-MM-DD": [ {start,end,subject,room,teacher,free} ] } }
- *        or { ok: false, step: "...", error: "..." }
+ * Deploy: `wrangler deploy` from this directory (see README.md) --
+ * needs a KV namespace bound as PUSH_KV and a VAPID_PRIVATE_KEY_JWK
+ * secret; see README.md for exact commands.
  */
 
 const ALLOWED_ORIGIN = '*'; // tighten to your Notesino origin if you want to lock this down
+
+/* Public half of your VAPID key pair -- safe to be public (it's also
+   embedded in the client's subscribe call, where it MUST match exactly).
+   The private half lives only in the VAPID_PRIVATE_KEY_JWK secret. Generate
+   your own pair; see README.md for the exact command and where each half
+   goes. Do not reuse any example key pair. */
+const VAPID_PUBLIC_KEY = 'REPLACE_WITH_YOUR_VAPID_PUBLIC_KEY';
 
 function withCors(res) {
   res.headers.set('Access-Control-Allow-Origin', ALLOWED_ORIGIN);
@@ -320,32 +341,258 @@ async function loginAndFetchTimetable({ subdomain, username, password, dateFrom,
   return { ok: true, days };
 }
 
+async function handleEdupageSync(request) {
+  if (request.method !== 'POST') return withCors(json({ ok: false, step: 'method', error: 'Use POST' }, 405));
+
+  let body;
+  try { body = await request.json(); } catch (e) {
+    return withCors(json({ ok: false, step: 'request-body', error: 'Invalid JSON body' }, 400));
+  }
+
+  const { subdomain, username, password, dateFrom, dateTo } = body || {};
+  if (!subdomain || !username || !password || !dateFrom || !dateTo) {
+    return withCors(json({
+      ok: false,
+      step: 'request-fields',
+      error: 'Missing one of: subdomain, username, password, dateFrom, dateTo'
+    }, 400));
+  }
+
+  try {
+    const result = await loginAndFetchTimetable({ subdomain, username, password, dateFrom, dateTo });
+    return withCors(json(result, 200));
+  } catch (err) {
+    const step = err && err.step ? err.step : 'unknown';
+    const message = err && err.message ? err.message : String(err);
+    return withCors(json({ ok: false, step, error: message }, 502));
+  }
+}
+
+/* ---------- Push notifications (Web Push: RFC 8291 encryption + RFC 8292 VAPID) ----------
+   No npm dependency -- implemented directly against WebCrypto so it runs in the
+   Workers runtime with nothing extra to bundle. */
+
+const VAPID_SUBJECT = 'mailto:notesino-push@example.com';
+
+function groupKvKey(syncCode) { return 'group:' + syncCode; }
+
+async function loadGroup(env, syncCode) {
+  const raw = await env.PUSH_KV.get(groupKvKey(syncCode));
+  if (!raw) return { subscriptions: [], items: [] };
+  try {
+    const parsed = JSON.parse(raw);
+    return { subscriptions: parsed.subscriptions || [], items: parsed.items || [] };
+  } catch (e) {
+    return { subscriptions: [], items: [] };
+  }
+}
+
+async function saveGroup(env, syncCode, group) {
+  await env.PUSH_KV.put(groupKvKey(syncCode), JSON.stringify(group));
+}
+
+async function handlePushSubscribe(request, env) {
+  if (request.method !== 'POST') return withCors(json({ ok: false, error: 'Use POST' }, 405));
+  let body;
+  try { body = await request.json(); } catch (e) { return withCors(json({ ok: false, error: 'Invalid JSON body' }, 400)); }
+  const { syncCode, subscription } = body || {};
+  if (!syncCode || !subscription || !subscription.endpoint || !subscription.keys) {
+    return withCors(json({ ok: false, error: 'Missing syncCode or subscription' }, 400));
+  }
+  const group = await loadGroup(env, syncCode);
+  group.subscriptions = group.subscriptions.filter(s => s.endpoint !== subscription.endpoint);
+  group.subscriptions.push({ endpoint: subscription.endpoint, keys: subscription.keys, addedAt: Date.now() });
+  await saveGroup(env, syncCode, group);
+  return withCors(json({ ok: true, deviceCount: group.subscriptions.length }, 200));
+}
+
+async function handlePushSync(request, env) {
+  if (request.method !== 'POST') return withCors(json({ ok: false, error: 'Use POST' }, 405));
+  let body;
+  try { body = await request.json(); } catch (e) { return withCors(json({ ok: false, error: 'Invalid JSON body' }, 400)); }
+  const { syncCode, items } = body || {};
+  if (!syncCode || !Array.isArray(items)) {
+    return withCors(json({ ok: false, error: 'Missing syncCode or items' }, 400));
+  }
+  const group = await loadGroup(env, syncCode);
+  const prevById = new Map(group.items.map(it => [it.id, it]));
+  group.items = items
+    .filter(it => it && it.id && it.fireAt)
+    .map(it => {
+      const prev = prevById.get(it.id);
+      const sent = prev && prev.fireAt === it.fireAt ? !!prev.sent : false;
+      return { id: it.id, title: String(it.title || 'Reminder').slice(0, 120), body: String(it.body || '').slice(0, 200), fireAt: it.fireAt, sent };
+    });
+  await saveGroup(env, syncCode, group);
+  return withCors(json({ ok: true, itemCount: group.items.length, deviceCount: group.subscriptions.length }, 200));
+}
+
+async function handlePushTest(request, env) {
+  if (request.method !== 'POST') return withCors(json({ ok: false, error: 'Use POST' }, 405));
+  if (VAPID_PUBLIC_KEY === 'REPLACE_WITH_YOUR_VAPID_PUBLIC_KEY' || !env.VAPID_PRIVATE_KEY_JWK) {
+    return withCors(json({ ok: false, error: 'This Worker has no VAPID key pair set up yet -- see README.md.' }, 500));
+  }
+  let body;
+  try { body = await request.json(); } catch (e) { return withCors(json({ ok: false, error: 'Invalid JSON body' }, 400)); }
+  const { syncCode } = body || {};
+  if (!syncCode) return withCors(json({ ok: false, error: 'Missing syncCode' }, 400));
+  const group = await loadGroup(env, syncCode);
+  if (!group.subscriptions.length) {
+    return withCors(json({ ok: false, error: 'No devices registered for this sync code yet.' }, 400));
+  }
+  const results = await sendToAll(env, group.subscriptions, { title: 'Notesino', body: 'Test notification — push is working.' });
+  const stillValid = group.subscriptions.filter((s, i) => results[i] !== 'gone');
+  if (stillValid.length !== group.subscriptions.length) {
+    group.subscriptions = stillValid;
+    await saveGroup(env, syncCode, group);
+  }
+  return withCors(json({ ok: true, sentTo: results.filter(r => r === 'sent').length, devices: group.subscriptions.length }, 200));
+}
+
+function b64urlEncode(bytes) {
+  let binary = '';
+  const arr = bytes instanceof Uint8Array ? bytes : new Uint8Array(bytes);
+  for (let i = 0; i < arr.length; i++) binary += String.fromCharCode(arr[i]);
+  return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+}
+function b64urlDecode(str) {
+  str = str.replace(/-/g, '+').replace(/_/g, '/');
+  while (str.length % 4) str += '=';
+  const binary = atob(str);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+  return bytes;
+}
+function concatBytes(...arrs) {
+  const total = arrs.reduce((n, a) => n + a.length, 0);
+  const out = new Uint8Array(total);
+  let off = 0;
+  for (const a of arrs) { out.set(a, off); off += a.length; }
+  return out;
+}
+async function hmacSha256(keyBytes, dataBytes) {
+  const key = await crypto.subtle.importKey('raw', keyBytes, { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
+  return new Uint8Array(await crypto.subtle.sign('HMAC', key, dataBytes));
+}
+async function hkdfExpandOneBlock(prk, info, length) {
+  const t1 = await hmacSha256(prk, concatBytes(info, new Uint8Array([1])));
+  return t1.slice(0, length);
+}
+
+async function importVapidPrivateKey(env) {
+  const jwk = JSON.parse(env.VAPID_PRIVATE_KEY_JWK);
+  return crypto.subtle.importKey('jwk', jwk, { name: 'ECDSA', namedCurve: 'P-256' }, false, ['sign']);
+}
+
+async function signVapidJwt(privateKey, endpointUrl) {
+  const aud = new URL(endpointUrl).origin;
+  const header = { typ: 'JWT', alg: 'ES256' };
+  const claims = { aud, exp: Math.floor(Date.now() / 1000) + 12 * 3600, sub: VAPID_SUBJECT };
+  const unsigned = b64urlEncode(new TextEncoder().encode(JSON.stringify(header))) + '.' +
+    b64urlEncode(new TextEncoder().encode(JSON.stringify(claims)));
+  const sig = await crypto.subtle.sign({ name: 'ECDSA', hash: 'SHA-256' }, privateKey, new TextEncoder().encode(unsigned));
+  return unsigned + '.' + b64urlEncode(new Uint8Array(sig));
+}
+
+/* RFC 8291 "aes128gcm" encryption of a Web Push message body. */
+async function encryptWebPush(uaPublicB64url, authB64url, plaintextBytes) {
+  const uaPublic = b64urlDecode(uaPublicB64url);
+  const authSecret = b64urlDecode(authB64url);
+
+  const uaPublicKey = await crypto.subtle.importKey('raw', uaPublic, { name: 'ECDH', namedCurve: 'P-256' }, false, []);
+  const senderKeyPair = await crypto.subtle.generateKey({ name: 'ECDH', namedCurve: 'P-256' }, true, ['deriveBits']);
+  const sharedSecret = new Uint8Array(await crypto.subtle.deriveBits({ name: 'ECDH', public: uaPublicKey }, senderKeyPair.privateKey, 256));
+  const asPublicRaw = new Uint8Array(await crypto.subtle.exportKey('raw', senderKeyPair.publicKey));
+
+  const prkKey = await hmacSha256(authSecret, sharedSecret);
+  const keyInfo = concatBytes(new TextEncoder().encode('WebPush: info'), new Uint8Array([0]), uaPublic, asPublicRaw);
+  const ikm = await hkdfExpandOneBlock(prkKey, keyInfo, 32);
+
+  const salt = crypto.getRandomValues(new Uint8Array(16));
+  const prk = await hmacSha256(salt, ikm);
+  const cek = await hkdfExpandOneBlock(prk, concatBytes(new TextEncoder().encode('Content-Encoding: aes128gcm'), new Uint8Array([0])), 16);
+  const nonce = await hkdfExpandOneBlock(prk, concatBytes(new TextEncoder().encode('Content-Encoding: nonce'), new Uint8Array([0])), 12);
+
+  const padded = concatBytes(plaintextBytes, new Uint8Array([2]));
+  const cekKey = await crypto.subtle.importKey('raw', cek, { name: 'AES-GCM' }, false, ['encrypt']);
+  const ciphertext = new Uint8Array(await crypto.subtle.encrypt({ name: 'AES-GCM', iv: nonce }, cekKey, padded));
+
+  const rsBuf = new Uint8Array(4);
+  new DataView(rsBuf.buffer).setUint32(0, 4096, false);
+  const header = concatBytes(salt, rsBuf, new Uint8Array([asPublicRaw.length]), asPublicRaw);
+  return concatBytes(header, ciphertext);
+}
+
+/* Sends one Web Push message; returns 'sent', 'gone' (404/410 -- caller should
+   drop this subscription), or 'failed'. */
+async function sendWebPush(env, subscription, payloadObj) {
+  try {
+    const vapidKey = await importVapidPrivateKey(env);
+    const jwt = await signVapidJwt(vapidKey, subscription.endpoint);
+    const plaintext = new TextEncoder().encode(JSON.stringify(payloadObj));
+    const body = await encryptWebPush(subscription.keys.p256dh, subscription.keys.auth, plaintext);
+
+    const res = await fetch(subscription.endpoint, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/octet-stream',
+        'Content-Encoding': 'aes128gcm',
+        'TTL': '86400',
+        'Authorization': 'vapid t=' + jwt + ', k=' + VAPID_PUBLIC_KEY
+      },
+      body
+    });
+    if (res.status === 404 || res.status === 410) return 'gone';
+    return res.ok ? 'sent' : 'failed';
+  } catch (e) {
+    return 'failed';
+  }
+}
+
+async function sendToAll(env, subscriptions, payloadObj) {
+  return Promise.all(subscriptions.map(s => sendWebPush(env, s, payloadObj)));
+}
+
+/* Cron entry point: find due, unsent items across every sync-code group and push them. */
+async function sweepAndSendPushes(env) {
+  const now = Date.now();
+  let cursor;
+  do {
+    const listed = await env.PUSH_KV.list({ prefix: 'group:', cursor });
+    for (const key of listed.keys) {
+      const syncCode = key.name.slice('group:'.length);
+      const group = await loadGroup(env, syncCode);
+      const due = group.items.filter(it => !it.sent && it.fireAt <= now);
+      if (!due.length || !group.subscriptions.length) continue;
+
+      let subscriptionsChanged = false;
+      for (const item of due) {
+        const results = await sendToAll(env, group.subscriptions, { title: item.title, body: item.body });
+        const stillValid = group.subscriptions.filter((s, i) => results[i] !== 'gone');
+        if (stillValid.length !== group.subscriptions.length) {
+          group.subscriptions = stillValid;
+          subscriptionsChanged = true;
+        }
+        item.sent = true;
+      }
+      if (due.length || subscriptionsChanged) await saveGroup(env, syncCode, group);
+    }
+    cursor = listed.list_complete ? undefined : listed.cursor;
+  } while (cursor);
+}
+
 export default {
-  async fetch(request) {
+  async fetch(request, env) {
     if (request.method === 'OPTIONS') return withCors(new Response(null, { status: 204 }));
-    if (request.method !== 'POST') return withCors(json({ ok: false, step: 'method', error: 'Use POST' }, 405));
+    const path = new URL(request.url).pathname.replace(/\/+$/, '');
 
-    let body;
-    try { body = await request.json(); } catch (e) {
-      return withCors(json({ ok: false, step: 'request-body', error: 'Invalid JSON body' }, 400));
-    }
+    if (path === '/push/subscribe') return handlePushSubscribe(request, env);
+    if (path === '/push/sync') return handlePushSync(request, env);
+    if (path === '/push/test') return handlePushTest(request, env);
 
-    const { subdomain, username, password, dateFrom, dateTo } = body || {};
-    if (!subdomain || !username || !password || !dateFrom || !dateTo) {
-      return withCors(json({
-        ok: false,
-        step: 'request-fields',
-        error: 'Missing one of: subdomain, username, password, dateFrom, dateTo'
-      }, 400));
-    }
-
-    try {
-      const result = await loginAndFetchTimetable({ subdomain, username, password, dateFrom, dateTo });
-      return withCors(json(result, 200));
-    } catch (err) {
-      const step = err && err.step ? err.step : 'unknown';
-      const message = err && err.message ? err.message : String(err);
-      return withCors(json({ ok: false, step, error: message }, 502));
-    }
+    return handleEdupageSync(request);
+  },
+  async scheduled(event, env, ctx) {
+    ctx.waitUntil(sweepAndSendPushes(env));
   }
 };

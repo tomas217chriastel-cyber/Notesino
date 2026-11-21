@@ -47,6 +47,35 @@ self.addEventListener('activate', function(event) {
   );
 });
 
+/* Real push notifications (see edupage-relay/'s push endpoints). The
+   payload is plain JSON: { title, body }. Falls back to a generic title if
+   the push arrives with no readable body (shouldn't normally happen, but a
+   silently-dropped push is worse than a vague one). */
+self.addEventListener('push', function(event) {
+  var data = { title: 'Notesino', body: 'You have a new notification.' };
+  try { if (event.data) data = event.data.json(); } catch (e) {}
+  event.waitUntil(
+    self.registration.showNotification(data.title || 'Notesino', {
+      body: data.body || '',
+      icon: 'icons/icon-192.png',
+      badge: 'icons/icon-192.png',
+      tag: data.id || undefined
+    })
+  );
+});
+
+self.addEventListener('notificationclick', function(event) {
+  event.notification.close();
+  event.waitUntil(
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then(function(clients) {
+      for (var i = 0; i < clients.length; i++) {
+        if ('focus' in clients[i]) return clients[i].focus();
+      }
+      if (self.clients.openWindow) return self.clients.openWindow(SHELL_URL);
+    })
+  );
+});
+
 self.addEventListener('fetch', function(event) {
   if (event.request.method !== 'GET') return;
   /* Navigations may arrive as "/" or "/index.html" depending on how the

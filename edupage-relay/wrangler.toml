@@ -1,3 +1,10 @@
 name = "notesino-edupage-relay"
 main = "worker.js"
 compatibility_date = "2024-09-01"
+
+kv_namespaces = [
+  { binding = "PUSH_KV", id = "YOUR_KV_NAMESPACE_ID" }
+]
+
+[triggers]
+crons = ["*/10 * * * *"]

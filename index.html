@@ -702,6 +702,16 @@
     color: rgba(var(--ink-rgb), 0.75);
   }
 
+  .notify-code-row {
+    display: flex;
+    gap: 6px;
+  }
+
+  .notify-code-row .tt-edupage-input {
+    flex: 1;
+    min-width: 0;
+  }
+
   .theme-customize-row input[type="color"] {
     width: 28px;
     height: 22px;
@@ -5014,6 +5024,29 @@
         <div class="add-menu-divider"></div>
         <button class="add-menu-item" id="exportWorkspaceBtn">Export Workspace&hellip;</button>
         <button class="add-menu-item" id="importWorkspaceBtn">Import Workspace&hellip;</button>
+        <div class="add-menu-divider"></div>
+        <button class="add-menu-item" id="notificationsBtn">Notifications&hellip;</button>
+        <div class="theme-customize-panel" id="notificationsPanel">
+          <div class="theme-customize-row">
+            <label for="notifyEnabledToggle">Send me notifications</label>
+            <input type="checkbox" id="notifyEnabledToggle">
+          </div>
+          <div class="tt-calendar-hint">Real device notifications for reminders and subject notes with a date, matched against your timetable -- e.g. a note mentioning a test for a subject that meets tomorrow. Needs the same relay as EduPage Sync, deployed with push support (see edupage-relay/README.md).</div>
+          <div class="tt-calendar-row">
+            <label for="notifyRelayInput">Relay URL</label>
+          </div>
+          <input type="text" id="notifyRelayInput" placeholder="https://your-relay.workers.dev" class="tt-edupage-input">
+          <div class="tt-calendar-row">
+            <label for="notifySyncCodeInput">Sync code</label>
+          </div>
+          <div class="notify-code-row">
+            <input type="text" id="notifySyncCodeInput" placeholder="Shared across your devices" class="tt-edupage-input">
+            <button class="tt-btn" id="notifyGenerateCodeBtn" title="Generate a new code">New</button>
+          </div>
+          <div class="tt-calendar-hint">Enter the <b>same code</b> on every device (phone, desktop) you want notified together.</div>
+          <button class="tt-btn tt-calendar-download-btn" id="notifyTestBtn">Send test notification</button>
+          <div class="tt-edupage-status" id="notifyStatus"></div>
+        </div>
         <div class="add-menu-divider" id="snapshotsDivider" style="display:none;"></div>
         <div class="theme-picker-label" id="snapshotsLabel" style="display:none;">Restore a Previous Version</div>
         <div id="snapshotsList"></div>
@@ -8459,7 +8492,11 @@
     notebookWrap.classList.toggle('has-content', !!text.trim());
     nbRecalcLineHeights();
     clearTimeout(quickNoteSaveTimer);
-    quickNoteSaveTimer = setTimeout(saveWorkspace, 400);
+    var subjectIdForReminders = activeSubjectId;
+    quickNoteSaveTimer = setTimeout(function() {
+      saveWorkspace();
+      syncSubjectNoteReminders(subjectIdForReminders, text);
+    }, 400);
   }
 
   quickNoteInput.addEventListener('input', saveQuickNote);
@@ -12118,6 +12155,248 @@
     }
   });
 
+  /* ---------- Notifications: connects Reminders + Subject Notes + Timetable ----------
+     A subject note that mentions a date ("test tomorrow") becomes a real,
+     visible reminder tied to that subject; any reminder that names a
+     subject gets enriched with that subject's actual class time/room for
+     that date (checking Week A/B where it applies); and, if the user turns
+     notifications on, the resulting schedule is kept in sync with a
+     Cloudflare Worker (edupage-relay/, extended with push support) that
+     sends a real Web Push to every device sharing the same sync code,
+     whether or not this tab/app is open at the time. */
+  var VAPID_PUBLIC_KEY = 'REPLACE_WITH_YOUR_VAPID_PUBLIC_KEY';
+  var NOTIFY_PREFS_KEY = 'claude_workspace_notify_prefs_v1';
+
+  function loadNotifyPrefs() {
+    try { return JSON.parse(localStorage.getItem(NOTIFY_PREFS_KEY) || '{}') || {}; } catch (err) { return {}; }
+  }
+  function saveNotifyPrefs(patch) {
+    var merged = Object.assign(loadNotifyPrefs(), patch);
+    try { localStorage.setItem(NOTIFY_PREFS_KEY, JSON.stringify(merged)); } catch (err) {}
+    return merged;
+  }
+
+  function htmlToPlainText(html) {
+    var tmp = document.createElement('div');
+    tmp.innerHTML = html || '';
+    return tmp.textContent || '';
+  }
+
+  /* Subject Notes -> Reminders. Re-derives the set of auto-reminders for one
+     subject's note text every time it's called, so edits/deletions in the
+     note text are reflected (including removing an auto-reminder whose date
+     phrase was edited away). Ids are stable per subject+segment-index so
+     re-parsing the same text updates in place instead of duplicating. */
+  function syncSubjectNoteReminders(subjectId, text) {
+    if (!window.NotesinoReminders) return;
+    var subject = subjects.filter(function(s) { return s.id === subjectId; })[0];
+    if (!subject) return;
+    var res = window.NotesinoReminders.parse(text || '');
+    res.reminders.slice(0, 10).forEach(function(rem, i) {
+      window.NotesinoReminders.upsertAuto('sn-' + subjectId + '-' + i, subject.name + ': ' + rem.title, rem.start, {
+        subjectId: subjectId, allDay: rem.allDay
+      });
+    });
+    for (var i = res.reminders.length; i < 10; i++) {
+      window.NotesinoReminders.removeAuto('sn-' + subjectId + '-' + i);
+    }
+  }
+
+  function rescanAllSubjectNoteReminders() {
+    subjects.forEach(function(s) {
+      syncSubjectNoteReminders(s.id, htmlToPlainText(subjectQuickNotes[s.id]));
+    });
+  }
+
+  /* Reminders -> Timetable. Finds the longest subject name mentioned in a
+     reminder's own title (manual reminders aren't tagged with a subjectId,
+     so this is a best-effort text match) -- a subject-note-derived
+     reminder already carries subjectId directly. */
+  function findSubjectMentioned(text) {
+    var lower = (text || '').toLowerCase();
+    var best = null;
+    subjects.forEach(function(s) {
+      var name = (s.name || '').toLowerCase().trim();
+      if (name.length < 3) return;
+      if (lower.indexOf(name) !== -1 && (!best || name.length > best.name.length)) best = s;
+    });
+    return best;
+  }
+
+  /* Does `subject` actually meet, per the Timetable, on the calendar date
+     `dateMs` falls on -- correctly following the Week A/B rotation when
+     it's enabled. Returns the matching period (for its room/time) or null. */
+  function timetableMatchForSubjectOnDate(subject, dateMs) {
+    if (!subject) return null;
+    var date = new Date(dateMs);
+    var dayCode = JS_DAY_TO_CODE[date.getDay()];
+    var dIdx = timetable.days.indexOf(dayCode);
+    if (dIdx === -1) return null;
+    var cellsMap = ttCellsForWeek(weekLetterForDate(date));
+    var name = subject.name.toLowerCase();
+    for (var pIdx = 0; pIdx < timetable.periods.length; pIdx++) {
+      var entry = cellsMap[ttKey(dIdx, pIdx)];
+      if (!entry || entry.free) continue;
+      if (ttPlainText(entry.subject || '').toLowerCase().indexOf(name) !== -1) {
+        return { period: timetable.periods[pIdx], entry: entry };
+      }
+    }
+    return null;
+  }
+
+  /* The final {id,title,body,fireAt} list sent to the relay -- recomputed
+     fresh each time rather than stored, so it always reflects the current
+     reminders/subjects/timetable without needing invasive change hooks. */
+  function computeNotificationItems() {
+    if (!window.NotesinoReminders) return [];
+    var now = Date.now();
+    var horizon = now + 30 * 24 * 60 * 60 * 1000;
+    return window.NotesinoReminders.getAll().reduce(function(items, rem) {
+      var fireAt = window.NotesinoReminders.nextOccurrence(rem, now);
+      if (!fireAt || fireAt < now - 5 * 60 * 1000 || fireAt > horizon) return items;
+
+      var subject = rem.subjectId
+        ? subjects.filter(function(s) { return s.id === rem.subjectId; })[0]
+        : findSubjectMentioned(rem.title);
+      var body = window.NotesinoReminders.whenText(rem);
+      if (subject) {
+        var match = timetableMatchForSubjectOnDate(subject, fireAt);
+        if (match) {
+          var bits = [subject.name + ' meets ' + match.period.start + '–' + match.period.end];
+          if (match.entry.room) bits.push('Room ' + match.entry.room);
+          body = bits.join(' · ');
+        }
+      }
+      items.push({ id: rem.id, title: rem.title, body: body, fireAt: fireAt });
+      return items;
+    }, []);
+  }
+
+  function urlBase64ToUint8Array(base64String) {
+    var padding = '='.repeat((4 - base64String.length % 4) % 4);
+    var base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+    var raw = atob(base64);
+    var out = new Uint8Array(raw.length);
+    for (var i = 0; i < raw.length; i++) out[i] = raw.charCodeAt(i);
+    return out;
+  }
+
+  async function subscribeToPush() {
+    if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+      throw new Error('Push notifications are not supported in this browser.');
+    }
+    if (VAPID_PUBLIC_KEY === 'REPLACE_WITH_YOUR_VAPID_PUBLIC_KEY') {
+      throw new Error('The app has no VAPID public key configured yet.');
+    }
+    var permission = await Notification.requestPermission();
+    if (permission !== 'granted') throw new Error('Notification permission was not granted.');
+    var reg = await navigator.serviceWorker.ready;
+    var sub = await reg.pushManager.getSubscription();
+    if (!sub) {
+      sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY) });
+    }
+    return sub.toJSON();
+  }
+
+  var notificationsBtn = document.getElementById('notificationsBtn');
+  var notificationsPanel = document.getElementById('notificationsPanel');
+  var notifyEnabledToggle = document.getElementById('notifyEnabledToggle');
+  var notifyRelayInput = document.getElementById('notifyRelayInput');
+  var notifySyncCodeInput = document.getElementById('notifySyncCodeInput');
+  var notifyGenerateCodeBtn = document.getElementById('notifyGenerateCodeBtn');
+  var notifyTestBtn = document.getElementById('notifyTestBtn');
+  var notifyStatusEl = document.getElementById('notifyStatus');
+
+  function setNotifyStatus(text, kind) {
+    notifyStatusEl.textContent = text;
+    notifyStatusEl.className = 'tt-edupage-status' + (kind ? ' ' + kind : '');
+  }
+
+  notificationsBtn.addEventListener('click', function(e) {
+    e.stopPropagation();
+    var wasOpen = notificationsPanel.classList.contains('open');
+    if (!wasOpen) {
+      var prefs = loadNotifyPrefs();
+      notifyEnabledToggle.checked = !!prefs.enabled;
+      notifyRelayInput.value = prefs.relayUrl || loadEdupagePrefs().relayUrl || '';
+      notifySyncCodeInput.value = prefs.syncCode || '';
+      setNotifyStatus('', '');
+    }
+    notificationsPanel.classList.toggle('open', !wasOpen);
+  });
+  notificationsPanel.addEventListener('pointerdown', function(e) { e.stopPropagation(); });
+
+  notifyGenerateCodeBtn.addEventListener('click', function() {
+    var chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+    var code = '';
+    for (var i = 0; i < 8; i++) code += chars[Math.floor(Math.random() * chars.length)];
+    notifySyncCodeInput.value = code;
+    saveNotifyPrefs({ syncCode: code });
+  });
+
+  async function syncNotificationItemsNow() {
+    var prefs = loadNotifyPrefs();
+    if (!prefs.enabled || !prefs.relayUrl || !prefs.syncCode) return;
+    try {
+      await fetch(prefs.relayUrl + '/push/sync', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ syncCode: prefs.syncCode, items: computeNotificationItems() })
+      });
+    } catch (err) {}
+  }
+
+  async function applyNotifySettings(showStatus) {
+    var relayUrl = notifyRelayInput.value.trim().replace(/\/+$/, '');
+    var syncCode = notifySyncCodeInput.value.trim().toUpperCase();
+    var enabled = notifyEnabledToggle.checked;
+    saveNotifyPrefs({ enabled: enabled, relayUrl: relayUrl, syncCode: syncCode });
+    if (!enabled) return;
+    if (!relayUrl || !syncCode) {
+      if (showStatus) setNotifyStatus('Enter a relay URL and a sync code first.', 'error');
+      notifyEnabledToggle.checked = false;
+      saveNotifyPrefs({ enabled: false });
+      return;
+    }
+    try {
+      var subscription = await subscribeToPush();
+      await fetch(relayUrl + '/push/subscribe', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ syncCode: syncCode, subscription: subscription })
+      });
+      await syncNotificationItemsNow();
+      if (showStatus) setNotifyStatus('Notifications are on for this device.', 'ok');
+    } catch (err) {
+      if (showStatus) setNotifyStatus('Could not enable notifications: ' + (err && err.message ? err.message : err), 'error');
+      notifyEnabledToggle.checked = false;
+      saveNotifyPrefs({ enabled: false });
+    }
+  }
+
+  notifyEnabledToggle.addEventListener('change', function() { applyNotifySettings(true); });
+  notifyRelayInput.addEventListener('change', function() { saveNotifyPrefs({ relayUrl: notifyRelayInput.value.trim().replace(/\/+$/, '') }); });
+  notifySyncCodeInput.addEventListener('change', function() { saveNotifyPrefs({ syncCode: notifySyncCodeInput.value.trim().toUpperCase() }); });
+
+  notifyTestBtn.addEventListener('click', async function() {
+    var relayUrl = notifyRelayInput.value.trim().replace(/\/+$/, '');
+    var syncCode = notifySyncCodeInput.value.trim().toUpperCase();
+    if (!relayUrl || !syncCode) { setNotifyStatus('Enter a relay URL and a sync code first.', 'error'); return; }
+    setNotifyStatus('Sending test notification…', '');
+    try {
+      var res = await fetch(relayUrl + '/push/test', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ syncCode: syncCode })
+      });
+      var data = await res.json().catch(function() { return null; });
+      if (!res.ok || !data || data.ok === false) throw new Error((data && data.error) || 'Test failed.');
+      setNotifyStatus('Sent to ' + data.sentTo + ' of ' + data.devices + ' device(s).', data.sentTo ? 'ok' : 'error');
+    } catch (err) {
+      setNotifyStatus('Could not send test: ' + (err && err.message ? err.message : err), 'error');
+    }
+  });
+
+  setInterval(syncNotificationItemsNow, 2 * 60 * 1000);
+
   var restored;
   withStateRestoreGuard(function() {
     restored = loadWorkspace();
@@ -12127,6 +12406,13 @@
     renderTimetable();
   });
   initBoards();
+  rescanAllSubjectNoteReminders();
+  if (loadNotifyPrefs().enabled) {
+    notifyEnabledToggle.checked = true;
+    notifyRelayInput.value = loadNotifyPrefs().relayUrl || '';
+    notifySyncCodeInput.value = loadNotifyPrefs().syncCode || '';
+    applyNotifySettings(false);
+  }
   /* Baseline checkpoint so the very first local edit has something to
      undo back to. For a fresh install this gets set again (to the same
      thing) a moment later when the starter note's saveWorkspace() call
@@ -12507,7 +12793,31 @@
     return start.getTime();
   }
 
-  window.NotesinoReminders = { parse: parse, googleUrl: googleUrl, buildIcs: buildIcs, whenText: whenText, nextOccurrence: nextOccurrence };
+  window.NotesinoReminders = {
+    parse: parse, googleUrl: googleUrl, buildIcs: buildIcs, whenText: whenText, nextOccurrence: nextOccurrence,
+    getAll: function() { return reminders.slice(); },
+    /* Lets Subject Notes keep a reminder in sync with a note's own text --
+       same id in, same reminder updated in place (not duplicated); a fresh
+       id creates one. Used for reminders derived from something else, so
+       they stay distinguishable (source:'auto') and linked to a subject. */
+    upsertAuto: function(id, title, startMs, meta) {
+      var idx = reminders.findIndex(function(r) { return r.id === id; });
+      var base = idx === -1 ? { id: id, created: Date.now() } : reminders[idx];
+      var next = Object.assign({}, base, {
+        id: id, title: title, start: startMs, allDay: !!(meta && meta.allDay),
+        duration: base.duration || DEFAULT_DURATION, rrule: null, sent: false,
+        source: 'auto', subjectId: (meta && meta.subjectId) || null
+      });
+      if (idx === -1) reminders.push(next); else reminders[idx] = next;
+      save();
+      renderList();
+    },
+    removeAuto: function(id) {
+      var before = reminders.length;
+      reminders = reminders.filter(function(r) { return r.id !== id; });
+      if (reminders.length !== before) { save(); renderList(); }
+    }
+  };
 
   /* ---------- UI ---------- */
   if (typeof document === 'undefined') return;

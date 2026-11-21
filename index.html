@@ -3488,10 +3488,52 @@
       top: calc(14px + env(safe-area-inset-top, 0px));
       right: calc(14px + env(safe-area-inset-right, 0px));
       gap: 6px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      max-width: calc(100vw - 28px);
     }
 
     #shareToolbar {
       left: calc(14px + env(safe-area-inset-left, 0px));
+      justify-content: flex-start;
+    }
+
+    /* The left-anchored share toolbar and right-anchored notes toolbar both
+       fit fine on their own on a phone-width screen -- they only collide
+       because they used to share one row. Stack the notes toolbar onto a
+       second row below it instead of letting them overlap. */
+    #notesToolbar {
+      top: calc(14px + env(safe-area-inset-top, 0px) + 44px);
+    }
+
+    /* The add-menu normally hangs right-aligned under the Add button, which
+       is fine when that button sits near the screen's right edge (desktop).
+       On mobile the notes toolbar (and the Add button with it) sits much
+       further left, so a right-aligned dropdown of this width would run
+       off the left edge of the screen instead. */
+    .add-menu {
+      left: 0;
+      right: auto;
+    }
+
+    /* The board switcher lives in the share toolbar's own row, but its
+       dropdown's default offset only clears a single toolbar row -- now
+       that the notes toolbar sits on a second row below it (see
+       #notesToolbar above), the menu needs to drop further to clear both. */
+    .board-switcher-menu {
+      top: 86px;
+      left: 0;
+      right: auto;
+    }
+
+    /* The EduPage Sync panel's trigger button is wide enough that it wraps
+       onto its own row starting near the left edge (unlike Calendar, whose
+       row has room to spare on the right) -- a right-anchored 300px panel
+       from there would run off the left edge of the screen. */
+    #ttEdupagePanel {
+      left: 0;
+      right: auto;
+      width: min(300px, calc(100vw - 40px));
     }
 
     .tb-btn {
@@ -4180,6 +4222,11 @@
     .rm-wrap { padding: 0 16px 16px; }
     .rm-item { flex-wrap: wrap; }
     .rm-item-actions { width: 100%; justify-content: flex-end; }
+
+    /* The example placeholder text wraps to two lines once the Add button
+       eats into the input's width on a phone -- give it room instead of
+       clipping the second line. */
+    .rm-input { min-height: 64px; }
   }
 
   /* Timetable -- its own full-screen window, opened from the web launcher. */
@@ -5795,6 +5842,37 @@
     }
   });
 
+  /* Cascades sequential spawns by a fixed diagonal step instead of drawing
+     each one independently at random -- on a narrow phone viewport the
+     random spread can be barely wider than the card itself, so two notes
+     added back to back would otherwise land almost exactly on top of each
+     other. Wraps back to a fresh (still randomized) start once a cascade
+     would run off the visible area. */
+  var lastSpawnOffset = new Map();
+  function cascadePos(key, maxX, maxY, minX, minY) {
+    var prev = lastSpawnOffset.get(key);
+    /* X and Y wrap independently rather than both needing to fit the same
+       step before either resets -- on a short mobile viewport the usable
+       vertical room (after header clearance) is often far smaller than the
+       horizontal room, so requiring both to advance together meant the
+       step almost never fit and every spawn fell back to the same tiny
+       random corner. */
+    var stepX = Math.max(70, Math.min(140, (maxX - minX) * 0.5));
+    var stepY = Math.max(40, Math.min(90, (maxY - minY) * 0.5));
+    var x, y;
+    if (prev) {
+      x = prev.x + stepX;
+      y = prev.y + stepY;
+      if (x > maxX) x = minX + Math.random() * Math.max(10, (maxX - minX) * 0.25);
+      if (y > maxY) y = minY + Math.random() * Math.max(10, (maxY - minY) * 0.25);
+    } else {
+      x = minX + Math.random() * Math.max(10, (maxX - minX) * 0.25);
+      y = minY + Math.random() * Math.max(10, (maxY - minY) * 0.25);
+    }
+    lastSpawnOffset.set(key, { x: x, y: y });
+    return { x: x, y: y };
+  }
+
   function randomPos(container, needsHeaderClearance) {
     if (container === layer) {
       /* Main canvas is pan/zoomable \u2014 place new items somewhere within
@@ -5802,9 +5880,10 @@
          own (unbounded) coordinate space. */
       var vrect = canvasViewport.getBoundingClientRect();
       var topMin = needsHeaderClearance ? 220 : 20;
-      var sx = Math.random() * Math.max(40, vrect.width - 260) + 20;
-      var sy = Math.random() * Math.max(40, vrect.height - topMin - 200) + topMin;
-      return screenToCanvas(vrect.left + sx, vrect.top + sy);
+      var maxX = Math.max(60, vrect.width - 160);
+      var maxY = Math.max(60, vrect.height - topMin - 160);
+      var p = cascadePos('layer', maxX, maxY, 20, topMin);
+      return screenToCanvas(vrect.left + p.x, vrect.top + p.y);
     }
     var w = window.innerWidth, h = window.innerHeight;
     if (container) {
@@ -5813,9 +5892,9 @@
       if (rect.height > 40) h = rect.height;
     }
     var topMin = needsHeaderClearance ? 220 : 20;
-    var x = Math.max(20, Math.random() * Math.max(40, w - 260));
-    var y = Math.max(topMin, Math.random() * Math.max(40, h - topMin - 200) + topMin);
-    return { x: x, y: y };
+    var maxX = Math.max(60, w - 160);
+    var maxY = Math.max(60, h - topMin - 160);
+    return cascadePos(container || 'default', maxX, maxY, 20, topMin);
   }
 
   function setNoteColor(note, dot, color) {

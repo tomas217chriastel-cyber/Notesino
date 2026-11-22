@@ -401,25 +401,43 @@ function enumerateDates(dateFromStr, dateToStr) {
    request, that doesn't match the "EduPage truncates wide ranges" cause
    this function was built for, and looks instead like an occasional bad
    gpid/gsh handshake for that one request (14 rapid logins-worth of
-   token churn against the same session). Re-doing the handshake+fetch
-   once for a day that comes back empty is cheap insurance against that:
-   a day that's genuinely free just gets confirmed empty twice. */
+   token churn against the same session), which can also throw outright
+   (e.g. a malformed gcall response) rather than just come back empty.
+   Both attempts are caught here -- a day that keeps failing is reported
+   as a per-day error, not thrown, so it can't abort every other day's
+   already-fetched data (see fetchTimetableRangeByDay). */
 async function fetchDayWithRetry(session, dateKey) {
-  var result = await fetchTimetableRange({ ...session, dateFrom: dateKey, dateTo: dateKey });
-  if (!result.days[dateKey] || !result.days[dateKey].length) {
-    var retry = await fetchTimetableRange({ ...session, dateFrom: dateKey, dateTo: dateKey });
-    if (retry.days[dateKey] && retry.days[dateKey].length) return retry;
+  try {
+    var result = await fetchTimetableRange({ ...session, dateFrom: dateKey, dateTo: dateKey });
+    if (result.days[dateKey] && result.days[dateKey].length) return result;
+  } catch (e) {
+    result = null;
   }
-  return result;
+  try {
+    var retry = await fetchTimetableRange({ ...session, dateFrom: dateKey, dateTo: dateKey });
+    return retry;
+  } catch (e) {
+    if (result) return result; // first attempt at least resolved (even if empty) -- use that over a hard error
+    return { days: {}, error: { step: (e && e.step) || 'unknown', message: (e && e.message) || String(e) } };
+  }
 }
 
+/* One bad day (a transient parse/token failure on that single request)
+   used to throw and abort the entire multi-day sync, discarding every
+   other day that had already succeeded -- confirmed in practice: a
+   failure on one day wiped out a sync that otherwise had real data for
+   the rest of the week. Each day is now isolated: a day that still fails
+   after its retry is simply left out of `days` (and named in
+   `failedDays`) instead of failing the whole request. */
 async function fetchTimetableRangeByDay(session, dateFrom, dateTo) {
   const days = {};
+  const failedDays = {};
   for (const dateKey of enumerateDates(dateFrom, dateTo)) {
     const result = await fetchDayWithRetry(session, dateKey);
-    Object.assign(days, result.days);
+    if (result.error) failedDays[dateKey] = result.error;
+    else Object.assign(days, result.days);
   }
-  return { ok: true, days };
+  return { ok: true, days, failedDays };
 }
 
 async function loginAndFetchTimetable({ subdomain, username, password, dateFrom, dateTo }) {

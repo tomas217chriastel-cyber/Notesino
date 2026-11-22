@@ -11170,11 +11170,16 @@
           return;
         }
         var mergedDays = {};
+        var failedDates = [];
         results.forEach(function(r) {
           var days = r.data.days || {};
           Object.keys(days).forEach(function(k) { mergedDays[k] = days[k]; });
+          var failedDays = r.data.failedDays || {};
+          Object.keys(failedDays).forEach(function(k) { failedDates.push(k + ' (' + failedDays[k].step + ')'); });
         });
-        edupageSetStatus(applyEdupageSyncResult(mergedDays, thisMonday, nextMonday), 'ok');
+        var summary = applyEdupageSyncResult(mergedDays, thisMonday, nextMonday);
+        if (failedDates.length) summary += ' Could not fetch: ' + failedDates.join(', ') + ' -- try syncing again.';
+        edupageSetStatus(summary, 'ok');
       })
       .catch(function(err) {
         edupageSetStatus('Could not reach the relay: ' + (err && err.message ? err.message : err), 'error');

@@ -438,6 +438,15 @@
     box-shadow: var(--card-shadow), 0 8px 28px rgba(0, 0, 0, 0.3);
     z-index: 50;
     transform-origin: top right;
+    /* Safety net so a tall submenu (Notifications, EduPage auto-refresh)
+       never runs off-screen with no way to reach it -- the page itself
+       can't scroll/zoom (see .canvas-viewport), so without this the content
+       below the fold would be completely unreachable, not just clipped. */
+    max-height: calc(100vh - 80px);
+    max-height: calc(100dvh - 80px);
+    overflow-y: auto;
+    touch-action: pan-y;
+    -webkit-overflow-scrolling: touch;
   }
 
   .add-menu.open {
@@ -4424,6 +4433,15 @@
     border: 0.5px solid rgba(var(--ink-rgb), 0.18);
     box-shadow: 0 12px 32px rgba(0,0,0,0.3);
     z-index: 20;
+    /* Same reachability safety net as .add-menu -- this panel grew taller
+       (auto-refresh toggle + hint text) and the page itself can't scroll
+       or zoom to compensate, so a field pushed below the fold would be
+       completely unreachable rather than just clipped. */
+    max-height: calc(100vh - 80px);
+    max-height: calc(100dvh - 80px);
+    overflow-y: auto;
+    touch-action: pan-y;
+    -webkit-overflow-scrolling: touch;
   }
 
   .tt-calendar-panel.open {

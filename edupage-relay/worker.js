@@ -338,9 +338,16 @@ async function fetchTimetableRange({ jar, base, userId, dbi, dateFrom, dateTo })
   function fixTime(t) { return t === '24:00' ? '23:59' : t; }
 
   const days = {};
+  // Tracks, per day, how many raw EduPage plan items existed before any
+  // filtering -- lets the client's diagnostic tell apart "EduPage genuinely
+  // sent nothing for this day" from "EduPage sent items but every one got
+  // filtered out here" (calendar 'event' entries, or the blank-filler skip)
+  // instead of both looking identically like a plain 0.
+  const rawCounts = {};
   for (const dateKey of Object.keys(dates)) {
     const dayObj = dates[dateKey];
     const plan = (dayObj && dayObj.plan) || [];
+    rawCounts[dateKey] = plan.length;
     const lessons = [];
     for (const item of plan) {
       // "event" items are calendar entries, not real lessons -- skip those,
@@ -376,7 +383,7 @@ async function fetchTimetableRange({ jar, base, userId, dbi, dateFrom, dateTo })
     days[dateKey] = lessons;
   }
 
-  return { ok: true, days };
+  return { ok: true, days, rawCounts };
 }
 
 /* EduPage's day-plan endpoint has been confirmed (against a real account) to
@@ -432,12 +439,16 @@ async function fetchDayWithRetry(session, dateKey) {
 async function fetchTimetableRangeByDay(session, dateFrom, dateTo) {
   const days = {};
   const failedDays = {};
+  const rawCounts = {};
   for (const dateKey of enumerateDates(dateFrom, dateTo)) {
     const result = await fetchDayWithRetry(session, dateKey);
     if (result.error) failedDays[dateKey] = result.error;
-    else Object.assign(days, result.days);
+    else {
+      Object.assign(days, result.days);
+      Object.assign(rawCounts, result.rawCounts);
+    }
   }
-  return { ok: true, days, failedDays };
+  return { ok: true, days, failedDays, rawCounts };
 }
 
 async function loginAndFetchTimetable({ subdomain, username, password, dateFrom, dateTo }) {
@@ -576,6 +587,11 @@ function b64urlEncode(bytes) {
   return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 }
 function b64urlDecode(str) {
+  // Strips anything that isn't valid base64url first -- a secret pasted in
+  // via `wrangler secret put` has been seen to pick up a trailing newline
+  // (from copying a console.log'd value), which made atob() throw outright
+  // ("invalid base64-encoded data") instead of just decoding the real key.
+  str = (str || '').replace(/[^A-Za-z0-9_-]/g, '');
   str = str.replace(/-/g, '+').replace(/_/g, '/');
   while (str.length % 4) str += '=';
   const binary = atob(str);

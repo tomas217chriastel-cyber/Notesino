@@ -10992,20 +10992,34 @@
      per distinct start seen anywhere this week/next, fixes both: a lesson
      always lands in the row for its own real time, and a day's gap just
      leaves that one row empty for that day without disturbing any other. */
-  function applyEdupageSyncResult(daysMap, thisMonday, nextMonday) {
+  function applyEdupageSyncResult(daysMap, thisMonday, nextMonday, rawCountsMap) {
     daysMap = daysMap || {};
+    rawCountsMap = rawCountsMap || {};
     var weekA = {}, weekB = {};
     var rawCountsA = [], rawCountsB = [];
+    // When a day shows 0 kept lessons, note in brackets how many raw items
+    // EduPage actually sent for that day before any filtering -- "0(raw 0)"
+    // means EduPage itself sent nothing for that day; "0(raw 3)" would mean
+    // items came back but every one got filtered out here, pointing at a
+    // filtering bug instead of an upstream/EduPage-side gap.
+    function countLabel(dayCode, isoKey, list) {
+      var kept = list ? list.length : null;
+      if (kept) return dayCode + ':' + kept;
+      var preFilter = rawCountsMap[isoKey];
+      if (kept === 0 && preFilter !== undefined && preFilter !== kept) return dayCode + ':0(raw ' + preFilter + ')';
+      return dayCode + ':' + (kept === null ? 'none' : kept);
+    }
     timetable.days.forEach(function(dayCode, dIdx) {
       var jsWeekday = JS_DAY_TO_CODE.indexOf(dayCode);
       if (jsWeekday === -1) return;
       var offset = (jsWeekday === 0) ? 6 : jsWeekday - 1;
       var dateA = new Date(thisMonday.getFullYear(), thisMonday.getMonth(), thisMonday.getDate() + offset);
       var dateB = new Date(nextMonday.getFullYear(), nextMonday.getMonth(), nextMonday.getDate() + offset);
-      var rawA = daysMap[isoDateLocal(dateA)];
-      var rawB = daysMap[isoDateLocal(dateB)];
-      rawCountsA.push(dayCode + ':' + (rawA ? rawA.length : 'none'));
-      rawCountsB.push(dayCode + ':' + (rawB ? rawB.length : 'none'));
+      var isoA = isoDateLocal(dateA), isoB = isoDateLocal(dateB);
+      var rawA = daysMap[isoA];
+      var rawB = daysMap[isoB];
+      rawCountsA.push(countLabel(dayCode, isoA, rawA));
+      rawCountsB.push(countLabel(dayCode, isoB, rawB));
       weekA[dIdx] = sortLessonsByStart(rawA);
       weekB[dIdx] = sortLessonsByStart(rawB);
     });
@@ -11170,14 +11184,17 @@
           return;
         }
         var mergedDays = {};
+        var mergedRawCounts = {};
         var failedDates = [];
         results.forEach(function(r) {
           var days = r.data.days || {};
           Object.keys(days).forEach(function(k) { mergedDays[k] = days[k]; });
+          var rawCounts = r.data.rawCounts || {};
+          Object.keys(rawCounts).forEach(function(k) { mergedRawCounts[k] = rawCounts[k]; });
           var failedDays = r.data.failedDays || {};
           Object.keys(failedDays).forEach(function(k) { failedDates.push(k + ' (' + failedDays[k].step + ')'); });
         });
-        var summary = applyEdupageSyncResult(mergedDays, thisMonday, nextMonday);
+        var summary = applyEdupageSyncResult(mergedDays, thisMonday, nextMonday, mergedRawCounts);
         if (failedDates.length) summary += ' Could not fetch: ' + failedDates.join(', ') + ' -- try syncing again.';
         edupageSetStatus(summary, 'ok');
       })

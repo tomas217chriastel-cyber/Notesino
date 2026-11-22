@@ -5308,7 +5308,7 @@
             <button class="tt-btn" id="ttEdupageBtn">EduPage Sync&hellip;</button>
             <div class="tt-calendar-panel" id="ttEdupagePanel">
               <div class="tt-calendar-label">Sync your real schedule from EduPage</div>
-              <div class="tt-calendar-hint">Unofficial, experimental. Needs a relay you deploy yourself once -- see edupage-relay/README.md. "Sync now" sends your password straight to your own relay and never saves it; turning on "Auto-refresh" below is the one exception, since it needs to log in again on its own later.</div>
+              <div class="tt-calendar-hint">Unofficial, experimental. Needs a relay you deploy yourself once -- see edupage-relay/README.md. Everything above, including the password, is remembered on this device only (never sent anywhere except your own relay) so you don't have to retype it every time -- clear your browser data for this site to forget it.</div>
               <div class="tt-calendar-row">
                 <label for="edupageRelayInput">Relay URL</label>
               </div>
@@ -10937,6 +10937,7 @@
       edupageRelayInput.value = prefs.relayUrl || '';
       edupageSubdomainInput.value = prefs.subdomain || '';
       edupageUsernameInput.value = prefs.username || '';
+      edupagePasswordInput.value = prefs.password || '';
       edupageStatusEl.textContent = '';
       edupageStatusEl.className = 'tt-edupage-status';
       edupageAutoToggle.checked = !!prefs.autoRefreshEnabled;
@@ -11126,7 +11127,10 @@
       return;
     }
 
-    saveEdupagePrefs({ relayUrl: relayUrl, subdomain: subdomain, username: username });
+    // Remembered locally on this device only, per the user's explicit choice
+    // to trade the earlier "never stored" default for not re-typing this
+    // every time -- never sent anywhere except this same relay request.
+    saveEdupagePrefs({ relayUrl: relayUrl, subdomain: subdomain, username: username, password: password });
 
     var thisMonday = startOfWeekMonday(new Date());
     var nextMonday = new Date(thisMonday.getFullYear(), thisMonday.getMonth(), thisMonday.getDate() + 7);
@@ -11139,7 +11143,6 @@
       fetchEdupageWeek(relayUrl, subdomain, username, password, nextMonday)
     ])
       .then(function(results) {
-        edupagePasswordInput.value = '';
         var failed = results.filter(function(r) { return !r.ok || !r.data || r.data.ok === false; });
         if (failed.length) {
           var data = failed[0].data;
@@ -11156,7 +11159,6 @@
         edupageSetStatus(applyEdupageSyncResult(mergedDays, thisMonday, nextMonday), 'ok');
       })
       .catch(function(err) {
-        edupagePasswordInput.value = '';
         edupageSetStatus('Could not reach the relay: ' + (err && err.message ? err.message : err), 'error');
       })
       .then(function() { edupageSyncBtn.disabled = false; });
@@ -11216,6 +11218,7 @@
       return;
     }
     saveNotifyPrefs({ relayUrl: relayUrl });
+    saveEdupagePrefs(Object.assign({}, loadEdupagePrefs(), { relayUrl: relayUrl, subdomain: subdomain, username: username, password: password }));
     edupageAutoToggle.disabled = true;
     edupageAutoSetStatus('Saving…', '');
     fetch(relayUrl + '/edupage/auto', {
@@ -11225,7 +11228,6 @@
     })
       .then(function(res) { return res.json().catch(function() { return null; }).then(function(data) { return { ok: res.ok, data: data }; }); })
       .then(function(result) {
-        edupagePasswordInput.value = '';
         if (!result.ok || !result.data || result.data.ok === false) {
           edupageAutoToggle.checked = false;
           edupageAutoSetStatus('Could not enable auto-refresh: ' + ((result.data && result.data.error) || 'unexpected response'), 'error');
@@ -11235,7 +11237,6 @@
         edupageAutoSetStatus('Auto-refresh is on — it will re-check EduPage every ~10 minutes, even with the app closed.', 'ok');
       })
       .catch(function(err) {
-        edupagePasswordInput.value = '';
         edupageAutoToggle.checked = false;
         edupageAutoSetStatus('Could not reach the relay: ' + (err && err.message ? err.message : err), 'error');
       })

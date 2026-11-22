@@ -1,0 +1,41 @@
+name: Deploy EduPage Relay
+
+# Deploys edupage-relay/ to Cloudflare Workers on every push that touches it,
+# the same way pages.yml auto-deploys the website -- so a relay code change
+# never needs a manual `wrangler deploy` from a local machine again.
+#
+# One-time setup (you do this, not Claude): create a Cloudflare API token at
+# https://dash.cloudflare.com/profile/api-tokens with the "Edit Cloudflare
+# Workers" template, then add it as a repository secret named
+# CLOUDFLARE_API_TOKEN (Settings -> Secrets and variables -> Actions -> New
+# repository secret). The KV namespace id in wrangler.toml and any Worker
+# secrets (VAPID_PRIVATE_KEY_JWK, CRED_ENCRYPTION_KEY) you already set with
+# `wrangler secret put` stay configured on Cloudflare's side; this workflow
+# only redeploys the code, it doesn't touch those.
+
+on:
+  push:
+    branches:
+      - claude/affectionate-sagan-axos6g
+      - claude/notesino-capabilities-pa3811
+    paths:
+      - 'edupage-relay/**'
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-relay
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Deploy to Cloudflare Workers
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          workingDirectory: edupage-relay
+          command: deploy

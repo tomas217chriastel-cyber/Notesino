@@ -6,7 +6,7 @@
    no network at all), while a fresh copy is fetched in the background and
    cached for next time. Bump CACHE_NAME whenever the shell list below
    changes, so old caches get cleaned up on activate. */
-var CACHE_NAME = 'notesino-cache-v6';
+var CACHE_NAME = 'notesino-cache-v7';
 var SHELL_URL = 'index.html';
 var APP_SHELL = [
   SHELL_URL,

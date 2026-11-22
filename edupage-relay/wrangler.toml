@@ -3,7 +3,7 @@ main = "worker.js"
 compatibility_date = "2024-09-01"
 
 kv_namespaces = [
-  { binding = "PUSH_KV", id = "YOUR_KV_NAMESPACE_ID" }
+  { binding = "PUSH_KV", id = "66a05d14ba814f15b7013348ee1f60f9" }
 ]
 
 [triggers]

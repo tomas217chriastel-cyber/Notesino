@@ -142,6 +142,26 @@ Redeploying later (e.g. after an update to `worker.js`) is just
 `wrangler deploy` again from this folder — the KV namespace and secrets
 stay configured.
 
+## Auto-deploy (skip the manual `wrangler deploy` step entirely)
+
+A GitHub Actions workflow (`.github/workflows/deploy-relay.yml`) redeploys
+this Worker automatically every time `edupage-relay/` changes on the repo's
+main branch — the same way the website already auto-deploys. One-time
+setup:
+
+1. Create a Cloudflare API token at
+   https://dash.cloudflare.com/profile/api-tokens → "Create Token" → use
+   the **"Edit Cloudflare Workers"** template → create it and copy the
+   token (shown only once).
+2. In the GitHub repo: Settings → Secrets and variables → Actions → "New
+   repository secret" → name it exactly `CLOUDFLARE_API_TOKEN` → paste the
+   token → Save.
+
+That's it — from then on, any push that touches this folder deploys itself
+within about a minute, with nothing to run locally. The KV namespace and
+any `wrangler secret put` secrets you already set stay exactly as they
+are; this workflow only redeploys the Worker's code.
+
 ## What EduPage sync needs from you each time
 
 - **School subdomain** — the part before `.edupage.org` in your school's
@@ -166,13 +186,15 @@ stay configured.
   it from) can call it. If you want to lock it down, change
   `ALLOWED_ORIGIN` at the top of `worker.js` to your app's exact origin
   and redeploy.
-- **"Auto-refresh in background" is the one case where your EduPage
-  password is stored anywhere.** Everything else in this file never stores
-  it. Turning that toggle on sends it once to your own Worker, which
-  encrypts it at rest (AES-GCM, with `CRED_ENCRYPTION_KEY` — a key only
-  your deployment holds) in the same KV entry as your sync code, so its
-  Cron Trigger can log in again on its own every ~10 minutes. Turning the
-  toggle back off deletes it from KV immediately. Since you deploy and
-  hold this Worker yourself, this is still only you (and EduPage) ever
-  seeing your real password — but it is a deliberate trade-off, not the
-  "never stored" default everything else here keeps, so it's opt-in.
+- **The app remembers your EduPage login on your own device, by request.**
+  The EduPage Sync panel's relay URL, subdomain, username and password are
+  saved in this browser's local storage (not synced anywhere, never sent
+  anywhere except to your own relay on each sync) purely so you don't have
+  to retype them — clearing this site's browser data forgets them.
+- **"Auto-refresh in background" additionally stores your EduPage
+  password on the relay itself**, encrypted at rest (AES-GCM, with
+  `CRED_ENCRYPTION_KEY` — a key only your deployment holds) in the same KV
+  entry as your sync code, so its Cron Trigger can log in again on its own
+  every ~10 minutes. Turning that toggle back off deletes it from KV
+  immediately. Since you deploy and hold this Worker yourself, this is
+  still only you (and EduPage) ever seeing your real password.

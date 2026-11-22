@@ -350,14 +350,25 @@ async function fetchTimetableRange({ jar, base, userId, dbi, dateFrom, dateTo })
       const subjIds = item.subjectid !== undefined ? [item.subjectid] : [];
       const classroomIds = Array.isArray(item.classroomids) ? item.classroomids : [];
       const teacherIds = Array.isArray(item.teacherids) ? item.teacherids : [];
+      const subject = subjIds.map(subjectName).filter(Boolean).join(', ');
+      const room = classroomIds.map(classroomName).filter(Boolean).join(', ');
+      const teacher = teacherIds.map(teacherName).filter(Boolean).join(', ');
+      // `item.type === ''` turned out to also match ordinary blank schedule
+      // slots (confirmed against a real account), not just real cancelled
+      // lessons -- only `removed`/`absent` are confirmed-reliable signals.
+      const cancelled = !!(item.removed || item.type === 'absent');
+      // A blank filler slot (no subject/room/teacher at all, and not an
+      // actual cancellation of a named lesson) isn't a real lesson -- skip
+      // it so it reads as an ordinary empty period, not a phantom cancelled one.
+      if (!subject && !room && !teacher && !cancelled) continue;
       lessons.push({
         start: fixTime(item.starttime || ''),
         end: fixTime(item.endtime || ''),
-        subject: subjIds.map(subjectName).filter(Boolean).join(', '),
-        room: classroomIds.map(classroomName).filter(Boolean).join(', '),
-        teacher: teacherIds.map(teacherName).filter(Boolean).join(', '),
+        subject,
+        room,
+        teacher,
         free: false,
-        cancelled: !!(item.removed || item.type === 'absent' || item.type === ''),
+        cancelled,
         raw: item
       });
     }

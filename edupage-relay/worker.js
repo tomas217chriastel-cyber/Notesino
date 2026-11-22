@@ -841,13 +841,24 @@ export default {
     if (request.method === 'OPTIONS') return withCors(new Response(null, { status: 204 }));
     const path = new URL(request.url).pathname.replace(/\/+$/, '');
 
-    if (path === '/push/subscribe') return handlePushSubscribe(request, env);
-    if (path === '/push/sync') return handlePushSync(request, env);
-    if (path === '/push/test') return handlePushTest(request, env);
-    if (path === '/edupage/auto') return handleEdupageAutoSave(request, env);
-    if (path === '/edupage/cached') return handleEdupageCached(request, env);
+    // Any exception that escapes here (a platform-level error like "Too many
+    // subrequests", or a bug in a handler) used to fall through to
+    // Cloudflare's own plain-text/HTML error page -- which isn't JSON, so
+    // the client's res.json() failed and showed a content-free "The relay
+    // did not respond as expected." Catching it here means the client
+    // always gets back real JSON with the actual error message instead.
+    try {
+      if (path === '/push/subscribe') return await handlePushSubscribe(request, env);
+      if (path === '/push/sync') return await handlePushSync(request, env);
+      if (path === '/push/test') return await handlePushTest(request, env);
+      if (path === '/edupage/auto') return await handleEdupageAutoSave(request, env);
+      if (path === '/edupage/cached') return await handleEdupageCached(request, env);
 
-    return handleEdupageSync(request);
+      return await handleEdupageSync(request);
+    } catch (err) {
+      const message = (err && err.message) || String(err);
+      return withCors(json({ ok: false, step: 'worker-exception', error: message }, 500));
+    }
   },
   async scheduled(event, env, ctx) {
     ctx.waitUntil(sweepAndSendPushes(env));

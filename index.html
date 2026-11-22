@@ -3025,8 +3025,7 @@
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    opacity: 0;
-    transition: opacity 0.15s ease, background 0.15s ease;
+    transition: background 0.15s ease;
   }
 
   .fmt-btn.italic {
@@ -3035,13 +3034,6 @@
 
   .fmt-btn.underline {
     text-decoration: underline;
-  }
-
-  .note:hover .fmt-btn,
-  .note:hover .note-close,
-  body.touch-device .fmt-btn,
-  body.touch-device .note-close {
-    opacity: 1;
   }
 
   /* Pin: locks drag/resize/delete on this note until unpinned. Stays
@@ -3106,33 +3098,23 @@
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    opacity: 0;
-    transition: opacity 0.15s ease, background 0.15s ease;
+    transition: background 0.15s ease;
   }
 
   .note-close:hover {
     background: rgba(0,0,0,0.3);
   }
 
+  /* Visibility is handled by the wrapping .note-ctx-toolbar (shown only
+     for the active note) -- this row itself just needs to lay out its
+     own controls, not hide/reveal independently. */
   .note-toolbar2 {
     display: flex;
     align-items: center;
     flex-wrap: wrap;
     gap: 5px;
     padding: 0 10px 6px;
-    margin-bottom: 2px;
     flex-shrink: 0;
-    opacity: 0;
-    max-height: 0;
-    overflow: hidden;
-    transition: opacity 0.15s ease, max-height 0.25s ease;
-  }
-
-  .note:hover .note-toolbar2,
-  body.touch-device .note-toolbar2 {
-    opacity: 1;
-    max-height: 120px;
-    overflow: visible;
   }
 
   .note-font-select {
@@ -3225,75 +3207,95 @@
     display: none;
   }
 
-  /* ---- Mobile/touch only: scale every note control relative to the
-     note's own current size, so buttons never end up cramped together
-     on a small note and each has its own reliably tappable space. This
-     never affects desktop, which keeps the fixed sizes above. ---- */
-  body.touch-device .note {
+  /* Every note control scales relative to the note's own current size (on
+     ALL devices, not just touch) -- this is what makes the floating
+     contextual toolbar (.note-ctx-toolbar) track the size of whichever
+     note it's attached to instead of staying a fixed size regardless of
+     how small or large that note is. */
+  .note {
     --note-scale: 1;
   }
 
-  body.touch-device .note-head {
+  .note-ctx-toolbar {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: calc(100% + 8px);
+    display: none;
+    flex-direction: column;
+    background: rgba(var(--panel-rgb), 0.98);
+    border: 1px solid rgba(var(--ink-rgb), 0.14);
+    border-radius: calc(14px * var(--note-scale));
+    box-shadow: var(--card-shadow), 0 10px 26px rgba(0,0,0,0.28);
+    z-index: 6;
+  }
+
+  .note.note-active .note-ctx-toolbar {
+    display: flex;
+  }
+
+  .note-head {
     padding: calc(8px * var(--note-scale)) calc(10px * var(--note-scale)) calc(4px * var(--note-scale));
     gap: calc(6px * var(--note-scale));
   }
 
-  body.touch-device .note-dot {
+  .note-dot {
     width: calc(20px * var(--note-scale));
     height: calc(20px * var(--note-scale));
   }
 
-  body.touch-device .note-head-right {
+  .note-head-right {
     gap: calc(6px * var(--note-scale));
   }
 
-  body.touch-device .fmt-btn,
-  body.touch-device .note-close {
+  .fmt-btn,
+  .note-close {
     width: calc(30px * var(--note-scale));
     height: calc(30px * var(--note-scale));
     font-size: calc(14px * var(--note-scale));
   }
 
-  /* Drag handle/grip aren't covered by the fixed @media mobile rules below
-     -- scale them too so they stay grabbable with a thumb on a small note. */
-  body.touch-device .note-drag-handle {
+  /* Drag handle/grip stay on the note itself (not in the floating
+     toolbar), so the note can still be grabbed and moved even when its
+     toolbar is hidden -- scaled the same way so they stay grabbable with
+     a thumb on a small note. */
+  .note-drag-handle {
     min-height: calc(20px * var(--note-scale));
   }
 
-  body.touch-device .note-drag-grip {
+  .note-drag-grip {
     width: calc(32px * var(--note-scale));
     height: calc(4px * var(--note-scale));
   }
 
-  body.touch-device .note-toolbar2 {
-    padding: 0 calc(10px * var(--note-scale)) calc(6px * var(--note-scale));
+  .note-toolbar2 {
+    padding: 0 calc(10px * var(--note-scale)) calc(8px * var(--note-scale));
     gap: calc(8px * var(--note-scale));
-    max-height: calc(140px * var(--note-scale));
     flex-wrap: wrap;
   }
 
-  body.touch-device .note-font-select {
+  .note-font-select {
     font-size: calc(12px * var(--note-scale));
     padding: calc(3px * var(--note-scale)) calc(5px * var(--note-scale));
     max-width: calc(90px * var(--note-scale));
   }
 
-  body.touch-device .note-size-select {
+  .note-size-select {
     font-size: calc(12px * var(--note-scale));
     padding: calc(3px * var(--note-scale)) calc(4px * var(--note-scale));
     width: calc(50px * var(--note-scale));
   }
 
-  body.touch-device .note-font-color-wrap {
+  .note-font-color-wrap {
     width: calc(26px * var(--note-scale));
     height: calc(26px * var(--note-scale));
   }
 
-  body.touch-device .note-font-color-wrap::after {
+  .note-font-color-wrap::after {
     font-size: calc(12px * var(--note-scale));
   }
 
-  body.touch-device .note-bg-btn {
+  .note-bg-btn {
     width: calc(30px * var(--note-scale));
     height: calc(30px * var(--note-scale));
     font-size: calc(14px * var(--note-scale));
@@ -5566,6 +5568,18 @@
   var topZ = 10;
   var openSwatchPanel = null;
 
+  /* The one note whose floating contextual toolbar is currently shown.
+     Activated on pointerdown anywhere inside a note (capture phase, so it
+     always wins even though controls like <select> stop propagation on
+     their own pointerdown), cleared on any pointerdown outside every note. */
+  var activeNote = null;
+  function setActiveNote(n) {
+    if (activeNote === n) return;
+    if (activeNote) activeNote.classList.remove('note-active');
+    activeNote = n;
+    if (activeNote) activeNote.classList.add('note-active');
+  }
+
   /* ---------- Infinite pan/zoom canvas ---------- */
   var canvasPanX = 0, canvasPanY = 0, canvasZoom = 1;
   var CANVAS_ZOOM_MIN = 0.15, CANVAS_ZOOM_MAX = 4;
@@ -5969,6 +5983,10 @@
     }
   });
 
+  document.addEventListener('pointerdown', function(e) {
+    if (activeNote && !e.target.closest('.note')) setActiveNote(null);
+  });
+
   /* Cascades sequential spawns by a fixed diagonal step instead of drawing
      each one independently at random -- on a narrow phone viewport the
      random spread can be barely wider than the card itself, so two notes
@@ -6043,6 +6061,7 @@
     if (data && data.w) note.style.width = data.w + 'px';
     if (data && data.h) note.style.height = data.h + 'px';
     note.style.zIndex = ++topZ;
+    note.addEventListener('pointerdown', function() { setActiveNote(note); }, true);
 
     var head = document.createElement('div');
     head.className = 'note-head';
@@ -6142,6 +6161,12 @@
     head.appendChild(dotWrap);
     head.appendChild(headRight);
 
+    /* Contextual toolbar: floats above whichever note is currently active
+       instead of living inside every note's own flow -- keeps notes clean
+       by default, controls only appear for the one you're working on. */
+    var ctxToolbar = document.createElement('div');
+    ctxToolbar.className = 'note-ctx-toolbar';
+
     /* --- Second toolbar row: font family, size, color (apply to selection), background image --- */
     var toolbar2 = document.createElement('div');
     toolbar2.className = 'note-toolbar2';
@@ -6225,9 +6250,11 @@
     body.innerHTML = (data && data.html) || '';
     body.classList.toggle('is-empty', !(body.textContent || '').trim());
 
+    ctxToolbar.appendChild(head);
+    ctxToolbar.appendChild(toolbar2);
+
     note.appendChild(bgVideoEl);
-    note.appendChild(head);
-    note.appendChild(toolbar2);
+    note.appendChild(ctxToolbar);
     note.appendChild(body);
 
     var dragHandle = document.createElement('div');
@@ -6407,15 +6434,15 @@
       note.style.zIndex = ++topZ;
     });
 
-    /* Persist size changes from the native CSS resize handle, and on
-       touch devices keep this note's control-scale variable in sync so
-       its buttons stay proportional to its actual current size. */
+    /* Persist size changes from the native CSS resize handle, and keep
+       this note's control-scale variable in sync (on every device, not
+       just touch) so its floating contextual toolbar and buttons stay
+       proportional to its actual current size. */
     var NOTE_SCALE_REF_WIDTH = 220; /* width at which scale = 1, matches the default note width */
     var NOTE_SCALE_MIN = 0.75; /* below this, touch targets inside the note get too small to tap reliably */
     var NOTE_SCALE_MAX = 1.6;
 
     function updateNoteScale() {
-      if (!isTouchDevice) return;
       var w = note.getBoundingClientRect().width;
       var scale = Math.max(NOTE_SCALE_MIN, Math.min(NOTE_SCALE_MAX, w / NOTE_SCALE_REF_WIDTH));
       note.style.setProperty('--note-scale', scale);

@@ -10933,12 +10933,25 @@
     try { localStorage.setItem(EDUPAGE_PREFS_KEY, JSON.stringify(prefs)); } catch (err) {}
   }
 
+  /* Pulls out just the "https://host..." part of whatever's in the Relay
+     URL field, so a label accidentally pasted in front of it (seen once:
+     "Edupage - relay : https://...") can't turn every request after that
+     into an invalid URL -- fetch() throws a bare "Failed to fetch" for
+     that, with no hint it was the URL itself at fault. Also strips a
+     trailing slash so callers can always just append a path. */
+  function sanitizeRelayUrl(raw) {
+    var s = (raw || '').trim();
+    var m = s.match(/https?:\/\/.*/);
+    if (m) s = m[0];
+    return s.replace(/\/+$/, '');
+  }
+
   ttEdupageBtn.addEventListener('click', function(e) {
     e.stopPropagation();
     var wasOpen = ttEdupagePanel.classList.contains('open');
     if (!wasOpen) {
       var prefs = loadEdupagePrefs();
-      edupageRelayInput.value = prefs.relayUrl || '';
+      edupageRelayInput.value = sanitizeRelayUrl(prefs.relayUrl || '');
       edupageSubdomainInput.value = prefs.subdomain || '';
       edupageUsernameInput.value = prefs.username || '';
       edupagePasswordInput.value = prefs.password || '';
@@ -11121,7 +11134,8 @@
   }
 
   edupageSyncBtn.addEventListener('click', function() {
-    var relayUrl = edupageRelayInput.value.trim().replace(/\/+$/, '');
+    var relayUrl = sanitizeRelayUrl(edupageRelayInput.value);
+    edupageRelayInput.value = relayUrl;
     var subdomain = edupageSubdomainInput.value.trim();
     var username = edupageUsernameInput.value.trim();
     var password = edupagePasswordInput.value;
@@ -11194,7 +11208,8 @@
   }
 
   edupageAutoToggle.addEventListener('change', function() {
-    var relayUrl = edupageRelayInput.value.trim().replace(/\/+$/, '');
+    var relayUrl = sanitizeRelayUrl(edupageRelayInput.value);
+    edupageRelayInput.value = relayUrl;
     var subdomain = edupageSubdomainInput.value.trim();
     var username = edupageUsernameInput.value.trim();
     var password = edupagePasswordInput.value;

@@ -396,10 +396,27 @@ function enumerateDates(dateFromStr, dateToStr) {
   return out;
 }
 
+/* A day coming back with zero lessons has been seen even for a day the
+   user confirms has real classes -- with each day now its own isolated
+   request, that doesn't match the "EduPage truncates wide ranges" cause
+   this function was built for, and looks instead like an occasional bad
+   gpid/gsh handshake for that one request (14 rapid logins-worth of
+   token churn against the same session). Re-doing the handshake+fetch
+   once for a day that comes back empty is cheap insurance against that:
+   a day that's genuinely free just gets confirmed empty twice. */
+async function fetchDayWithRetry(session, dateKey) {
+  var result = await fetchTimetableRange({ ...session, dateFrom: dateKey, dateTo: dateKey });
+  if (!result.days[dateKey] || !result.days[dateKey].length) {
+    var retry = await fetchTimetableRange({ ...session, dateFrom: dateKey, dateTo: dateKey });
+    if (retry.days[dateKey] && retry.days[dateKey].length) return retry;
+  }
+  return result;
+}
+
 async function fetchTimetableRangeByDay(session, dateFrom, dateTo) {
   const days = {};
   for (const dateKey of enumerateDates(dateFrom, dateTo)) {
-    const result = await fetchTimetableRange({ ...session, dateFrom: dateKey, dateTo: dateKey });
+    const result = await fetchDayWithRetry(session, dateKey);
     Object.assign(days, result.days);
   }
   return { ok: true, days };

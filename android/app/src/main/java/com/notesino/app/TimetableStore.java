@@ -77,6 +77,42 @@ class TimetableStore {
         return text.trim();
     }
 
+    /** Mirrors the web app's startOfWeekMonday(): midnight of the Monday
+        on or before the given calendar's date. */
+    private static long startOfWeekMondayMillis(Calendar cal) {
+        Calendar c = (Calendar) cal.clone();
+        int dow = c.get(Calendar.DAY_OF_WEEK); // Calendar.SUNDAY=1 .. Calendar.SATURDAY=7
+        int diff = (dow == Calendar.SUNDAY) ? -6 : (Calendar.MONDAY - dow);
+        c.add(Calendar.DAY_OF_MONTH, diff);
+        c.set(Calendar.HOUR_OF_DAY, 0);
+        c.set(Calendar.MINUTE, 0);
+        c.set(Calendar.SECOND, 0);
+        c.set(Calendar.MILLISECOND, 0);
+        return c.getTimeInMillis();
+    }
+
+    /** Mirrors the web app's weekLetterForDate(): which of the alternating
+        Week A / Week B schedules today falls on. Without this the widget
+        always showed Week A's cells, even on a real Week B day. */
+    private static String weekLetterForToday(JSONObject rotation) {
+        if (rotation == null || !rotation.optBoolean("enabled", false)) return "A";
+        String anchorDate = rotation.optString("anchorDate", "");
+        String[] parts = anchorDate.split("-");
+        if (parts.length != 3) return "A";
+        try {
+            Calendar anchor = Calendar.getInstance();
+            anchor.clear();
+            anchor.set(Integer.parseInt(parts[0]), Integer.parseInt(parts[1]) - 1, Integer.parseInt(parts[2]));
+            long todayMonday = startOfWeekMondayMillis(Calendar.getInstance());
+            long anchorMonday = startOfWeekMondayMillis(anchor);
+            long diffWeeks = Math.round((todayMonday - anchorMonday) / (7.0 * 86400000.0));
+            long mod = ((diffWeeks % 2) + 2) % 2;
+            return mod == 0 ? "A" : "B";
+        } catch (NumberFormatException e) {
+            return "A";
+        }
+    }
+
     /** Today's periods that have a subject filled in, or are explicitly
         marked free, in period order. */
     static List<Period> todaysPeriods(Context ctx) {
@@ -90,6 +126,15 @@ class TimetableStore {
             JSONArray periods = root.optJSONArray("periods");
             JSONObject cells = root.optJSONObject("cells");
             if (days == null || periods == null || cells == null) return out;
+
+            // On an alternating Week A/B schedule, today might be a Week B
+            // day -- fall back to Week A's cells whenever there's no
+            // rotation (or no Week B data) so a plain, non-alternating
+            // timetable behaves exactly as before.
+            JSONObject cellsB = root.optJSONObject("cellsB");
+            boolean useB = "B".equals(weekLetterForToday(root.optJSONObject("rotation")))
+                    && cellsB != null && cellsB.length() > 0;
+            JSONObject activeCells = useB ? cellsB : cells;
 
             String todayCode = DAY_CODES[Calendar.getInstance().get(Calendar.DAY_OF_WEEK) - 1];
             int dayIdx = -1;
@@ -105,7 +150,7 @@ class TimetableStore {
                 JSONObject period = periods.optJSONObject(p);
                 if (period == null) continue;
 
-                JSONObject cell = cells.optJSONObject(dayIdx + "-" + p);
+                JSONObject cell = activeCells.optJSONObject(dayIdx + "-" + p);
                 boolean free = cell != null && cell.optBoolean("free", false);
                 String subject = stripHtml(cell != null ? cell.optString("subject", "") : "");
                 if (subject.length() == 0 && !free) continue;

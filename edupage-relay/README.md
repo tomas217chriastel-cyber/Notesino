@@ -24,7 +24,14 @@ account.)
 The sync button makes two separate week-long requests (this week, next
 week) instead of one combined two-week request, because EduPage's day-plan
 endpoint has been observed to silently drop the second week when asked for
-a 14-day span in one call.
+a 14-day span in one call. The Worker itself goes further still: each of
+those two "week" requests is actually fetched **one day at a time**
+server-side and merged, because even a 7-day range has been observed (on a
+real account) to come back with entries for only the first day or two --
+genuinely missing from the response, not just empty. A sync therefore
+makes around 14 requests to EduPage behind the scenes and takes noticeably
+longer than it used to; that's the trade-off for actually getting every
+day's data.
 
 **Cancelled lessons**: EduPage flags a removed or teacher-absent lesson
 with `removed`/`type` fields on the raw plan item; Notesino now keeps those

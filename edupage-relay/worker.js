@@ -379,20 +379,45 @@ async function fetchTimetableRange({ jar, base, userId, dbi, dateFrom, dateTo })
   return { ok: true, days };
 }
 
+/* EduPage's day-plan endpoint has been confirmed (against a real account) to
+   silently return entries for only the first couple of days of a multi-day
+   date-range request, no matter how wide a range is actually asked for --
+   not just empty, genuinely absent from the response. Fetching one day at a
+   time sidesteps that, whatever its exact cause: each request's own range
+   is a single day, so there's nothing left for EduPage to truncate. */
+function enumerateDates(dateFromStr, dateToStr) {
+  const parse = s => { const [y, m, d] = s.split('-').map(Number); return Date.UTC(y, m - 1, d); };
+  const fmt = ms => {
+    const d = new Date(ms);
+    return d.getUTCFullYear() + '-' + String(d.getUTCMonth() + 1).padStart(2, '0') + '-' + String(d.getUTCDate()).padStart(2, '0');
+  };
+  const out = [];
+  for (let t = parse(dateFromStr); t <= parse(dateToStr); t += 86400000) out.push(fmt(t));
+  return out;
+}
+
+async function fetchTimetableRangeByDay(session, dateFrom, dateTo) {
+  const days = {};
+  for (const dateKey of enumerateDates(dateFrom, dateTo)) {
+    const result = await fetchTimetableRange({ ...session, dateFrom: dateKey, dateTo: dateKey });
+    Object.assign(days, result.days);
+  }
+  return { ok: true, days };
+}
+
 async function loginAndFetchTimetable({ subdomain, username, password, dateFrom, dateTo }) {
-  const { jar, base, userId, dbi } = await loginToEdupage({ subdomain, username, password });
-  return fetchTimetableRange({ jar, base, userId, dbi, dateFrom, dateTo });
+  const session = await loginToEdupage({ subdomain, username, password });
+  return fetchTimetableRangeByDay(session, dateFrom, dateTo);
 }
 
 /* Used by the auto-refresh cron: one login, two separate week-long fetches
    (see index.html's client-side sync for why two weeks must be fetched
-   separately rather than as one combined range), merged into one days map. */
+   separately rather than as one combined range), each itself done day by
+   day, merged into one days map. */
 async function fetchTwoWeekSnapshot({ subdomain, username, password, week1From, week1To, week2From, week2To }) {
   const session = await loginToEdupage({ subdomain, username, password });
-  // Sequential, not parallel: both calls share one CookieJar, and EduPage's
-  // per-request gpid/gsh dance isn't worth risking on concurrent mutation.
-  const week1 = await fetchTimetableRange({ ...session, dateFrom: week1From, dateTo: week1To });
-  const week2 = await fetchTimetableRange({ ...session, dateFrom: week2From, dateTo: week2To });
+  const week1 = await fetchTimetableRangeByDay(session, week1From, week1To);
+  const week2 = await fetchTimetableRangeByDay(session, week2From, week2To);
   return { ok: true, days: Object.assign({}, week1.days, week2.days) };
 }
 
